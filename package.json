@@ -1,12 +1,14 @@
 {
   "name": "nulllight",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "private": true,
   "description": "NullLight Lichtsteuerung und Offline-Demo",
   "scripts": {
     "test": "node tests/all.cjs app/NullLight.html",
     "test:demo": "node tests/all.cjs demo/NullLight.html",
-    "build:demo": "node scripts/package-demo.cjs"
+    "build:demo": "node scripts/package-demo.cjs",
+    "build:mac": "ruby scripts/build-mac.rb",
+    "test:updates": "ruby tests/updater-check.rb"
   },
   "engines": {
     "node": ">=22"

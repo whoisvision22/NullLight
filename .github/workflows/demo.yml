@@ -1,13 +1,15 @@
-name: Demo pruefen und bauen
+name: NullLight version pruefen und veroeffentlichen
 on:
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: nulllight-release
+  cancel-in-progress: false
 jobs:
-  demo:
+  windows-demo:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,10 +19,56 @@ jobs:
       - run: npm test
       - run: npm run test:demo
       - run: npm run build:demo
-      - name: Windows-Demo als ZIP verpacken
+      - name: Demo verpacken
         working-directory: dist
-        run: zip -qr NullLight-Windows-Demo.zip NullLight-Windows-Demo
+        run: |
+          VERSION=$(node -p 'require("../version.json").version')
+          zip -qr "NullLight-Windows-Demo-v${VERSION}.zip" NullLight-Windows-Demo
       - uses: actions/upload-artifact@v4
         with:
-          name: NullLight-Windows-Demo
-          path: dist/NullLight-Windows-Demo.zip
+          name: windows-demo
+          path: dist/*.zip
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - run: /usr/bin/ruby tests/updater-check.rb
+      - run: /usr/bin/ruby scripts/build-mac.rb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-app-and-update
+          path: |
+            dist/*.zip
+            dist/NullLight-update.json
+            dist/NullLight-release-*.json
+  release:
+    needs: [windows-demo, mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Neue Version mit Downloads und Update-Quelle veroeffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p 'require("./version.json").version')
+          if gh release view "v${VERSION}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Version ${VERSION} ist bereits veroeffentlicht. Fuer ein neues Release version.json erhoehen."
+            exit 0
+          fi
+          sha256sum dist/*.zip dist/*.json > dist/SHA256SUMS
+          gh release create "v${VERSION}" dist/*.zip dist/*.json dist/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest \
+            --title "NullLight v${VERSION}" --notes-file RELEASE-NOTES.md

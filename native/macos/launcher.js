@@ -14,6 +14,10 @@ ObjC.registerSubclass({
             implementation: function(controller, message) {
                 var json = ObjC.unwrap(message.body);
                 if (typeof json !== 'string') return;
+                if (ObjC.unwrap(message.name) === 'appControl') {
+                    if (json === 'restart') restartApp();
+                    return;
+                }
                 var panel = $.NSSavePanel.savePanel;
                 panel.nameFieldStringValue = 'NullLight-Show.json';
                 panel.allowedFileTypes = $(['json']);
@@ -49,6 +53,7 @@ function launchEngine(directory, bundleResources, failedUpdate) {
     var environment = $.NSProcessInfo.processInfo.environment.mutableCopy;
     environment.setObjectForKey($(bundleResources), $('NULLLIGHT_BUNDLE_RESOURCES'));
     environment.setObjectForKey($(failedUpdate ? '1' : '0'), $('NULLLIGHT_UPDATE_FAILED'));
+    environment.setObjectForKey($(bundleResources + '/vendor'), $('RUBYLIB'));
     engine.environment = environment;
     engine.standardOutput = pipe;
     engine.standardError = pipe;
@@ -59,6 +64,14 @@ function launchEngine(directory, bundleResources, failedUpdate) {
         throw new Error(line || 'Der Art-Net-Dienst konnte nicht gestartet werden.');
     }
     return line;
+}
+function restartApp() {
+    stopEngine();
+    var task = $.NSTask.alloc.init;
+    task.launchPath = '/usr/bin/open';
+    task.arguments = $(['-n', ObjC.unwrap($.NSBundle.mainBundle.bundlePath)]);
+    task.launch;
+    $.NSApplication.sharedApplication.terminate(null);
 }
 function run() {
     var app = $.NSApplication.sharedApplication;
@@ -107,6 +120,7 @@ try {
         var configuration = $.WKWebViewConfiguration.alloc.init;
         exportHandler = $.LichtpultExportHandler.alloc.init;
         configuration.userContentController.addScriptMessageHandlerName(exportHandler, $("showExport"));
+        configuration.userContentController.addScriptMessageHandlerName(exportHandler, $("appControl"));
         webView = $.WKWebView.alloc.initWithFrameConfiguration(
             $.NSMakeRect(0, 0, 1280, 850), configuration
         );

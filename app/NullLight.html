@@ -386,7 +386,7 @@ nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
 
 
 
-<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v16</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v17</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -2046,30 +2046,41 @@ function resetSelectedLights(){
 }
 let updateInfo=null,updateBusy=false;
 function updatePanel(){
- const info=updateInfo||{};
- const pending=Number(info.version)>Number(info.runningVersion);
- const message=info.state==="unavailable"||info.state==="error"?info.message:
-  pending?"Version "+info.version+" ist geladen. Speichere deine Szenen und öffne NullLight erneut.":
-  info.runningVersion?"Version "+info.runningVersion+" ist aktuell.":"Der Update-Status wird beim Start der Mac-App geprüft.";
- return '<section class="panel"><h3>Automatische Updates</h3><p role="status">'+esc(message)+'</p>'+
-  '<p class="muted">NullLight prüft beim Start und alle 15 Minuten den lokalen Projektordner. Neue Versionen werden geprüft und für den nächsten Start bereitgestellt.</p>'+
-  '<div class="row">'+button(updateBusy?"Updates werden geprüft…":"Jetzt nach Updates suchen","updates-check",(!nativeAvailable||updateBusy?'disabled':'')+' class="primary"')+'</div>'+
-  (info.source?'<details><summary>Update-Quelle</summary><small style="overflow-wrap:anywhere">'+esc(info.source)+'</small></details>':"")+
-  (!nativeAvailable?'<small>Automatische Updates sind in der Mac-App verfügbar.</small>':"")+'</section>';
+ const info=updateInfo||{},ready=info.state==='ready'&&Number(info.version)>Number(info.runningVersion)||Number(info.stagedVersion)>Number(info.runningVersion);
+ const message=ready?'Update geprüft und vorbereitet. Deine Show wird vor dem Neustart gespeichert.':info.message||'Prüfe, ob auf GitHub eine neue Version verfügbar ist.';
+ return '<section class="panel"><h3>Updates</h3><p role="status">'+esc(message)+'</p><small>Installierte Version: '+(info.runningVersion||'Browser-Demo')+'</small>'+
+  '<div class="row">'+button(updateBusy?'Bitte warten…':'Updates prüfen','updates-check',(!nativeAvailable||updateBusy?'disabled':'')+' class="primary"')+
+  (info.state==='available'?button('Herunterladen und vorbereiten','updates-install',updateBusy?'disabled':''):'')+
+  (ready?button('Jetzt neu starten','updates-restart',updateBusy?'disabled':''):'')+'</div>'+
+  '<small>Downloads kommen aus dem NullLight-Repository auf GitHub. Dateien und Prüfsummen werden vor der Übernahme kontrolliert. Die vorige Version bleibt erhalten.</small>'+
+  (!nativeAvailable?'<small>Diese Dateidemo wird durch den Download einer neuen Demo ersetzt. Die installierte Mac-App kann Updates selbst übernehmen.</small>':'')+'</section>';
 }
 async function checkUpdates(){
- if(!nativeAvailable||updateBusy)return;
- updateBusy=true;
- try{updateInfo=await nativeRequest("/api/update/check",{},10000);}
- catch(error){updateInfo={...(updateInfo||{}),state:"error",message:error.message};}
+ if(!nativeAvailable||updateBusy)return;updateBusy=true;if(tab===0)render();
+ try{updateInfo=await nativeRequest('/api/update/check',{},45000);}
+ catch(error){updateInfo={...(updateInfo||{}),state:'error',message:error.message};}
  finally{updateBusy=false;if(tab===0)render();}
 }
-document.addEventListener("click",event=>{
- const action=event.target.closest("[data-action]")?.dataset.action;
- if(action==="updates-open"){tab=0;render();}
- else if(action==="updates-check")checkUpdates();
+async function installUpdate(){
+ if(!nativeAvailable||updateBusy)return;updateBusy=true;render();
+ try{updateInfo=await nativeRequest('/api/update/install',{},90000);}
+ catch(error){updateInfo={...(updateInfo||{}),state:'error',message:error.message};}
+ finally{updateBusy=false;render();}
+}
+function restartForUpdate(){
+ for(const scene of data.scenes)scene.steps=scene.steps.map(step=>copy(setupDrafts.get(step)||step));
+ save();if(storageError){updateInfo={...(updateInfo||{}),message:'Die Show konnte nicht gespeichert werden. Bitte zuerst exportieren.'};render();return;}
+ const bridge=window.webkit?.messageHandlers?.appControl;
+ if(bridge)bridge.postMessage('restart');
+ else{updateInfo={...(updateInfo||{}),message:'Bitte NullLight schließen und erneut öffnen.'};render();}
+}
+document.addEventListener('click',event=>{
+ const action=event.target.closest('[data-action]')?.dataset.action;
+ if(action==='updates-open'){tab=0;render();}
+ else if(action==='updates-check')checkUpdates();
+ else if(action==='updates-install')installUpdate();
+ else if(action==='updates-restart')restartForUpdate();
 });
-setInterval(checkUpdates,15*60*1000);
 
 let fixtureDraft=null,fixtureDraftKey=null,deviceMessage="",deviceBusy=false,deviceProposal=null,deviceDescription="";
 let playbackDark=false,previewDark=false;

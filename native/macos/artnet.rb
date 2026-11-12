@@ -299,6 +299,9 @@ module ArtNet
                  when '/api/frame' then sender.frame(input.fetch('channels'))
                  when '/api/stop' then sender.stop
                  when '/api/mapping' then sender.set_mapping(input.fetch('mapping'))
+                 when '/api/update/install'
+                   updates.install if updates
+                   update_status.call
                  when '/api/update/check'
                    updates.check if updates
                    update_status.call
