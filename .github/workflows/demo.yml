@@ -1,0 +1,26 @@
+name: Demo pruefen und bauen
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - run: npm run test:demo
+      - run: npm run build:demo
+      - name: Windows-Demo als ZIP verpacken
+        working-directory: dist
+        run: zip -qr NullLight-Windows-Demo.zip NullLight-Windows-Demo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NullLight-Windows-Demo
+          path: dist/NullLight-Windows-Demo.zip

@@ -1,0 +1,14 @@
+{
+  "name": "nulllight",
+  "version": "0.16.0",
+  "private": true,
+  "description": "NullLight Lichtsteuerung und Offline-Demo",
+  "scripts": {
+    "test": "node tests/all.cjs app/NullLight.html",
+    "test:demo": "node tests/all.cjs demo/NullLight.html",
+    "build:demo": "node scripts/package-demo.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

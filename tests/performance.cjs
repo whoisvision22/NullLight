@@ -1,0 +1,34 @@
+const fs=require('fs');let source=fs.readFileSync('tests/workspace.cjs','utf8');source+=`
+run('data.selectedColors=[]');assert.equal(run('programColorChoices().length'),6);assert.equal(run('programColorChoices()[0]'),'#ffffff');
+for(const color of ['#123456','#234567','#345678','#456789','#56789a','#6789ab','#789abc'])run('rememberPickedColor('+JSON.stringify(color)+')');
+assert.equal(run('data.selectedColors.length'),6);assert.equal(run('programColorChoices()[0]'),'#789abc');assert.equal(run('programColorChoices().includes("#123456")'),false);
+run('rememberPickedColor("#345678")');assert.equal(run('programColorChoices()[0]'),'#345678');assert.equal(run('new Set(programColorChoices()).size'),6);
+run('data={lights:[{id:"rgb",name:"RGB",mode:"RGB",mapping:"R,G,B",address:1},{id:"drgb",name:"Dimmer RGB",mode:"Eigenes Profil",mapping:"D,R,G,B,255",address:10}],scenes:[],masterGroups:[],playbackMode:"sequence"};');
+run('saveMasterGroup({id:"g1",name:"Links",ids:["rgb","drgb"],level:40})');
+run('saveMasterGroup({id:"g2",name:"Extra",ids:["rgb"],level:25})');
+const frame=run('applyGroupMasters(encodeFrame({values:{rgb:{color:"#ffffff",level:100},drgb:{color:"#ffffff",level:100}}},"",50))');
+assert.equal(frame[0],32);assert.equal(frame[9],51);assert.equal(frame[10],255);assert.equal(frame[13],255);
+const white=run('applyGroupMasters(encodeFrame(null,"white",100))');assert.equal(white[0],64);assert.equal(white[9],102);
+assert(run('applyGroupMasters(encodeFrame(null,"black",100)).every(value=>value===0)'));
+assert.throws(()=>run('saveMasterGroup({id:"bad",name:"Bad",ids:[],level:100})'));
+assert.throws(()=>run('saveMasterGroup({id:"bad",name:"Bad",ids:["unknown"],level:100})'));
+assert.throws(()=>run('saveMasterGroup({id:"bad",name:"Bad",ids:["rgb"],level:101})'));
+run('data.scenes=["a","b","c"].map(id=>({id,name:id,live:true,loop:true,steps:[{fade:0,hold:1,values:{}}]}));performQueue.clear();data.scenes.forEach(scene=>performQueue.add(scene.id));');
+assert.equal(run('nextPerformScene(null,true).id'),'a');assert.equal(run('nextPerformScene("a").id'),'b');assert.equal(run('nextPerformScene("c").id'),'a');
+run('moveQueue("c",-1)');assert.equal(run('[...performQueue].join(",")'),'a,c,b');assert.equal(run('nextPerformScene("a").id'),'c');
+run('data.playbackMode="random"');let previous=null;
+for(let cycle=0;cycle<20;cycle++){const ids=[];for(let i=0;i<3;i++){const id=run('nextPerformScene('+JSON.stringify(previous)+').id');assert.notEqual(id,previous);ids.push(id);previous=id;}assert.equal(new Set(ids).size,3);}
+run('performQueue.clear();performQueue.add("b");shuffleBag=[]');assert.equal(run('nextPerformScene("b").id'),'b');run('performQueue.clear()');assert.equal(run('nextPerformScene("b")'),null);
+run('data.playbackMode="sequence";performQueue.add("a");performQueue.add("b");play("a");stageIndex=0;advancePlayback()');assert.equal(run('active'),'b');
+run('data.scenes[1].steps.push({fade:0,hold:1,values:{}});stageIndex=0;liveSnapshot=copy(data.scenes[1]);advancePlayback()');assert.equal(run('stageIndex'),1);assert.equal(run('active'),'b');run('advancePlayback()');assert.equal(run('active'),'a');
+assert.equal(run('validateShow(data).masterGroups.length'),2);assert.equal(run('validateShow(data).playbackMode'),'sequence');
+run('removeFixture("rgb")');assert.equal(run('data.masterGroups[0].ids.includes("rgb")'),false);
+run('active=null;liveSnapshot=null;performQueue.clear();performSelectOnly=true;togglePerformScene("b");togglePerformScene("c")');
+assert.equal(run('active'),null);assert.equal(run('[...performQueue].join(",")'),'b,c');
+run('data.playbackMode="random";savePlaybackList("Party-Reihe")');assert.equal(run('data.playbackLists.length'),1);
+run('performQueue.clear();loadPlaybackList(data.playbackLists[0].id)');assert.equal(run('[...performQueue].join(",")'),'b,c');assert.equal(run('data.playbackMode'),'random');
+run('moveQueue("c",-1);savePlaybackList("Party-Reihe")');assert.equal(run('data.playbackLists.length'),1);assert.equal(run('data.playbackLists[0].ids.join(",")'),'c,b');
+run('data.scenes[0].buttonColor="#33aaff"');assert.equal(run('validateShow(data).scenes[0].buttonColor'),'#33aaff');assert.equal(run('validateShow(data).playbackLists[0].mode'),'random');
+run('tab=2;render()');body=nodes.get('#screen').innerHTML;assert(body.indexOf('rig-panel')<body.indexOf('performance-panel'));assert(body.indexOf('performance-panel')<body.indexOf('playback-footer'));assert(body.includes('selection-badge'));
+console.log('Passed: six recent colors; grouped RGB/dimmer/white/blackout output; group validation and cleanup; ordered queue; shuffle cycles; full-scene advance; show import.');
+`;new Function('require','process',source)(require,process);

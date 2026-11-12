@@ -1,0 +1,2419 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NullLight · Windows-Demo</title><meta name="description" content="NullLight Lichtsteuerung – interaktive Online-Demo">
+<style>
+:root{color-scheme:dark;--bg:#101218;--panel:#191d26;--line:#303644;--ink:#f3f5fa;--muted:#aeb9cd;--accent:#ad9cff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,sans-serif;height:100vh;display:flex;flex-direction:column}
+header,nav,.bar{display:flex;align-items:center;gap:10px;padding:12px 24px;border-bottom:1px solid var(--line)}
+header{justify-content:space-between}h1,h2,h3,p{margin:0}h1{font-size:22px}h2{font-size:20px}
+small,.muted{color:var(--muted)}button,input,select{font:inherit;color:inherit}
+button,input,select{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:9px 12px}
+button{cursor:pointer}button:hover{border-color:var(--accent)}button[aria-pressed=true],.primary{background:var(--accent);color:#161025;border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav{flex-wrap:wrap}main{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.bar{position:sticky;top:0;background:var(--bg);z-index:1;flex-wrap:wrap}.bar small{margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));grid-auto-rows:minmax(145px,1fr);gap:14px;padding:20px 24px;flex:1}
+.tile{text-align:left;font-size:24px;font-weight:700;background:linear-gradient(145deg,var(--tint),var(--panel) 68%);display:flex;flex-direction:column;justify-content:space-between;padding:20px}
+.tile small{font-size:13px;font-weight:500}.tile[aria-pressed=true]{background:linear-gradient(145deg,var(--tint),var(--panel) 78%);color:var(--ink);outline:2px solid var(--accent);outline-offset:-2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.wrap{padding:20px 24px;display:grid;gap:14px}.editor{grid-template-columns:minmax(160px,1fr) minmax(300px,2.4fr) minmax(150px,1fr);align-items:start}
+.row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.split{justify-content:space-between}
+label{display:flex;gap:6px;align-items:center}label.stack{align-items:flex-start;flex-direction:column}
+input[type=number]{width:90px}input[type=color]{padding:3px;width:42px;height:35px}input[type=range]{padding:0;width:105px}
+.swatch{border:1px solid var(--line);border-radius:8px;padding:9px;display:flex;align-items:center;gap:8px}
+.swatch i{display:block;width:20px;height:20px;border:1px solid #ffffff40;border-radius:50%}
+.error{color:#ffacb4}.list{display:grid;gap:8px}.list button{text-align:left;overflow-wrap:anywhere}
+@media(max-width:850px){.editor{grid-template-columns:1fr}.grid{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}}
+:root{--bg:#14171b;--panel:#1e2228;--line:#373e48;--ink:#f4f6f7;--muted:#adb8c5;--accent:#b6a1ff}
+header{padding-block:11px;background:#101216}
+header h1{font-size:18px;font-weight:750;letter-spacing:.015em}
+#status{font-size:13px;color:var(--muted)}
+nav{background:#191d22;gap:4px;padding-block:0}
+nav button{background:transparent;border:0;border-radius:0;border-bottom:3px solid transparent;padding:13px 15px 11px;font-weight:650}
+nav button[aria-pressed=true]{background:#2c2442;color:var(--accent);border-color:var(--accent)}
+button,input,select{border-radius:5px}
+button[aria-pressed=true],.primary{color:#1c142e}
+.bar{background:#191d22}
+.live-controls button{min-width:85px}
+.live-controls [data-action="black"][aria-pressed=true]{background:#ffb0ab;border-color:#ffb0ab}
+.live-controls [data-action="white"][aria-pressed=true]{background:#fff;border-color:#fff}
+.banks{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 24px;border-bottom:1px solid var(--line)}
+.banks button{font-size:13px;padding:5px 10px}
+.grid{gap:12px;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));grid-auto-rows:minmax(145px,1fr)}
+.tile{border-top:4px solid var(--scene-color);font-size:22px}
+.tile[aria-pressed=true]{outline:2px solid var(--accent)}
+.tile small{color:#e1e6ef}
+.panel{border-radius:8px}
+.patch-layout{grid-template-columns:minmax(250px,1fr) minmax(420px,1.65fr);align-items:start}
+.patch-grid{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px}
+.channel{display:grid;place-items:center;min-width:0;padding:3px 0;border-radius:3px;border:1px solid #343b45;background:#16191e;color:#b6c2d2;font:10px ui-monospace,monospace}
+.channel.used{background:#413368;color:#e9ddff;border-color:#7058ac}
+.channel.first{font-weight:800;background:#59428c}
+.channel.selected{outline:2px solid #e9ddff;outline-offset:-2px}
+.steps{display:flex;gap:8px;overflow:auto;padding:2px 2px 7px}
+.steps button{flex:0 0 108px;text-align:left;display:grid;gap:5px;border-top:3px solid var(--step-color)}
+.steps small{color:inherit;font-size:11px}
+.editor .panel{overflow:hidden}
+.editor .panel label.stack input{width:100%}
+@media(max-width:850px){.patch-layout{grid-template-columns:1fr}.grid{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}}
+.setup{grid-template-columns:minmax(150px,1fr) minmax(360px,3.6fr) minmax(195px,1.25fr);align-items:start}
+.setup h3{font-size:15px}
+.setup .inventory button{display:grid;gap:4px;text-align:left;overflow-wrap:anywhere}
+.setup .inventory small{color:inherit}
+.floor{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;padding:6px;border:1px solid #493c64;border-radius:8px;background:#14111c}
+.cell{min-width:0;min-height:48px;padding:4px;border:1px solid #342b48;background:#1d1828;display:grid;align-content:center;justify-items:center;gap:3px}
+.cell:hover{border-color:var(--accent)}
+.cell.filled{border-color:color-mix(in srgb,var(--lamp) 55%,#514469);background:color-mix(in srgb,var(--lamp) var(--glow),#241d32)}
+.cell.selected{outline:2px solid var(--accent);outline-offset:-2px}
+.cell i{width:13px;height:13px;border:1px solid #eee3ff77;border-radius:50%;background:color-mix(in srgb,var(--lamp) var(--glow),#343041)}
+.cell span{font-size:10px;max-width:100%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+.setup select{width:100%}
+.setup-status{min-height:1.25em}
+@media(max-width:950px){.setup{grid-template-columns:minmax(150px,1fr) minmax(340px,2.5fr)}}
+@media(max-width:650px){.setup{grid-template-columns:1fr}}
+.setup .step-panel{grid-column:1/-1}
+.setup .step-panel .steps{padding-bottom:4px}
+.setup .step-panel .steps button{flex-basis:134px}
+.setup .floor-panel{grid-column:2}
+.recent-colors{display:flex;flex-wrap:wrap;gap:6px}
+.recent-colors button{width:30px;height:30px;padding:0;background:var(--recent);border:1px solid #ffffff65}
+.recent-colors button:hover{outline:2px solid var(--accent)}
+.cell.filled{color:#fff;text-shadow:0 1px 3px #000,0 1px 6px #000}
+.cell.filled i{box-shadow:0 0 10px color-mix(in srgb,var(--lamp) var(--glow),transparent)}
+.cell.filled span{padding:0 2px;border-radius:3px;background:#110d1b80}
+@media(max-width:650px){.setup .floor-panel{grid-column:auto}}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:24px;max-width:500px}
+dialog::backdrop{background:#0009}
+dialog p{margin:15px 0}
+#artnet-form{display:grid;gap:16px}
+#artnet-form input[name=target]{width:180px}
+#artnet-form select{max-width:300px}
+input[type=file]{max-width:270px}
+:root{--bg:#17151e;--panel:#25222e;--line:#494050;--muted:#b9afc6;--accent:#ba9af4}
+header{background:#24202c;border-bottom:1px solid #544463;padding:10px 20px}
+header h1{font-size:20px;letter-spacing:.05em}
+nav{background:#302936;padding:0 20px;gap:2px}
+nav button{font-size:15px;padding:11px 24px}
+nav button[aria-pressed=true]{background:#80609f;color:#fff;border-color:#cba7ef}
+#screen{background:#1b1821;overflow:auto}
+.stage-workspace{display:grid;grid-template-columns:minmax(350px,1fr) 225px;gap:10px;padding:12px 16px 0}
+.rig-panel{min-width:0;background:#15131b;border:1px solid var(--line);border-radius:7px;padding:10px 14px 6px}
+.rig-panel h2{font-size:14px;font-weight:600}
+.rig-panel small{font-size:11px}
+.rig-canvas{height:clamp(220px,35vh,410px);position:relative;margin:8px 0 0;border:1px solid #3b3247;border-radius:4px;background-color:#141219;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:12.5% 10%}
+.rig-light{position:absolute;transform:translate(-50%,-50%);width:10%;height:9%;padding:0;border:1px solid color-mix(in srgb,var(--light-color,#8c729d) 35%,#39313e);border-radius:4px;display:flex;justify-content:center;align-items:center;background:color-mix(in srgb,var(--light-color,#8c729d) var(--light-level,0%),#201b29)}
+.rig-light i{width:12px;height:12px;border:1px solid #ffffff70;border-radius:50%;background:color-mix(in srgb,var(--light-color,#8c729d) var(--light-level,0%),#30283d);box-shadow:0 0 12px color-mix(in srgb,var(--light-color,#8c729d) var(--light-level,0%),transparent)}
+.rig-light span{position:absolute;bottom:0;width:100%;font-size:9px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;color:#fff;text-shadow:0 1px 3px #000;background:#0005}
+.rig-light[aria-pressed=true]{outline:2px solid #d8c2f4;outline-offset:1px;color:#fff}
+.audience{display:block;text-align:center;padding-top:4px;color:var(--muted)}
+.rig-empty{position:absolute;inset:0;display:grid;place-items:center}
+.master-panel{gap:10px;padding:13px}
+.master-panel input[type=range]{width:100%}
+.master-panel input[type=number]{width:73px}
+.master-panel h3{font-size:15px}
+.master-panel label{font-size:13px}
+.master-panel button{padding:7px 10px;font-size:13px}
+.workspace{display:grid;gap:10px;padding:12px 16px 18px;align-items:start}
+.controls-workspace{grid-template-columns:190px minmax(250px,1fr) 250px}
+.effect-workspace{grid-template-columns:200px minmax(280px,1fr) 245px}
+.perform-workspace{grid-template-columns:175px minmax(280px,1fr);align-items:stretch}
+.workspace .panel{padding:13px;gap:10px}
+.workspace h3{font-size:15px}
+.fixture-panel .inventory{max-height:260px;overflow:auto}
+.inventory button{display:flex;justify-content:space-between;gap:8px;text-align:left}
+.inventory small{color:inherit;white-space:nowrap}
+.preset-edit input,.preset-edit select,.effect-workspace select{max-width:100%;width:100%}
+.channel-faders{display:flex;gap:10px;flex-wrap:wrap;max-height:150px;overflow:auto}
+.fader-meter{display:grid;width:74px;gap:4px;text-align:center}
+.fader-meter label{font-size:10px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fader-meter small{display:block;color:var(--muted)}
+.fader-meter meter{width:70px;height:12px}
+.fader-meter output{font:12px ui-monospace,monospace;color:#d3b6f2}
+.step-panel{grid-column:1/-1}
+.fx-form{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.fx-form input[type=range]{width:100%}
+.performance-panel{min-height:260px}
+.performance-panel .grid{padding:0;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));grid-auto-rows:minmax(105px,1fr);gap:9px}
+.performance-panel .tile{font-size:20px;border-radius:5px;padding:13px}
+.performance-panel .tile small{font-size:11px}
+.performance-panel .tile[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--accent)}
+.bank-list{min-height:260px}
+.bank-list button{text-align:left}
+header .row button{font-size:12px;padding:6px 10px}
+@media(max-width:950px){.controls-workspace,.effect-workspace{grid-template-columns:170px 1fr}.preset-edit,.effect-workspace>.panel:last-child{grid-column:1/-1}.stage-workspace{grid-template-columns:1fr 195px}}
+@media(max-width:650px){.stage-workspace{grid-template-columns:1fr}.master-panel{display:flex;flex-direction:row;flex-wrap:wrap}.master-panel>label.stack{width:100px}.controls-workspace,.effect-workspace,.perform-workspace{grid-template-columns:1fr}.rig-canvas{height:300px}nav button{padding:10px 13px}}
+
+.channel-slider{appearance:slider-vertical;-webkit-appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:26px!important;height:100px;justify-self:center;accent-color:var(--accent)}
+.channel-faders{max-height:210px}
+.rig-panel{padding:14px;background:linear-gradient(150deg,#292236,#191620);border:1px solid #4a3b60;border-radius:12px;box-shadow:0 12px 35px #0003}
+.rig-panel>.row{gap:10px}
+.rig-panel h2{font-size:16px;letter-spacing:.01em}
+.rig-panel>.row button{padding:6px 11px;font-size:12px;background:#322a40}
+.rig-panel>.row button[aria-pressed=true]{background:#b69ae2;color:#251831}
+.rig-canvas{height:clamp(360px,48vh,620px);background:#100e17;border:1px solid #493958;border-radius:8px;overflow:hidden}
+.stage-drawing{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.perspective{cursor:grab;touch-action:none}.perspective:active{cursor:grabbing}
+.rig-light{width:52px;height:42px;background:transparent!important;border:0!important;outline:0!important;display:grid;place-items:center;overflow:visible;transform:translate(-50%,-50%) scale(var(--fixture-scale,1));box-shadow:none!important}
+.fixture-shell{display:grid;place-items:center;border:1px solid #96869e;background:linear-gradient(145deg,#655b71,#26212e 65%);box-shadow:0 5px 8px #0008,inset 0 1px 0 #b7a5c380}
+.fixture-shell.par{width:31px;height:31px;border-radius:50%;padding:4px}
+.fixture-shell.panel{width:43px;height:27px;border-radius:5px;padding:3px}
+.fixture-shell.bar{width:53px;height:16px;border-radius:4px;padding:3px}
+.rig-light .fixture-shell i{width:100%;height:100%;border-radius:inherit;background:radial-gradient(circle at 38% 30%,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#51435f),color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#1c1726));box-shadow:0 0 20px color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),transparent);border:1px solid #ffffff30}
+.fixture-shell.panel i{background-image:radial-gradient(circle,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#41314e) 45%,transparent 50%)!important;background-size:7px 7px!important}
+.rig-light .fixture-label{top:39px;bottom:auto;width:max-content;max-width:115px;padding:3px 7px;background:#100d19df;border:1px solid #64536f66;border-radius:4px;font-size:10px;color:#e3d5ee;line-height:1.3;pointer-events:none}
+.rig-light[aria-pressed=true] .fixture-shell{outline:2px solid #dfc7ff;outline-offset:3px}
+.rig-light[aria-pressed=true] .fixture-label{color:#fff;border-color:#b392da}
+.rig-light.labels-hidden .fixture-label{display:none}
+.rig-foot{margin-top:10px;gap:10px}.rig-foot small{font-size:11px;color:#afa0bf}
+.rig-empty>div{text-align:center;color:#cbb7e0}.rig-empty p{margin-bottom:14px;font-size:22px}
+.layout-stage{grid-template-columns:1fr}
+.layout-workspace{grid-template-columns:300px minmax(260px,1fr)}
+.layout-workspace .inventory{max-height:210px;overflow:auto}
+.layout-workspace input[type=number]{width:85px}
+.publish-panel,.timing-panel{margin:0 16px 14px;padding:16px}
+.performance-item{display:flex;flex-direction:column;gap:8px;min-width:0}
+.performance-item .tile{width:100%;flex:1;min-height:105px}
+.bank-list .list>div>button{width:100%}
+.bank-rename{display:flex;gap:4px;margin-top:5px}.bank-rename input{min-width:0;width:100%;padding:5px}.bank-rename button{padding:4px;font-size:11px}
+.mapping-scroll{overflow:auto}
+.mapping-table{width:100%;border-collapse:collapse;text-align:left}
+.mapping-table th{font-size:12px;color:var(--muted);padding:10px 8px}
+.mapping-table td{padding:8px;border-top:1px solid var(--line)}
+.mapping-table input{max-width:150px}.mapping-table input[type=number]{width:105px}
+#mapping-message{min-height:1.4em}
+nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
+@media(max-width:700px){.layout-workspace{grid-template-columns:1fr}.rig-panel>.row{align-items:flex-start}.rig-canvas{height:380px}}
+
+.bank-field-row{display:flex;gap:5px;align-items:stretch}
+.bank-field-row>button{flex:1;text-align:left;min-width:0;overflow-wrap:anywhere}
+.field-options{position:relative;flex-shrink:0}
+.field-options>summary{display:grid;place-items:center;list-style:none;width:30px;height:30px;border:1px solid #73627f66;border-radius:6px;background:#25202ff2;color:#e6d4ff;font-size:22px;line-height:1;cursor:pointer;user-select:none}
+.field-options>summary::-webkit-details-marker{display:none}
+.field-options>summary:hover,.field-options[open]>summary{border-color:var(--accent);background:#453452}
+.field-menu{position:absolute;right:0;top:34px;z-index:80;padding:5px;min-width:135px;border:1px solid #8b71a4;border-radius:7px;background:#2d2538;box-shadow:0 8px 20px #0008}
+.field-menu>button{width:100%;border:0;text-align:left;background:transparent}
+.performance-face{position:relative;display:flex;flex:1;min-height:120px}
+.performance-face>.field-options{position:absolute;top:8px;right:8px;z-index:10}
+.performance-face .tile{position:relative;isolation:isolate;overflow:hidden;padding-right:44px;background:#1c1923!important}
+.performance-face .tile::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--button-colors,#292432);opacity:var(--button-level,.2);pointer-events:none}
+.field-rename-form{display:grid;gap:8px;padding:10px;border:1px solid #9476af;border-radius:7px;background:#2e253c}
+.field-rename-form input{width:100%;min-width:0}
+.field-rename-form button{font-size:12px;padding:6px 9px}
+.field-rename-form small{color:#ffc4d3}
+.bank-field>.field-rename-form{margin-top:6px}
+.rig-light{width:62px;height:52px}
+.rig-light>.fixture-shell{position:relative;bottom:auto;top:auto;overflow:visible;flex:none;transform-origin:center}
+.fixture-shell.par{width:39px;height:39px;padding:5px;border:1px solid #ac9db7;border-radius:50%;background:conic-gradient(from 0deg,#77717e,#25202d 15%,#62596c 32%,#17131f 48%,#74677c 70%,#25202d 85%,#77717e);box-shadow:0 5px 0 #100d16,0 8px 10px #0009,inset 0 0 0 3px #29222f}
+.fixture-shell.par::before{content:"";position:absolute;inset:-4px -8px -5px;border:3px solid #74677d;border-top-color:transparent;border-radius:7px 7px 18px 18px;z-index:-1;box-shadow:0 2px 0 #16111c}
+.rig-light .fixture-shell.par i{border-radius:50%;border:1px solid #9e90aa;box-shadow:inset 0 0 0 2px #17101d,inset 0 0 0 4px #e7d4ff16,0 0 16px color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),transparent);background:radial-gradient(circle at 35% 29%,#ffffffbb 0%,#ffffff20 9%,transparent 24%),repeating-radial-gradient(circle at center,transparent 0 3px,#eee0ff12 3px 4px),radial-gradient(circle,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#81708d) 0%,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#2b1f38) 70%,#110d18 100%)}
+.fixture-shell.panel{width:48px;height:35px;padding:5px;border:1px solid #82758d;border-radius:5px;background:linear-gradient(145deg,#817987,#2d2437 35%,#18131f 70%,#62556c);box-shadow:0 5px 0 #110d17,0 7px 10px #0008,inset 0 0 0 2px #211929}
+.fixture-shell.panel::before{content:"";position:absolute;inset:-4px -5px -5px;border:2px solid #6e607a;border-top-color:transparent;border-radius:5px;z-index:-1}
+.rig-light .fixture-shell.panel i{border-radius:2px;border:0;background-color:#130f1c!important;background-image:radial-gradient(circle at 35% 30%,#ffffff9c 0 7%,transparent 14%),radial-gradient(circle,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#5f4b72) 0 32%,#8e7a9d 36%,#1a1127 43%,transparent 48%)!important;background-size:9px 8px!important;box-shadow:0 0 12px color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),transparent)}
+.fixture-shell.bar{width:58px;height:19px;padding:4px;border:1px solid #8c7c97;border-radius:4px;background:linear-gradient(#7b7085,#201927 35%,#110d16 70%,#55445f);box-shadow:0 4px 0 #0f0c15,0 6px 8px #0009}
+.rig-light .fixture-shell.bar i{border-radius:1px;border:0;background-color:#130f1c;background-image:radial-gradient(circle,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#705481) 0 33%,#9984a9 37%,transparent 47%)!important;background-size:7px 9px;box-shadow:0 0 12px color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),transparent)}
+.rig-light .fixture-label{top:48px;background:#120e1cdd;border-color:#89739b55;padding:3px 7px;max-width:125px}
+.perspective .fixture-shell{transform:rotateX(22deg) rotateZ(-8deg)}
+.rig-light[aria-pressed=true] .fixture-shell{outline:2px solid #d8b3ff;outline-offset:5px}
+
+.quick-colors{display:grid;grid-template-columns:repeat(5,minmax(45px,1fr));gap:8px}
+.quick-color{display:grid;gap:5px;place-items:center;padding:6px 3px;background:#201b29;border:1px solid #51445e}
+.quick-color i{display:block;width:100%;height:30px;border-radius:5px;background:var(--quick-color);box-shadow:inset 0 0 0 1px #ffffff40,0 3px 6px #0004}
+.quick-color span{font-size:10px;color:inherit;white-space:nowrap}
+.quick-color[aria-pressed=true]{outline:2px solid #dec6ff;outline-offset:1px;background:#49315c;color:#fff}
+.quick-color:disabled{opacity:.45;cursor:default}
+.optional-color{border-top:1px solid var(--line);padding-top:10px}
+.optional-color summary{cursor:pointer;color:#d7c6e6;font-size:13px}
+.optional-color label{margin-top:10px}
+.group-editor{display:grid;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+.group-editor input{width:100%;min-width:0}
+.group-editor button{font-size:12px;padding:7px 8px}
+.group-editor small{font-size:11px;color:var(--muted)}
+#group-notice:empty{display:none}
+@media(max-width:700px){.quick-colors{grid-template-columns:repeat(5,minmax(40px,1fr))}}
+
+.steps .step-card{position:relative;flex:0 0 145px;display:flex;min-width:0}
+.steps .step-card>button:first-child{width:100%;flex:1;padding:12px 36px 12px 12px;min-height:65px}
+.steps .step-card>.delete-step{position:absolute;right:5px;top:5px;display:grid;place-items:center;width:24px;height:24px;min-height:0;padding:0;flex:none;font-size:19px;line-height:1;background:#492735;color:#ffc3d0;border:1px solid #8f536c}
+.steps .step-card>.delete-step:hover{background:#8e3651;color:#fff;border-color:#f391ad}
+.quick-colors{grid-template-columns:repeat(5,minmax(55px,1fr));gap:10px}
+.quick-color{padding:7px;min-height:70px;border-radius:8px}
+.quick-color i{height:39px;border-radius:5px}
+.quick-color span{font-size:11px}
+.custom-color-button{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:1px solid #9276ac;border-radius:7px;background:#382942;color:#ead9ff;cursor:pointer;min-height:39px}
+.custom-color-button input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+@media(max-width:700px){.quick-colors{grid-template-columns:repeat(5,minmax(40px,1fr))}.quick-color{padding:4px}.quick-color span{font-size:9px}}
+
+.ai-panel{margin:12px 16px 0;padding:16px}
+#ai-scene-form{display:grid;gap:10px}
+#ai-scene-form textarea{width:100%;resize:vertical;min-height:80px;border:1px solid var(--line);border-radius:7px;background:#19151f;color:var(--ink);padding:10px;font:inherit}
+#ai-scene-form>button{justify-self:start}
+#ai-message:empty{display:none}
+.ai-settings{border-top:1px solid var(--line);padding-top:10px}
+.ai-settings summary{cursor:pointer}
+.ai-settings p{font-size:12px;margin:10px 0;max-width:750px}
+#ai-key-form{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+#ai-key-form input{min-width:240px}
+.performance-face .tile.is-playing{outline:2px solid #ebd8ff;outline-offset:1px}
+.performance-face .tile[aria-pressed=true]:not(.is-playing){outline:2px solid #9873bd;outline-offset:1px}
+
+.device-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
+.device-picker>button{display:grid;justify-items:center;gap:8px;padding:10px 6px;background:#241c30;border:1px solid #51415f;min-height:110px}
+.device-picker>button>span:last-child{font-size:11px}
+.device-picker>button[aria-pressed=true]{background:#483058;color:#f7edff;outline:2px solid #be98e3;outline-offset:-2px}
+.device-symbol{width:68px;height:65px;display:inline-grid;place-items:center;position:relative;--light-color:#cba2ff;--light-level:70%}
+.device-symbol .fixture-shell{position:relative}
+.device-symbol .fixture-shell i{width:100%;height:100%;border-radius:inherit;background:radial-gradient(circle at 35% 30%,#fff8,#be8df6 40%,#432d5d 80%);box-shadow:0 0 10px #bd85ff44}
+.fixture-shell.strobe{width:54px;height:27px;padding:4px;border:1px solid #9c8ca8;border-radius:5px;background:linear-gradient(#6f637b,#201a2b 40%,#100c16);box-shadow:0 5px 0 #110c19,0 7px 9px #0008}
+.fixture-shell.strobe::before{content:"";position:absolute;inset:-3px -5px -4px;border:2px solid #74607f;border-top-color:transparent;border-radius:5px;z-index:-1}
+.rig-light .fixture-shell.strobe i{border-radius:2px;border:1px solid #aa9fb2;background:repeating-linear-gradient(90deg,transparent 0 4px,#1d122a77 4px 5px),linear-gradient(color-mix(in srgb,var(--light-color,#fff) var(--light-level,0%),#4c3c58),color-mix(in srgb,var(--light-color,#fff) var(--light-level,0%),#21172a));box-shadow:0 0 25px color-mix(in srgb,var(--light-color,#fff) var(--light-level,0%),transparent)}
+.fixture-shell.moving{width:33px;height:29px;padding:4px;border:1px solid #998aa7;border-radius:12px 12px 7px 7px;background:linear-gradient(145deg,#75677f,#1d1628 45%,#35253e);box-shadow:0 3px 6px #0009}
+.fixture-shell.moving::before{content:"";position:absolute;width:45px;height:9px;left:-7px;bottom:-16px;border:1px solid #756181;border-radius:5px;background:linear-gradient(#655272,#181120);box-shadow:0 4px 5px #0007}
+.fixture-shell.moving::after{content:"";position:absolute;left:-7px;right:-7px;top:7px;bottom:-10px;border:4px solid #7b6588;border-top:0;border-radius:0 0 10px 10px;z-index:-1}
+.rig-light .fixture-shell.moving i{width:100%;height:100%;border-radius:50%;border:1px solid #b0a0ba;background:radial-gradient(circle at 35% 30%,#ffffff99,transparent 28%),radial-gradient(circle,color-mix(in srgb,var(--light-color,#b697d0) var(--light-level,0%),#665171),color-mix(in srgb,var(--light-color,#b697d0) var(--light-level,0%),#21112c));box-shadow:0 0 22px color-mix(in srgb,var(--light-color,#b697d0) var(--light-level,0%),transparent)}
+.fixture-shell.strip{width:63px;height:15px;padding:3px;border:1px solid #8d7b9b;border-radius:4px;background:linear-gradient(#796585,#181020);box-shadow:0 3px 0 #100b18,0 5px 8px #0008}
+.rig-light .fixture-shell.strip i{border:0;border-radius:1px;background-color:#140b20;background-image:radial-gradient(circle,color-mix(in srgb,var(--light-color,#c7a6ec) var(--light-level,0%),#705481) 0 32%,#8c759a 36%,transparent 46%);background-size:7px 8px}
+.fixture-assistant summary{cursor:pointer;font-weight:600;color:#ddc5f2}
+.fixture-assistant>p{font-size:12px;line-height:1.5}
+#fixture-agent-form{display:grid;gap:10px}
+#fixture-agent-form textarea{width:100%;resize:vertical;background:#1d1527;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:10px;font:inherit}
+#light-form input[name=mapping]{width:100%;font-family:ui-monospace,monospace}
+#light-form input[name=name]{max-width:100%}
+
+body{padding-top:30px}.online-demo-note{position:fixed;top:0;left:0;right:0;height:30px;background:#422568;color:#f4eaff;display:flex;align-items:center;justify-content:center;font:12px system-ui;z-index:9999}
+/* Compact programming and calibrated arrangement workspaces */
+#screen.programming-view,#screen.arrangement-view{overflow:hidden}
+.program-workspace{display:grid;grid-template-columns:230px minmax(0,1fr) 220px;gap:12px;padding:12px 16px;height:100%;min-height:0;overflow:hidden}
+.program-sidebar,.program-settings,.arrangement-sidebar{display:flex;flex-direction:column;gap:12px;overflow:auto;min-height:0;padding:0 3px 10px 0;scrollbar-width:thin}
+.program-center{min-width:0;min-height:0;display:flex;flex-direction:column;gap:12px}
+.program-center>.rig-panel{flex:1;min-height:210px;display:flex;flex-direction:column}
+.program-center .rig-canvas{height:auto;flex:1;min-height:140px}
+.program-center .step-panel{flex:0 1 auto;max-height:235px;overflow:auto;min-width:0}
+.program-workspace .panel{padding:12px;gap:10px}
+.program-workspace h3{font-size:14px}
+.program-workspace label{font-size:12px}
+.program-workspace button{font-size:12px;padding:7px 9px}
+.program-workspace .timing-panel,.program-workspace .publish-panel{margin:0}
+.program-settings input:not([type=checkbox]),.program-settings select{width:100%;max-width:100%;min-width:0}
+.program-settings .panel input[type=number]{width:82px}
+#publish-form,#stage-size-form{display:flex;flex-direction:column;gap:10px}
+.fixture-inventory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.fixture-inventory .inventory-fixture{min-height:92px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:9px 4px;font-size:11px;text-align:center;min-width:0}
+.inventory-fixture strong{font-size:11px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.inventory-fixture small{font-size:10px;color:inherit;opacity:.75}
+.inventory-fixture .device-symbol{height:32px;width:66px;display:grid;place-items:center;transform:scale(.8)}
+.group-details{font-size:12px}.group-details summary{cursor:pointer;color:var(--accent)}
+.group-details .group-editor input{width:100%;min-width:0}
+.arrangement-workspace{height:100%;min-height:0;display:grid;grid-template-columns:260px minmax(0,1fr);gap:12px;padding:12px 16px}
+.arrangement-workspace>.rig-panel{min-height:0;min-width:0;display:flex;flex-direction:column}
+.arrangement-workspace .rig-canvas{height:auto;min-height:200px;flex:1}
+.arrangement-sidebar .panel{padding:12px}
+.arrangement-sidebar input[type=number]{width:98px}
+.danger-button{color:#ffb3c6;border-color:#753847}
+.stage-drawing{z-index:0}.rig-canvas{isolation:isolate}
+.rig-light{z-index:20}.rig-empty{z-index:5;position:relative}
+.program-center .steps{min-height:75px}
+.program-center .step-card{flex:0 0 116px}
+@media(max-width:1150px){.program-workspace{grid-template-columns:200px minmax(0,1fr) 190px;gap:8px;padding:10px}.program-workspace .rig-panel>.row{gap:5px}.program-workspace .rig-panel>.row small{font-size:10px}}
+@media(max-width:850px){.program-workspace{grid-template-columns:175px minmax(0,1fr);grid-template-rows:minmax(420px,1fr) auto;height:auto;min-height:100%}.program-sidebar{grid-column:1;grid-row:1;max-height:calc(100vh - 160px)}.program-center{grid-column:2;grid-row:1}.program-settings{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}#screen.programming-view{overflow:auto}.program-center .rig-panel{min-height:250px}.arrangement-workspace{grid-template-columns:215px minmax(0,1fr)}}
+@media(max-width:580px){#screen.arrangement-view{overflow:auto}.program-workspace{display:flex;flex-direction:column}.program-sidebar{max-height:none;display:grid;grid-template-columns:1fr 1fr;overflow:visible}.program-center{min-height:560px}.program-settings{grid-template-columns:1fr}.arrangement-workspace{display:flex;flex-direction:column;height:auto}.arrangement-sidebar{max-height:none;overflow:visible}.arrangement-workspace>.rig-panel{min-height:420px}.fixture-inventory{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.arrangement-workspace{grid-template-columns:230px minmax(0,1fr) 220px}
+.arrangement-lights{min-height:0;height:100%;padding:12px;gap:12px;overflow:hidden}
+.arrangement-lights>.fixture-inventory{flex:1;overflow:auto;min-height:0;align-content:start;scrollbar-width:thin}
+.arrangement-sidebar{padding-bottom:0}
+@media(max-width:1150px){.arrangement-workspace{grid-template-columns:200px minmax(0,1fr) 190px;gap:8px;padding:10px}.arrangement-sidebar input[type=number]{width:80px}}
+@media(max-width:850px){.arrangement-workspace{grid-template-columns:175px minmax(0,1fr);grid-template-rows:minmax(420px,1fr) auto;height:auto;min-height:100%}#screen.arrangement-view{overflow:auto}.arrangement-lights{grid-column:1;grid-row:1}.arrangement-workspace>.rig-panel{grid-column:2;grid-row:1}.arrangement-sidebar{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;overflow:visible}}
+@media(max-width:580px){.arrangement-workspace{display:flex}.arrangement-lights{min-height:320px;max-height:480px}.arrangement-sidebar{display:flex}.arrangement-workspace>.rig-panel{min-height:420px}}
+.rig-light:not([aria-pressed=true]) .fixture-label{display:none}
+.rig-light .fixture-label{max-width:190px;width:max-content;overflow:visible;white-space:normal;text-align:center}
+.rig-light .fixture-label small{display:block;color:#c4aed9;font-size:9px;line-height:1.4;background:none}
+.unplaced-status{color:#d6bcff!important;font-weight:600}
+.quick-colors{grid-template-columns:repeat(3,minmax(0,1fr))}
+.master-panel{min-width:0;max-height:80vh;overflow:auto;scrollbar-width:thin}
+.master-groups{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.master-groups button{font-size:12px;padding:5px 9px}.master-groups h3{font-size:14px}
+.master-group{display:flex;flex-direction:column;gap:6px;padding:10px;background:#15111d;border:1px solid #42324f;border-radius:7px}
+.master-group strong{font-size:13px}.master-group label,.master-groups>small{font-size:11px}
+.master-group input[type=range]{width:100%}.master-group output{color:var(--accent)}
+.master-group-editor{display:flex;flex-direction:column;gap:10px;padding:9px;border:1px solid var(--accent);border-radius:7px}
+.master-group-editor h4{margin:0;font-size:13px}.master-group-editor input:not([type=checkbox]){width:100%;min-width:0}
+.master-group-members{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto}.master-group-members label{font-size:12px}
+.playback-controls{padding:12px;border:1px solid #514062;background:#191421;border-radius:8px;display:grid;gap:10px}
+.playback-controls button{font-size:12px;padding:6px 9px}.playback-controls small{font-size:11px}
+.playback-controls p{font-size:12px}.playback-queue{display:grid;gap:5px;margin:0;padding-left:25px;max-height:180px;overflow:auto}
+.playback-queue li::marker{color:var(--accent);font-weight:700}.playback-queue li{padding:4px;font-size:12px}.playback-queue li>span{display:inline-block;min-width:150px}.playback-queue li>.row{display:inline-flex}
+@media(max-width:650px){.master-panel{max-height:none}.master-groups{width:100%}}
+.performance-panel .grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr));grid-auto-rows:minmax(80px,auto);gap:8px}
+.performance-face{min-height:80px}.performance-panel .tile,.performance-item .tile{min-height:80px;font-size:15px;padding:10px 34px 10px 12px;gap:8px}
+.performance-panel .tile small{font-size:10px}.performance-face>.field-options{top:5px;right:5px}
+.playback-list-panel{border-top:1px solid #4c3a5a;padding-top:10px;display:grid;gap:8px}.playback-list-panel h4{font-size:13px;margin:0}
+.playback-list-panel input{font-size:12px;padding:6px 8px;max-width:190px}.playback-list-panel label{font-size:12px}
+.preset-color-editor{border:1px solid var(--accent);padding:8px;border-radius:6px;display:grid;gap:8px}.preset-color-editor button{font-size:11px;padding:5px 7px}
+.performance-panel .tile .selection-badge{display:none;position:absolute;top:6px;left:8px;width:20px;height:20px;border:1.5px solid #e3d2fa;border-radius:50%;background:#171121cc;color:#fff;font-size:11px;font-weight:700;line-height:1;place-items:center}
+.performance-panel .tile.selection-edit .selection-badge{display:grid}
+.performance-panel .tile.selection-edit{padding-top:27px}
+.performance-panel .tile.selection-edit[aria-pressed=true] .selection-badge{background:var(--accent);color:#21142f;border-color:var(--accent)}
+.playback-footer{padding:12px 16px 20px}.perform-workspace{padding-bottom:0}
+.performance-panel .grid{flex:none}.performance-panel .field-options .field-menu{z-index:60}
+.perform-shell{display:grid;grid-template-columns:minmax(0,1fr) 225px;align-items:start;gap:12px;padding:12px 16px 20px}
+.perform-main{min-width:0;display:flex;flex-direction:column;gap:12px}.perform-main>.rig-panel{min-width:0}
+.perform-main .rig-canvas{height:clamp(250px,38vh,440px)}.perform-main .perform-workspace{padding:0;grid-template-columns:145px minmax(0,1fr)}
+.perform-main .playback-footer{padding:0}.perform-shell>.master-panel{position:sticky;top:0;max-height:calc(100vh - 155px);min-height:0}
+@media(max-width:850px){.perform-shell{grid-template-columns:minmax(0,1fr) 190px;padding:10px}.perform-main .perform-workspace{grid-template-columns:110px minmax(0,1fr)}.perform-main .rig-canvas{height:310px}}
+@media(max-width:650px){.perform-shell{grid-template-columns:1fr}.perform-shell>.master-panel{position:static;max-height:none}.perform-main .perform-workspace{grid-template-columns:1fr}}
+.master-group-heading{flex:1;min-width:0;padding:2px!important;border:0;background:transparent;font-weight:650;text-align:left;overflow-wrap:anywhere}
+.master-group-level{font-size:11px;color:var(--accent)}.master-group>.row{gap:5px;flex-wrap:nowrap}
+.perform-main .rig-panel{align-self:stretch}.perform-main{gap:10px}
+.performance-panel .grid{grid-template-columns:repeat(auto-fill,72px);grid-auto-rows:64px;gap:8px;justify-content:start}
+.performance-face{min-height:64px;height:64px}.performance-panel .tile,.performance-item .tile{height:64px;min-height:64px;width:72px;padding:0!important;align-items:center;justify-content:center;text-align:center;font-size:27px}
+.performance-number{font-size:27px;line-height:1;font-weight:750}.performance-panel .tile .scene-card-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.performance-face>.field-options{top:3px;right:3px}.performance-face>.field-options summary{width:17px;height:17px;padding:0;line-height:14px;font-size:12px}
+.performance-panel .tile .selection-badge{top:3px;left:3px;width:17px;height:17px;font-size:10px}
+.performance-item{max-width:72px}.performance-item .field-rename-form,.performance-item .preset-color-editor{min-width:190px;position:relative;z-index:80;background:var(--panel)}
+.performance-panel .grid{grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-rows:64px;gap:8px}
+.performance-item{max-width:none;min-width:0}.performance-panel .tile,.performance-item .tile{width:100%}
+.empty-performance{border:1px solid #51425f!important;border-top:3px solid #51425f!important;background:#1c1825!important;color:#8e819f}
+.empty-performance:hover{border-color:var(--accent)!important;color:#dfcaff;background:#2b2238!important}
+@media(max-width:1150px){.performance-panel .grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:700px){.performance-panel .grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.step-card button[aria-pressed=true]{outline:2px solid #d0b3ff;outline-offset:-2px}.program-center .step-panel>small{font-size:10px;color:var(--muted)}
+</style>
+
+
+
+
+
+<div class="online-demo-note">NullLight · Windows-Demo · Offline-Vorschau ohne DMX-Ausgabe · Speicherung in diesem Browser</div><header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v16</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<nav id="tabs" aria-label="Lichtpult"></nav>
+<main id="screen"></main>
+<script>
+"use strict";
+const modes = {"Dimmer":1,"RGB":3,"RGBW":4,"Eigenes Profil":1};
+const initial = {
+ lights:[{"id":"demo-par-1","name":"PAR links","visualType":"par","mode":"RGB","mapping":"R,G,B","address":1,"height":2.4,"position":{"x":0.15,"y":0.25}},{"id":"demo-panel","name":"LED-Panel","visualType":"panel","mode":"RGBW","mapping":"R,G,B,W","address":10,"height":2.4,"position":{"x":0.4,"y":0.2}},{"id":"demo-par-2","name":"PAR rechts","visualType":"par","mode":"RGB","mapping":"R,G,B","address":20,"height":2.4,"position":{"x":0.85,"y":0.25}},{"id":"demo-strip","name":"LED-Streifen","visualType":"strip","mode":"RGB","mapping":"R,G,B","address":30,"height":0.1,"position":{"x":0.5,"y":0.65}},{"id":"demo-strobo","name":"Strobo","visualType":"strobe","mode":"Dimmer","mapping":"D","address":40,"height":2.4,"position":{"x":0.65,"y":0.2}}],
+ scenes:[
+  {id:"entry",name:"Einlass",colors:["#ffd499"],level:65},
+  {id:"talk",name:"Ansage",colors:["#fff7e4"],level:90},
+  {id:"blue",name:"Bühne blau",colors:["#4b79ff"],level:85},
+  {id:"party",name:"Party",colors:["#b25bff","#ff4aa5","#33d5ff"],level:95},
+  {id:"break",name:"Pause",colors:["#5d9f91"],level:35},
+  {id:"end",name:"Abschluss",colors:["#f79864"],level:60}
+ ]
+};
+initial.scenes = initial.scenes.map(scene => ({
+ id:scene.id,name:scene.name,bank:scene.id==="party"?"Party":["talk","blue"].includes(scene.id)?"Bühne":"Ablauf",live:true,loop:scene.colors.length>1,
+ steps:scene.colors.map((_,i)=>({fade:i?0.5:0.3,hold:2,values:Object.fromEntries(initial.lights.map((light,j)=>[light.id,{color:scene.colors[(i+j)%scene.colors.length],level:scene.level}]))}))
+}));
+const storageKey = "lichtpult.demo.v1";
+let data;
+try { data = JSON.parse(localStorage.getItem(storageKey)) || initial; } catch { data = initial; }
+if(!data.layoutVersion){
+ const defaults=[
+  {id:"front",name:"Frontlicht",mode:"RGBW",address:1},
+  {id:"stage",name:"Bühne",mode:"RGB",address:11}
+ ];
+ for(const sample of defaults){
+  const index=data.lights.findIndex(light=>Object.keys(sample).every(key=>sample[key]===light[key]));
+  if(index<0)continue;
+  data.lights.splice(index,1);
+  for(const scene of data.scenes) for(const step of scene.steps) delete step.values[sample.id];
+ }
+ data.layoutVersion=1;
+}
+let storageError = false;
+function save(){
+ try {localStorage.setItem(storageKey,JSON.stringify(data));}
+ catch {storageError = true;document.querySelector("#status").textContent="Speichern nicht verfügbar";}
+}
+let tab=4, demo=false, active=null, editing=data.scenes[0]?.id, stepIndex=0, fixture=null;
+let liveSnapshot=null, bankFilter="", patchPage=0;
+let setupDrag=null, setupDraft=null, setupNotice="", setupMulti=false;
+const setupSelection=new Set();
+const setupDrafts=new WeakMap();
+const setupCellCount=80;
+let auto=false, override="", stageIndex=0, previewIndex=null, timer, previewTimer, dragId;
+const screen=document.querySelector("#screen");
+const esc=value=>String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
+const copy=value=>JSON.parse(JSON.stringify(value));
+const current=()=>data.scenes.find(scene=>scene.id===editing);
+const running=()=>liveSnapshot;
+const bankName=scene=>scene.bank||"Allgemein";
+const allLiveScenes=()=>data.scenes.filter(scene=>scene.live);
+const liveScenes=()=>allLiveScenes().filter(scene=>scene.steps.length&&(!bankFilter||bankName(scene)===bankFilter));
+const defaultValue={color:"#ffffff",level:0};
+const newStep=()=>({fade:0,hold:2,values:{}});
+const button=(label,action,extra="")=>'<button type="button" data-action="'+action+'" '+extra+'>'+label+'</button>';
+const flag=value=>'aria-pressed="'+Boolean(value)+'"';
+const checked=value=>value?"checked":"";
+function connection(){
+ const config=data.artnet||{target:"",source:"",net:0,subnet:0,universe:0};
+ return '<div class="wrap"><section class="panel"><h2>Art-Net über LAN</h2>'+
+  '<p>Verbinde den Mac und deinen Art-Net-Node über Ethernet. Wähle die LAN-Schnittstelle des Macs und trage die IP-Adresse und das Universum des Nodes ein.</p>'+
+  (nativeAvailable?'<form id="artnet-form"><div class="row"><label class="stack">Node-IP<input name="target" placeholder="IP des Nodes" required value="'+esc(config.target)+'" '+(outputState.enabled?'disabled':'')+'></label>'+
+  '<label class="stack">Mac-Netzwerkschnittstelle<select name="source" required '+(outputState.enabled?'disabled':'')+'><option value="">Bitte auswählen</option>'+
+  localInterfaces.map(item=>'<option value="'+esc(item.ip)+'" '+(item.ip===config.source?'selected':'')+'>'+esc(item.name+' · '+item.ip)+'</option>').join("")+'</select></label>'+
+  ['net','subnet','universe'].map((key,index)=>'<label class="stack">'+['Net','Sub-Net','Universum'][index]+' (ab 0)<input name="'+key+'" type="number" required min="0" max="'+(index?15:127)+'" value="'+config[key]+'" '+(outputState.enabled?'disabled':'')+'></label>').join("")+'</div><div class="row">'+
+  (outputState.enabled?button("Blackout & Ausgabe stoppen","output-stop"):'<button class="primary">Verbinden & Ausgabe starten</button>')+
+  '<small id="packet-count">'+outputState.packets+' DMX-Pakete gesendet</small></div></form>':
+  '<p class="muted">Für die Art-Net-Ausgabe öffne die Mac-App. Hier kannst du Shows vorbereiten und als Datei übertragen.</p>')+
+  '<p id="connection-notice" role="status">'+esc(connectionMessage||(outputState.enabled?'Node-Verbindung wird geprüft.':"Ausgabe gestoppt."))+'</p>'+
+  '<small>Beim Stoppen oder Beenden sendet die App Blackout. Die Anzeige bestätigt gesendete Daten und Node-Antworten. Das tatsächliche Licht prüfst du am Aufbau.</small></section>'+
+  '<section class="panel"><h3>Show</h3><div class="row">'+button("Show exportieren","export-show")+
+  '<label>Show laden <input type="file" id="import-show" accept=".json,application/json" '+(outputState.enabled?'disabled':'')+'></label>'+
+  button(demo?"Vorschau beenden":"Vorschau starten","demo",outputState.enabled?'disabled':'')+'</div></section>'+
+  '<dialog id="connect-dialog"><h3>Mit gespeichertem Node verbinden?</h3><p>'+esc(config.target)+' · Universum '+esc(config.universe)+'</p><div class="row">'+
+  button("Verbinden","connect-confirm",'class="primary"')+button("Später","connect-later")+'</div></dialog>'+
+  '<small>Art-Net™ ist eine Marke von Artistic Licence. Art-Net-Protokoll © Artistic Licence.</small>'+updatePanel()+'</div>';
+}
+function patchGrid(){
+ const start=patchPage*128+1;
+ const owners=new Map();
+ for(const light of data.lights){
+  for(let i=0;i<channelCount(light);i++) owners.set(light.address+i,light);
+ }
+ const cells=Array.from({length:128},(_,index)=>{
+  const channel=start+index, light=owners.get(channel);
+  if(!light)return '<span class="channel" title="Kanal '+channel+' frei">'+channel+'</span>';
+  const label='Kanal '+channel+' · '+light.name;
+  const css='channel used'+(channel===light.address?' first':'')+(fixture===light.id?' selected':'');
+  return button(channel,"edit-light:"+light.id,'class="'+css+'" title="'+esc(label)+'" aria-label="'+esc(label)+'"');
+ });
+ return '<section class="panel"><div class="row split"><h3>DMX-Adressraster</h3><small>DMX-Adressraum · 512 Kanäle</small></div><div class="row">'+
+  Array.from({length:4},(_,index)=>button((index*128+1)+'–'+((index+1)*128),'patch:'+index,flag(index===patchPage))).join("")+
+  '</div><div class="patch-grid">'+cells.join("")+'</div><small>Markiert = belegt. Klick auf einen belegten Kanal öffnet das Licht.</small></section>';
+}
+function swatches(step,mode=""){
+ return data.lights.map(light=>{
+  const value=step?.values[light.id]||defaultValue;
+  const level=mode==="black"?0:mode==="white"?100:value.level;
+  const color=mode==="white"||light.mode==="Dimmer"?"#ffffff":value.color;
+  return '<div class="swatch"><i style="background:color-mix(in srgb, '+color+' '+level+'%, #111218)"></i><span>'+esc(light.name)+' · '+level+' %</span></div>';
+ }).join("");
+}
+function stepCard(step,index){
+ const color=Object.values(step.values).find(value=>value.level>0)?.color||"#68778a";
+ return button('Step '+(index+1)+'<small>'+step.fade+' s Fade · '+step.hold+' s Halt</small>',
+  'step:'+index,'style="--step-color:'+color+'" '+flag(index===stepIndex));
+}
+function editor(){
+ const scene=current();
+ const step=scene?.steps[stepIndex];
+ return '<div class="wrap editor"><section class="panel"><h2>Szenen</h2><div class="row">'+button("Leere Szene","new-scene",'class="primary"')+(scene?button("Szene duplizieren","copy-scene"):'')+'</div><div class="list">'+data.scenes.map(item=>button(esc(item.name)+'<br><small>'+esc(bankName(item))+'</small>',"select:"+item.id,flag(item.id===editing))).join("")+'</div></section>'+
+ (scene?'<section class="panel"><label class="stack">Szenenname<input id="scene-name" maxlength="50" value="'+esc(scene.name)+'"></label><label class="stack">Szenenbank<input id="scene-bank" maxlength="40" placeholder="Allgemein" value="'+esc(scene.bank)+'"></label><div class="row"><label><input type="checkbox" id="visible" '+checked(scene.live)+'> Im Live-Pult anzeigen</label><label><input type="checkbox" id="loop" '+checked(scene.loop)+'> Steps wiederholen</label></div><h3>Steps</h3><div class="steps">'+scene.steps.map(stepCard).join("")+'</div><div class="row">'+button("Step hinzufügen","add-step")+button("Step duplizieren","copy-step")+button("←","move-left",'aria-label="Step nach links" '+(stepIndex===0?"disabled":""))+button("→","move-right",'aria-label="Step nach rechts" '+(stepIndex===scene.steps.length-1?"disabled":""))+(scene.steps.length>1?button("Step entfernen","remove-step"):"")+'</div><div class="row"><label>Überblendzeit <input id="fade" type="number" min="0" max="120" step="0.1" value="'+step.fade+'"> s</label><label>Beats <input id="beats" type="number" min="1" max="32" value="'+(step.beats||1)+'"></label><label>Haltezeit <input id="hold" type="number" min="0.1" max="120" step="0.1" value="'+step.hold+'"> s</label></div><h3>Lichter in Step '+(stepIndex+1)+'</h3>'+
+ data.lights.map(light=>{
+  const value=step.values[light.id]||defaultValue;
+  return '<div class="row"><strong>'+esc(light.name)+'</strong><label>Helligkeit <input data-level="'+light.id+'" type="range" min="0" max="100" value="'+value.level+'"><output>'+value.level+' %</output></label>'+
+  (light.mode==="Dimmer"?'':'<label>Farbe <input data-color="'+light.id+'" type="color" value="'+value.color+'"></label>')+'</div>';
+ }).join("")+'<div class="row">'+button("Szene speichern","save-scene",'class="primary"')+'<small id="saved" role="status"></small></div></section><section class="panel"><h3>Vorschau</h3>'+button(previewIndex===null?"Vorschau abspielen":"Vorschau stoppen","preview")+'<small id="preview-step"></small><div id="preview-lights" class="list">'+swatches(scene.steps[previewIndex??stepIndex])+'</div></section>':'')+'</div>';
+}
+function loadSetupStep(){
+ previewDark=false;
+ const step=current()?.steps[stepIndex];
+ if(step&&!setupDrafts.has(step))setupDrafts.set(step,copy(step));
+ setupDraft=step?setupDrafts.get(step):newStep();
+ setupNotice="";
+}
+function setupValue(light){
+ const step=previewIndex===null?setupDraft:current()?.steps[previewIndex];
+ return step?.values[light.id]||defaultValue;
+}
+function visualColor(light,value){
+ return light.mode==="Dimmer"?"#ffffff":value.color;
+}
+function recentColors(){
+ return data.recentColors||[...new Set(data.scenes.flatMap(scene=>scene.steps.flatMap(step=>
+  Object.values(step.values).map(value=>value.color)
+ )))].slice(-12).reverse();
+}
+function rememberColors(colors){
+ data.recentColors=[...new Set([...colors,...recentColors()])].slice(0,12);
+}
+function setupPalette(){
+ const colors=recentColors();
+ return '<div><small>Zuletzt gespeicherte Farben</small><div class="recent-colors">'+
+  (colors.map(color=>button("","setup-recent:"+color,'aria-label="Farbe '+esc(color)+'" title="'+esc(color)+'" style="--recent:'+esc(color)+'"')).join("")||
+   '<small>Hier erscheinen deine gespeicherten Farben.</small>')+'</div></div>';
+}
+function setupSteps(scene){
+ if(!scene)return '<section class="panel step-panel"><h3>Steps</h3><p>Lege zuerst eine Szene an.</p></section>';
+ const shown=previewIndex??stepIndex,selected=selectedProgramSteps();
+ return '<section class="panel step-panel"><div class="row split"><h3>Steps</h3><small>'+(scene.steps.length?"Step "+(shown+1)+" von "+scene.steps.length:"Keine gespeicherten Steps")+(selected.length>1?" · "+selected.length+" ausgewählt":"")+'</small></div><small>⌘ / Strg + Klick: mehrere Steps auswählen · Zeiten gemeinsam ändern</small>'+
+  '<div class="row"><label>Szene <select id="setup-scene">'+
+  data.scenes.map(item=>'<option value="'+item.id+'" '+(item===scene?'selected':'')+'>'+esc(item.name)+'</option>').join("")+
+  '</select></label>'+button("← Zurück","setup-prev",stepIndex===0?"disabled":"")+
+  button("Weiter →","setup-next",stepIndex>=scene.steps.length-1?"disabled":"")+
+  button(previewIndex===null?"Steps abspielen":"Wiedergabe stoppen","setup-preview",scene.steps.length?"":"disabled")+
+  (nativeAvailable?button("Szene live testen","setup-output",flag(setupToOutput)+(outputState.enabled?"":" disabled")):"")+'</div>'+
+  '<div class="steps" aria-label="Steps auswählen">'+scene.steps.map((step,index)=>{
+   const value=Object.values(step.values).find(item=>item.level>0);
+   return '<div class="step-card">'+button('Step '+(index+1)+'<small>'+step.fade+' s Fade · '+step.hold+' s Halt</small>',
+    'setup-step:'+index,'style="--step-color:'+(value?.color||"#68778a")+'" '+flag(index===shown||selected.includes(step)))+
+    button("×","step-delete:"+index,'class="delete-step" title="Step '+(index+1)+' löschen" aria-label="Step '+(index+1)+' löschen"')+'</div>';
+  }).join("")+'</div><div class="row">'+
+  button("Als neuen Step speichern","setup-save",'class="primary" '+(!data.lights.length||previewIndex!==null?'disabled':''))+
+  button(scene.steps.length?"Gewählten Step aktualisieren":"Ersten Step speichern","setup-update",(!data.lights.length||previewIndex!==null?'disabled':''))+
+  button("Step löschen","remove-step",scene.steps.length?"":"disabled")+
+  (stepUndo?.sceneId===scene.id?button("Rückgängig","undo-step"):"")+
+  '<small id="setup-notice" role="status">'+esc(setupNotice)+'</small></div></section>';
+}
+function setupControls(lights){
+ const name=lights.length===1?lights[0].name:lights.length+" Lichter ausgewählt";
+ const colorLight=lights.find(light=>channelMap(light).some(channel=>["R","G","B","W"].includes(channel)));
+ return '<strong>'+esc(name)+'</strong><small>Farbe anklicken → Auswahl mit 100 % Helligkeit</small>'+
+  quickColorPalette(lights)+
+  '<div class="row"><label class="custom-color-button">Eigene Farbe<input id="setup-color" type="color" aria-label="Eigene Farbe wählen" value="'+(colorLight?setupValue(colorLight).color:"#ffffff")+
+  '" '+(previewIndex===null?'':'disabled')+'></label>'+button("Alles auf null","selection-off",previewIndex===null?'':'disabled')+'</div>'+
+  '<small>Die sechs Felder merken sich deine zuletzt gewählten Farben.</small>';
+}
+function selectSetupLight(id,multiple){
+ if(!multiple){setupSelection.clear();setupSelection.add(id);}
+ else if(setupSelection.has(id))setupSelection.delete(id);
+ else setupSelection.add(id);
+ setupNotice="";
+}
+function applySetupValue(key,newValue){
+ if(previewIndex===null)previewDark=false;
+ if(previewIndex!==null)return;
+ for(const light of data.lights){
+  if(!setupSelection.has(light.id))continue;
+  const value=setupDraft.values[light.id]??={...defaultValue};
+  delete value.channels;
+  value[key]=key==="color"&&!channelMap(light).some(channel=>["R","G","B","W"].includes(channel))?"#ffffff":newValue;
+  if(key==="color")value.level=100;
+  const cell=screen.querySelector('.cell[data-fixture="'+light.id+'"]');
+  if(cell){
+   cell.style.setProperty("--lamp",visualColor(light,value));
+   cell.style.setProperty("--glow",value.level+"%");
+  }
+ }
+const selected=data.lights.filter(light=>setupSelection.has(light.id));
+const levelInput=screen.querySelector("#setup-level");
+if(levelInput&&selected.length){
+ const levels=selected.map(light=>setupValue(light).level);
+ levelInput.value=levels[0];
+ levelInput.nextElementSibling.textContent=levels.every(level=>level===levels[0])?levels[0]+" %":"Gemischt";
+}
+screen.querySelectorAll(".quick-color").forEach(control=>{
+ const hex=control.dataset.action.split(":")[1];
+ const colors=selected.filter(light=>channelMap(light).some(channel=>["R","G","B","W"].includes(channel))).map(light=>setupValue(light).color.toLowerCase());
+ control.setAttribute("aria-pressed",String(colors.length>0&&colors.every(color=>color===hex)));
+});
+setupNotice="";
+document.querySelector("#setup-notice").textContent="";
+}
+function placeLight(id,cell){
+ const light=data.lights.find(item=>item.id===id);
+ if(!light||!Number.isInteger(cell)||cell<0||cell>=setupCellCount)return;
+ if(data.lights.some(item=>item!==light&&item.cell===cell)){
+  setupNotice="Dieses Feld ist bereits belegt.";
+  return;
+ }
+ delete light.position;
+ light.cell=cell;
+ selectSetupLight(id,false);
+ save();
+}
+function readColors(container){
+ return Array.from(container?.querySelectorAll(".swatch i")||[],node=>getComputedStyle(node).backgroundColor);
+}
+function fadeColors(container,previous,seconds){
+ if(!seconds||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ container?.querySelectorAll(".swatch i").forEach((node,index)=>{
+  const target=getComputedStyle(node).backgroundColor;
+  if(previous[index]&&previous[index]!==target){
+   node.animate([{backgroundColor:previous[index]},{backgroundColor:target}],{duration:1000*seconds,easing:"linear"});
+  }
+ });
+}
+function refreshPreview(){
+ const target=document.querySelector("#preview-lights");
+if(target){
+ const previous=readColors(target);
+ const step=current()?.steps[previewIndex??stepIndex];
+ target.innerHTML=swatches(step);
+ if(previewIndex!==null)fadeColors(target,previous,step?.fade);
+}
+ const note=document.querySelector("#preview-step");
+ if(note) note.textContent="Step "+((previewIndex??stepIndex)+1);
+}
+function stopPreview(){clearTimeout(previewTimer);previewIndex=null;previewDark=false;}
+function previewTick(){
+ const scene=current();
+ if(!scene||previewIndex===null)return;
+ if(tab===3||tab===4)render();else refreshPreview();
+ const step=scene.steps[previewIndex];
+ previewTimer=setTimeout(()=>{
+  if(previewIndex+1<scene.steps.length){previewIndex++;previewTick();}
+  else if(scene.loop){previewIndex=0;previewTick();}
+  else{stopPreview();render();}
+ },1000*stepDuration(step));
+}
+function schedule(){
+ clearTimeout(timer);
+ const scene=running();
+ if(!scene||override)return;
+ outputFrame();
+ const step=scene.steps[stageIndex];
+ if(!step)return;
+ timer=setTimeout(()=>{
+  if(stageIndex+1<scene.steps.length){stageIndex++;schedule();}
+else if(performQueue.size){
+ const selected=repeatScenes();
+ const index=selected.findIndex(item=>item.id===scene.id);
+ if(selected.length)play(selected[(index+1)%selected.length].id);
+ else{performQueue.clear();active=null;liveSnapshot=null;outputStep=null;}
+}
+else if(auto){
+   const choices=liveScenes();
+   const next=choices[(choices.findIndex(item=>item.id===scene.id)+1)%choices.length];
+   if(next)play(next.id);
+   else auto=false;
+  }else if(scene.loop){stageIndex=0;schedule();}
+  if(tab===2&&!renameField&&!screen.querySelector(".field-options[open]"))render();
+ },1000*stepDuration(step));
+}
+function play(id){if(!data.scenes.find(scene=>scene.id===id)?.steps.length)return;playbackDark=false;active=id;liveSnapshot=copy(data.scenes.find(scene=>scene.id===id));stageIndex=0;demo=true;schedule();}
+document.addEventListener("click",event=>{
+ const control=event.target.closest("button[data-action]");
+ if(!control)return;
+ const [action,arg]=control.dataset.action.split(":");
+ const scene=current();
+ const step=scene?.steps[stepIndex];
+ switch(action){
+case "tab":
+ stopPreview();
+ setupToOutput=false;
+ tab=Number(arg);
+ if(tab===4)loadSetupStep();
+ break;
+case "setup-output":setupToOutput=!setupToOutput;outputStep=null;break;
+case "setup-add":if(outputState.enabled)return;tab=1;fixture="new";break;
+case "setup-light":selectSetupLight(arg,tab===3||setupMulti||event.metaKey||event.ctrlKey||event.shiftKey);break;
+case "selection-clear":setupSelection.clear();break;
+case "selection-off":resetSelectedLights();break;
+case "setup-multi":
+ setupMulti=!setupMulti;
+ if(!setupMulti&&setupSelection.size>1)selectSetupLight([...setupSelection][0],false);
+ break;
+case "setup-all":
+ setupMulti=true;
+ data.lights.forEach(light=>setupSelection.add(light.id));
+ break;
+case "setup-cell":{
+ const cell=Number(arg);
+ const occupant=data.lights.find(light=>light.cell===cell);
+ if(occupant)selectSetupLight(occupant.id,setupMulti||event.metaKey||event.ctrlKey||event.shiftKey);
+ else if(setupSelection.size===1)placeLight([...setupSelection][0],cell);
+ break;
+}
+case "setup-unplace":{
+ const light=data.lights.find(item=>setupSelection.has(item.id));
+ if(light){delete light.cell;setupNotice="";save();}
+ break;
+}
+case "setup-prev":case "setup-next":case "setup-step":{
+ stopPreview();
+ const index=action==="setup-step"?Number(arg):stepIndex+(action==="setup-prev"?-1:1);
+ if(scene&&index>=0&&index<scene.steps.length){
+  selectProgramStep(index,action==='setup-step'&&(event.metaKey||event.ctrlKey));
+  loadSetupStep();
+ }
+ break;
+}
+case "setup-preview":
+ if(!scene?.steps.length)return;
+ if(previewIndex===null){previewIndex=0;previewTick();return;}
+ stopPreview();
+ break;
+case "setup-recent":
+ applySetupValue("color",arg);if(previewIndex===null&&setupSelection.size)rememberPickedColor(arg);
+ break;
+case "setup-save":case "setup-update":{
+ if(!scene||!setupDraft||!data.lights.length||previewIndex!==null)return;
+ const original=scene.steps[stepIndex];
+ const changedColors=Object.entries(setupDraft.values).filter(([id,value])=>value.color!==original?.values?.[id]?.color)
+  .map(([,value])=>value.color);
+ if(changedColors.length)rememberColors(changedColors);
+ setupDrafts.delete(original);
+ if(action==="setup-save"){scene.steps.push(copy(setupDraft));stepIndex=scene.steps.length-1;selectedStepRefs.clear();selectedStepRefs.add(scene.steps[stepIndex]);}
+ else {const selected=selectedStepRefs.delete(original);scene.steps[stepIndex]=copy(setupDraft);if(selected)selectedStepRefs.add(scene.steps[stepIndex]);}
+ loadSetupStep();
+ save();
+ setupNotice=storageError?"Speichern fehlgeschlagen.":"Step "+(stepIndex+1)+" in „"+scene.name+"“ gespeichert.";
+ break;
+}
+  case "demo":
+   if(outputState.enabled)return;
+   demo=!demo;
+   if(demo)tab=2;
+   else{clearTimeout(timer);active=null;liveSnapshot=null;auto=false;override="";}
+   break;
+case "patch":patchPage=Number(arg);break;
+case "bank-all":case "bank":
+ bankFilter=action==="bank-all"?"":[...new Set(allLiveScenes().map(bankName))][Number(arg)]||"";
+ if(auto&&liveScenes().length&&!liveScenes().some(item=>item.id===active))play(liveScenes()[0].id);
+ break;
+case "new-light":if(outputState.enabled)return;fixture="new";fixtureDraft=null;break;
+  case "edit-light":if(outputState.enabled)return;fixture=arg;fixtureDraft=null;break;
+  case "cancel-light":fixture=null;break;
+case "delete-light":if(outputState.enabled)return;deleteCandidate=arg;break;
+case "cancel-delete-light":deleteCandidate=null;break;
+case "confirm-delete-light":if(outputState.enabled||deleteCandidate!==arg)return;removeFixture(arg);deleteCandidate=null;break;
+  case "play":if(tab===2){togglePerformScene(arg);render();return;}auto=false;play(arg);break;
+  case "auto":
+   auto=!auto;
+   if(auto&&liveScenes().length){if(!liveScenes().some(item=>item.id===active))play(liveScenes()[0].id);else schedule();}
+   else{auto=false;schedule();}
+   break;
+  case "black":case "white":
+   if(action==="white"&&override==="black")return;
+   override=override===action?"":action;demo=true;schedule();break;
+  case "select":stopPreview();editing=arg;stepIndex=0;break;
+  case "new-scene":case "copy-scene":{
+   stopPreview();
+   const next=action==="copy-scene"?copy(scene):{name:"Neue Szene",steps:[newStep()],live:false,loop:false};
+   next.id=uid();delete next.buttonNumber;
+   if(action==="copy-scene")next.name+=" Kopie";
+   data.scenes.push(next);editing=next.id;stepIndex=0;save();break;
+  }
+  case "step":stopPreview();stepIndex=Number(arg);break;
+  case "add-step":case "copy-step":
+   stopPreview();scene.steps.splice(stepIndex+1,0,action==="copy-step"?copy(tab===3?setupDraft:step):newStep());stepIndex++;save();break;
+  case "move-left":case "move-right":{
+   stopPreview();const target=stepIndex+(action==="move-left"?-1:1);
+   [scene.steps[target],scene.steps[stepIndex]]=[step,scene.steps[target]];
+   stepIndex=target;save();break;
+  }
+case "step-delete":case "remove-step":{
+ const index=action==="step-delete"?Number(arg):stepIndex;
+ const removed=scene?.steps[index];
+ if(!removed)return;
+ stopPreview();
+ stepUndo={sceneId:scene.id,index,saved:copy(removed),draft:copy(setupDrafts.get(removed)||removed)};
+ scene.steps.splice(index,1);
+ if(index<stepIndex)stepIndex--;
+ stepIndex=Math.max(0,Math.min(stepIndex,scene.steps.length-1));
+ loadSetupStep();save();
+ setupNotice="Step "+(index+1)+" gelöscht.";
+ break;
+}
+case "undo-step":{
+ if(!scene||stepUndo?.sceneId!==scene.id)return;
+ stopPreview();
+ const restored=copy(stepUndo.saved);
+ scene.steps.splice(stepUndo.index,0,restored);
+ setupDrafts.set(restored,copy(stepUndo.draft));
+ stepIndex=stepUndo.index;stepUndo=null;
+ loadSetupStep();save();setupNotice="Step wiederhergestellt.";
+ break;
+}
+  case "preview":if(previewIndex===null)previewIndex=0;else stopPreview();break;
+  case "save-scene":
+   save();document.querySelector("#saved").textContent=storageError?"Speichern fehlgeschlagen":"Gespeichert";return;
+  default:return;
+ }
+ if(stageIndex>=(running()?.steps.length??1)){stageIndex=0;schedule();}
+ render();
+ if(action==="tab")screen.scrollTop=0;
+ if(action==="preview"&&previewIndex!==null)previewTick();
+});
+document.addEventListener("change",event=>{
+ const field=event.target;
+ if(tab===3&&field.dataset.color){rememberColors([field.value]);save();return;}
+ if(tab!==3||field.id!=="setup-scene")return;
+ stopPreview();
+ editing=field.value;stepIndex=0;
+ loadSetupStep();
+ render();
+});
+document.addEventListener("input",event=>{
+ const field=event.target;
+ const scene=current();
+ if(tab===3&&(field.id==="setup-level"||field.id==="setup-color")){
+  if(field.id==="setup-level"){
+   applySetupValue("level",Number(field.value));
+   field.nextElementSibling.textContent=field.value+" %";
+  }else applySetupValue("color",field.value);
+  return;
+ }
+if(tab!==3||!scene)return;
+ const step=scene.steps[stepIndex];
+ if(field.id==="scene-name"){
+  scene.name=field.value.trim()||"Unbenannte Szene";
+  const listButton=document.querySelector('[data-action="select:'+scene.id+'"]');
+  listButton.innerHTML=esc(scene.name)+'<br><small>'+esc(bankName(scene))+'</small>';
+ }else if(field.id==="scene-bank"){
+  scene.bank=field.value.trim();
+  document.querySelector('[data-action="select:'+scene.id+'"] small').textContent=bankName(scene);
+ }else if(field.id==="visible")scene.live=field.checked;
+ else if(field.id==="loop")scene.loop=field.checked;
+ else if(field.id==="fade"||field.id==="hold"||field.id==="beats"){
+  if(!field.validity.valid||field.value==="")return;
+  step[field.id]=Number(field.value);
+ }else if(field.dataset.level||field.dataset.color){
+  const id=field.dataset.level||field.dataset.color;
+  const value=step.values[id]??={...defaultValue};
+  if(field.dataset.level){value.level=Number(field.value);field.nextElementSibling.textContent=field.value+" %";}
+  else value.color=field.value;
+  refreshPreview();
+ }else return;
+ setupDrafts.delete(step);
+ const card=document.querySelector('[data-action="step:'+stepIndex+'"]');
+ if(card){
+  const color=Object.values(step.values).find(value=>value.level>0)?.color||"#68778a";
+  card.style.setProperty("--step-color",color);
+  card.querySelector("small").textContent=step.fade+" s Fade · "+step.hold+" s Halt";
+ }
+ save();
+});
+document.addEventListener("submit",event=>{
+ if(event.target.id!=="light-form")return;
+ event.preventDefault();
+ if(outputState.enabled)return;
+ const form=new FormData(event.target);
+ const name=form.get("name").trim(),address=Number(form.get("address"));
+const mappingInput=form.get("mapping").trim().toUpperCase();
+ const mode=deviceMode(mappingInput);
+ const visualType=form.get("visualType")||fixtureKind({name});
+ const mapping=mappingInput||({Dimmer:"D",RGB:"R,G,B",RGBW:"R,G,B,W"}[mode]||"");
+ const group=form.get("group").trim();
+ const channelList=mapping.split(",").map(channel=>channel.trim());
+ const validMapping=channelList.length>0&&channelList.every(channel=>["D","R","G","B","W","0","255"].includes(channel));
+ const end=address+channelList.length-1;
+ const overlap=data.lights.find(light=>light.id!==fixture&&address<light.address+channelCount(light)&&end>=light.address);
+ const error=!name?"Bitte gib einen Namen ein.":!deviceTypes[visualType]?"Bitte eine Geräteart auswählen.":!validMapping?"Bitte eine gültige Kanalfolge eingeben.":!Number.isInteger(address)||address<1?"Bitte eine gültige DMX-Adresse eingeben.":end>512?"Der Kanalbereich endet hinter Kanal 512.":overlap?"Überschneidung mit "+overlap.name+".":"";
+ document.querySelector("#light-error").textContent=error;
+ if(error)return;
+ const existing=data.lights.find(light=>light.id===fixture);
+ if(existing)Object.assign(existing,{name,mode,address,group,mapping,visualType});
+ else data.lights.push({id:uid(),name,mode,address,group,mapping,visualType,height:deviceTypes[visualType].height,position:automaticLightPosition()});
+ patchPage=Math.floor((address-1)/128);fixture=null;save();render();
+});
+screen.addEventListener("dragstart",event=>{
+const lamp=event.target.closest("[data-fixture]");
+if(lamp&&tab===4){
+ setupDrag=lamp.dataset.fixture;
+ event.dataTransfer.setData("text/plain",setupDrag);
+ event.dataTransfer.effectAllowed="move";
+ return;
+}
+const tile=event.target.closest("[data-scene]");
+ if(tile){dragId=tile.dataset.scene;event.dataTransfer.setData("text/plain",dragId);}
+});
+screen.addEventListener("dragover",event=>{
+ if((setupDrag&&event.target.closest("[data-cell]"))||(dragId&&event.target.closest("[data-scene]")))event.preventDefault();
+});
+screen.addEventListener("dragend",()=>{dragId=null;setupDrag=null;});
+screen.addEventListener("drop",event=>{
+ if(tab===4&&setupDrag){
+  const cell=event.target.closest("[data-cell]");
+  if(!cell)return;
+  event.preventDefault();
+  placeLight(setupDrag,Number(cell.dataset.cell));
+  setupDrag=null;
+  render();
+  return;
+ }
+ const target=event.target.closest("[data-scene]")?.dataset.scene;
+ if(!target||!dragId||target===dragId)return;
+ event.preventDefault();
+ const from=data.scenes.findIndex(scene=>scene.id===dragId);
+ const to=data.scenes.findIndex(scene=>scene.id===target);
+ if(from<0||to<0)return;
+ data.scenes.splice(to,0,data.scenes.splice(from,1)[0]);dragId=null;save();render();
+});
+/* NATIVE_SESSION */
+const nativeAvailable=Boolean(window.lichtpultSession);
+let outputState={enabled:false,subscribed:false,packets:0,error:null};
+let localInterfaces=[], connectionMessage="", outputBusy=false, taps=[];
+let frameTransition={from:Array(512).fill(0),to:Array(512).fill(0),start:0,duration:0};
+let outputStep=null, setupToOutput=false;
+let master=100;
+const channelMap=light=>(light.mapping||({Dimmer:"D",RGB:"R,G,B",RGBW:"R,G,B,W"}[light.mode]||"D")).split(",").map(value=>value.trim().toUpperCase());
+const channelCount=light=>channelMap(light).length;
+const bpm=()=>Math.max(30,Math.min(300,Number(data.bpm)||130));
+const stepDuration=step=>data.tempoSync?60/bpm()*(Number(step.beats)||1):step.fade+step.hold;
+function connectionStatus(){
+ if(outputState.error)return "Art-Net · "+outputState.error;
+ if(outputState.enabled)return outputState.subscribed?"● Art-Net · Ausgabe aktiv":"◌ Art-Net · Warte auf Node";
+ return demo?"● Vorschau":"○ Getrennt";
+}
+async function nativeRequest(path,body,timeoutMs=2000){
+ if(!nativeAvailable)throw new Error("Art-Net ist in der Mac-App verfügbar.");
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),timeoutMs);
+ try{
+  const response=await fetch(path,{method:body?"POST":"GET",
+   headers:{"Content-Type":"application/json","X-Lichtpult-Session":window.lichtpultSession},
+   body:body?JSON.stringify(body):undefined,signal:controller.signal});
+  const result=await response.json();
+  if(!response.ok)throw new Error(result.error||"Die Verbindung ist fehlgeschlagen.");
+  return result;
+ }finally{clearTimeout(timeout);}
+}
+function updateOutputStatus(result){
+ outputState=result;
+ document.querySelector("#status").textContent=connectionStatus();
+ const notice=document.querySelector("#connection-notice");
+ if(notice)notice.textContent=connectionMessage||(result.enabled?
+  result.subscribed?"Node antwortet. Art-Net-Ausgabe läuft.":"Warte auf eine Antwort des Nodes für das eingestellte Universum.":"Art-Net-Ausgabe gestoppt.");
+ const packets=document.querySelector("#packet-count");
+if(packets)packets.textContent=result.packets+" DMX-Pakete gesendet";
+const routingStatus=document.querySelector("#mapping-status");
+if(routingStatus)routingStatus.textContent=(result.received||0)+" Eingangspakete · "+result.packets+" Ausgangspakete";
+}
+async function startOutput(config){
+ connectionMessage="";
+ try{
+  const problem=patchProblem();
+  if(problem)throw new Error(problem);
+  updateOutputStatus(await nativeRequest("/api/enable",{...config,mapping:data.mapping||mappingDefaults()}));
+  data.artnet=config;demo=false;save();
+  render();
+ }catch(error){connectionMessage=error.message;render();}
+}
+async function stopOutput(){
+ connectionMessage="";
+ try{updateOutputStatus(await nativeRequest("/api/stop",{}));}
+ catch(error){connectionMessage=error.message;outputState.error=error.message;}
+ render();
+}
+async function initializeNative(){
+ if(!nativeAvailable)return;
+ try{
+  const result=await nativeRequest("/api/status");
+  localInterfaces=result.interfaces;
+
+  updateInfo=result.update||null;
+  updateOutputStatus(result);
+  render();
+  if(data.artnet){
+   tab=0;render();
+   document.querySelector("#connect-dialog").showModal();
+  }
+ }catch(error){connectionMessage=error.message;render();}
+}
+function patchProblem(){
+ const used=new Set();
+ for(const light of data.lights){
+  const map=channelMap(light);
+  if(!Number.isInteger(light.address)||light.address<1||light.address+map.length-1>512)return "Die DMX-Adresse von "+light.name+" ist ungültig.";
+  if(!map.length||!map.every(value=>["D","R","G","B","W","0","255"].includes(value)))return "Bitte die Kanalbelegung von "+light.name+" prüfen.";
+  for(let index=0;index<map.length;index++){
+   const address=light.address+index;
+   if(used.has(address))return "Die DMX-Kanäle überschneiden sich bei "+light.name+".";
+   used.add(address);
+  }
+ }
+ return "";
+}
+function colorValues(value){
+ const color=value?.color||"#ffffff";
+ const rgb=[1,3,5].map(offset=>parseInt(color.slice(offset,offset+2),16)||0);
+ return {rgb,level:Math.max(0,Math.min(100,Number(value?.level)||0))/100};
+}
+function encodeFrame(step,mode="",scale=master){
+ const frame=Array(512).fill(0);
+ if(mode==="black"||(!step&&mode!=="white"))return frame;
+ for(const light of data.lights){
+  const map=channelMap(light),value=step?.values[light.id]||defaultValue;
+  const parsed=colorValues(value),rgb=parsed.rgb;
+  let level=parsed.level*scale/100;
+  if(mode==="white"){rgb.fill(255);level=scale/100;}
+  if(mode==="black")level=0;
+  const white=map.includes("W")?Math.min(...rgb):0;
+  const colors={R:rgb[0]-white,G:rgb[1]-white,B:rgb[2]-white,W:white};
+  map.forEach((channel,index)=>{
+   const address=light.address-1+index;
+   if(address<0||address>=512)return;
+   let out=0;
+   if(channel==="255")out=mode==="black"?0:255;
+   else if(channel==="D")out=Math.round(level*255);
+   else if(channel in colors)out=Math.round(colors[channel]*(map.includes("D")?1:level));
+const raw=mode===""?value.channels?.[index]:undefined;
+if(Number.isInteger(raw)){
+ out=raw;
+ if(channel==="D"||(!map.includes("D")&&["R","G","B","W"].includes(channel)))out=Math.round(raw*scale/100);
+}
+frame[address]=out;
+  });
+ }
+ return frame;
+}
+function interpolatedFrame(now=performance.now()){
+ const amount=frameTransition.duration?Math.min(1,Math.max(0,(now-frameTransition.start)/frameTransition.duration)):1;
+ return frameTransition.to.map((value,index)=>Math.round(frameTransition.from[index]+(value-frameTransition.from[index])*amount));
+}
+function outputFrame(){
+ if(!override&&(setupToOutput?previewDark:playbackDark))return Array(512).fill(0);
+ const step=setupToOutput?(previewIndex===null?setupDraft:current()?.steps[previewIndex]):running()?.steps[stageIndex];
+ const scene=setupToOutput?current():running();
+ const animated=scene?.effects?.some(layer=>layer.enabled);
+ const evaluated=animated?effectStep(step,scene):step;
+ const target=encodeFrame(evaluated);
+ const signature=animated?step:JSON.stringify(target);
+ if(outputStep!==signature){
+  const previous=interpolatedFrame();
+  outputStep=signature;
+  const fade=data.tempoSync&&step?Math.min(step.fade,stepDuration(step)):step?.fade||0;
+  frameTransition={from:previous,to:target,start:performance.now(),duration:1000*fade};
+ }
+ if(override)return applyGroupMasters(encodeFrame(evaluated,override));
+ if(animated){
+  const amount=frameTransition.duration?Math.min(1,Math.max(0,(performance.now()-frameTransition.start)/frameTransition.duration)):1;
+  return applyGroupMasters(target.map((value,index)=>Math.round(frameTransition.from[index]+(value-frameTransition.from[index])*amount)));
+ }
+ return applyGroupMasters(interpolatedFrame());
+}
+function retargetMaster(){
+ const step=running()?.steps[stageIndex];
+ frameTransition={from:interpolatedFrame(),to:encodeFrame(step),start:performance.now(),duration:0};
+}
+async function outputTick(){
+ if(!outputState.enabled||outputBusy)return;
+ outputBusy=true;
+ try{updateOutputStatus(await nativeRequest("/api/frame",{channels:outputFrame()}));}
+ catch(error){
+  outputState={...outputState,enabled:false,error:error.message};
+  document.querySelector("#status").textContent=connectionStatus();
+ }finally{outputBusy=false;}
+}
+function tempoControls(){
+ return '<label><input id="tempo-sync" type="checkbox" '+checked(data.tempoSync)+'> BPM-Sync</label>'+
+  '<label>BPM <input id="bpm" type="number" min="30" max="300" value="'+bpm()+'"></label>'+
+  button("Tap","tap-tempo");
+}
+function groupSelector(){
+ const groups=[...new Set(data.lights.map(light=>light.group).filter(Boolean))];
+ return groups.length?'<label>Gruppe <select id="select-group"><option value="">Auswählen…</option>'+
+  groups.map((name,index)=>'<option value="'+index+'">'+esc(name)+'</option>').join("")+'</select></label>':"";
+}
+function validateShow(show){
+ validateStage(show?.stage);
+ if(show?.masterGroupsCollapsed!==undefined&&typeof show.masterGroupsCollapsed!=="boolean")throw new Error("Ungültige Master-Ansicht.");
+ if(show?.selectedColors!==undefined&&(!Array.isArray(show.selectedColors)||show.selectedColors.length>6||!show.selectedColors.every(color=>/^#[0-9a-f]{6}$/i.test(color))))throw new Error("Ungültige Farbauswahl.");
+ if(show?.playbackMode!==undefined&&!["sequence","random"].includes(show.playbackMode))throw new Error("Ungültiger Wiedergabemodus.");
+ if(!show||!Array.isArray(show.lights)||!Array.isArray(show.scenes)||!show.scenes.length)throw new Error("Ungültige Show-Datei.");
+ const ids=new Set(),occupied=new Set();
+ for(const light of show.lights){
+  if(!light||typeof light.id!=="string"||ids.has(light.id)||!/^[-a-zA-Z0-9]+$/.test(light.id)||
+   typeof light.name!=="string"||!Object.keys(modes).includes(light.mode))throw new Error("Ungültiges Licht.");
+ids.add(light.id);
+if(light.inLayout!==undefined&&typeof light.inLayout!=="boolean")throw new Error("Ungültiger Aufbau-Status.");
+if(light.position&&(!Number.isFinite(light.position.x)||!Number.isFinite(light.position.y)||light.position.x<0||light.position.x>1||light.position.y<0||light.position.y>1))throw new Error("Ungültige Lichtposition.");
+if(light.visualType&&!["par","panel","bar","strobe","moving","strip"].includes(light.visualType))throw new Error("Ungültige Darstellung.");
+if(light.height!==undefined&&(!Number.isFinite(light.height)||light.height<0||light.height>5))throw new Error("Ungültige Höhe.");
+  const map=channelMap(light);
+  if(!Number.isInteger(light.address)||light.address<1||light.address+map.length-1>512||
+   !map.every(value=>["D","R","G","B","W","0","255"].includes(value)))throw new Error("Ungültige Kanalbelegung.");
+  if(light.cell!==undefined&&(!Number.isInteger(light.cell)||light.cell<0||light.cell>=setupCellCount))throw new Error("Ungültige Rasterposition.");
+  if(light.group!==undefined&&typeof light.group!=="string")throw new Error("Ungültige Gruppe.");
+  for(let index=0;index<map.length;index++){
+   if(occupied.has(light.address+index))throw new Error("Überlappende DMX-Adressen.");
+   occupied.add(light.address+index);
+  }
+ }
+ const sceneIds=new Set(),buttonNumbers=new Set();
+ for(const scene of show.scenes){
+  if(!scene||typeof scene.id!=="string"||!/^[-a-zA-Z0-9]+$/.test(scene.id)||sceneIds.has(scene.id)||
+   typeof scene.name!=="string"||!Array.isArray(scene.steps))throw new Error("Ungültige Szene.");
+sceneIds.add(scene.id);
+if(scene.buttonNumber!==undefined){if(!Number.isInteger(scene.buttonNumber)||scene.buttonNumber<1||scene.buttonNumber>4096||buttonNumbers.has(scene.buttonNumber))throw new Error("Ungültige Buttonnummer.");buttonNumbers.add(scene.buttonNumber);}
+if(scene.buttonColor!==undefined&&!/^#[0-9a-f]{6}$/i.test(scene.buttonColor))throw new Error("Ungültige Buttonfarbe.");
+  if(scene.buttonName!==undefined&&typeof scene.buttonName!=="string")throw new Error("Ungültiger Tastenname.");
+if(scene.effects!==undefined){
+ if(!Array.isArray(scene.effects))throw new Error("Ungültige Effekte.");
+ for(const layer of scene.effects){
+  if(!layer||typeof layer.id!=="string"||!/^[-a-zA-Z0-9]+$/.test(layer.id)||
+   !["wave","chase","pulse","alternate","rainbow","solid"].includes(layer.type)||
+   !["replace","add","multiply"].includes(layer.mix)||!["x","y","radial"].includes(layer.axis)||
+   !/^#[0-9a-f]{6}$/i.test(layer.color)||!/^#[0-9a-f]{6}$/i.test(layer.color2)||
+   !Number.isFinite(layer.level)||layer.level<0||layer.level>100||
+   !Number.isFinite(layer.speed)||layer.speed<0.125||layer.speed>8||
+   !Number.isFinite(layer.width)||layer.width<0.05||layer.width>1||
+   !Array.isArray(layer.ids)||!layer.ids.every(id=>typeof id==="string"))
+    throw new Error("Ungültiger Effekt.");
+ }
+}
+  for(const step of scene.steps){
+   if(step?.darkAfter!==undefined&&typeof step.darkAfter!=="boolean")throw new Error("Ungültige Dunkel-Option.");
+   if(step?.darkHold!==undefined&&(!Number.isFinite(step.darkHold)||step.darkHold<.1||step.darkHold>120))throw new Error("Ungültige Dunkelzeit.");
+   if(!step||!Number.isFinite(step.fade)||step.fade<0||step.fade>120||!Number.isFinite(step.hold)||
+    step.hold<0.1||step.hold>120||!step.values||typeof step.values!=="object")throw new Error("Ungültiger Step.");
+for(const value of Object.values(step.values)){
+ if(value?.channels!==undefined&&(!value.channels||typeof value.channels!=="object"||
+   !Object.entries(value.channels).every(([index,out])=>/^\d+$/.test(index)&&Number(index)<512&&Number.isInteger(out)&&out>=0&&out<=255)))
+   throw new Error("Ungültige Kanalwerte.");
+    if(!value||!/^#[0-9a-f]{6}$/i.test(value.color)||!Number.isFinite(value.level)||value.level<0||value.level>100)throw new Error("Ungültige Lichtwerte.");
+   }
+  }
+ }
+ if(show.tabNames&&(!Object.values(show.tabNames).every(value=>typeof value==="string")))throw new Error("Ungültige Reiternamen.");
+ if(show.banks&&(!Array.isArray(show.banks)||!show.banks.every(value=>typeof value==="string")))throw new Error("Ungültige Banken.");
+ const importedMapping=validateMapping(show.mapping||mappingDefaults());
+ if(show.recentColors&&!show.recentColors.every(color=>/^#[0-9a-f]{6}$/i.test(color)))throw new Error("Ungültige Farbpalette.");
+ // Only show data is imported. The network destination is configured in this app.
+ return {masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
+}
+document.addEventListener("click",async event=>{
+ const action=event.target.closest("[data-action]")?.dataset.action;
+ if(action==="output-stop")await stopOutput();
+ else if(action==="connect-confirm"){
+  document.querySelector("#connect-dialog").close();
+  await startOutput(data.artnet);
+ }else if(action==="connect-later")document.querySelector("#connect-dialog").close();
+ else if(action==="export-show"){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download="NullLight-Show.json";link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ }else if(action==="tap-tempo"){
+  const now=performance.now();
+  if(taps.length&&now-taps[taps.length-1]>2000)taps=[];
+  taps.push(now);taps=taps.slice(-6);
+  if(taps.length>1){
+   data.bpm=Math.max(30,Math.min(300,Math.round(60000*(taps.length-1)/(now-taps[0]))));
+   save();schedule();render();
+  }
+ }else if(action==="chase"){
+  const lights=data.lights.filter(light=>setupSelection.has(light.id));
+  if(!lights.length)return;
+  const values=setupDraft?.values||{};
+  const scene={id:uid(),name:"Lauflicht "+(data.scenes.length+1),bank:"Lauflichter",live:true,loop:true,
+   steps:lights.map(light=>({fade:0.05,hold:0.4,beats:1,values:Object.fromEntries(lights.map(item=>[
+    item.id,{color:values[item.id]?.color||"#b05cff",level:item===light?100:0}
+   ]))}))};
+  data.scenes.push(scene);editing=scene.id;stepIndex=0;loadSetupStep();save();render();
+ }
+});
+document.addEventListener("submit",async event=>{
+ if(event.target.id!=="artnet-form")return;
+ event.preventDefault();
+ const form=new FormData(event.target);
+ await startOutput({target:form.get("target").trim(),source:form.get("source"),
+  net:Number(form.get("net")),subnet:Number(form.get("subnet")),universe:Number(form.get("universe"))});
+});
+document.addEventListener("change",async event=>{
+ const field=event.target;
+ if(field.id==="select-group"&&field.value!==""){
+  const groups=[...new Set(data.lights.map(light=>light.group).filter(Boolean))];
+  setupSelection.clear();data.lights.filter(light=>light.group===groups[Number(field.value)]).forEach(light=>setupSelection.add(light.id));
+  setupMulti=true;render();
+ }else if(field.id==="import-show"){
+  const file=field.files[0];
+  if(!file)return;
+  try{
+   if(outputState.enabled)throw new Error("Bitte vor dem Laden die Ausgabe stoppen.");
+   const imported=validateShow(JSON.parse(await file.text()));
+   clearTimeout(timer);stopPreview();active=null;liveSnapshot=null;auto=false;override="";outputStep=null;stepUndo=null;performQueue.clear();playbackDark=false;previewDark=false;
+   data=imported;editing=data.scenes[0].id;stepIndex=0;setupDraft=null;setupSelection.clear();
+   save();connectionMessage="Show geladen.";render();
+  }catch(error){connectionMessage=error.message;render();}
+ }
+});
+document.addEventListener("input",event=>{
+ const field=event.target;
+ if(field.id==="bpm"&&field.validity.valid&&field.value){
+  data.bpm=Number(field.value);save();schedule();
+ }else if(field.id==="tempo-sync"){data.tempoSync=field.checked;save();schedule();}
+ else if(field.id==="master"){master=Number(field.value);field.nextElementSibling.textContent=master+" %";retargetMaster();}
+});
+setInterval(outputTick,1000/30);
+initializeNative();
+
+let effectLayerId=null, effectsPreview=true;
+const effectTypes={wave:"Welle",chase:"Lauflicht",pulse:"Puls",alternate:"Wechsel",rainbow:"Regenbogen",solid:"Farbe"};
+const performanceClock=()=>performance.now()/1000;
+function presetChooser(id){
+ return '<select id="'+id+'" aria-label="Preset">'+data.scenes.map(scene=>'<option value="'+scene.id+'" '+(scene===current()?'selected':'')+'>'+esc(bankName(scene)+' / '+scene.name)+'</option>').join("")+'</select>';
+}
+function selectedEffect(){
+ const effects=current()?.effects||[];
+ return effects.find(layer=>layer.id===effectLayerId)||effects[0];
+}
+function displayValues(light,value){
+ if(!value.channels)return value;
+ const map=channelMap(light),frame=encodeFrame({values:{[light.id]:value}},"",100);
+ const at=channel=>{const index=map.indexOf(channel);return index<0?0:frame[light.address-1+index];};
+ const white=at("W");
+ const rgb=["R","G","B"].map(channel=>Math.min(255,at(channel)+white));
+ const peak=Math.max(...rgb);
+ const level=map.includes("D")?at("D")/255*100:peak/255*100;
+ const normalized=peak?rgb.map(channel=>Math.round(channel/peak*255)):rgb;
+ return {color:"#"+normalized.map(channel=>channel.toString(16).padStart(2,"0")).join(""),level};
+}
+function fixturePlaced(light){return light.inLayout!==false;}
+function fixturePosition(light,index){
+ if(light.position)return light.position;
+ const cell=Number.isInteger(light.cell)?light.cell:index%setupCellCount;
+ return {x:(cell%8+.5)/8,y:(Math.floor(cell/8)+.5)/10};
+}
+function effectStep(step,scene,seconds=performanceClock()){
+ const result={...step,values:copy(step?.values||{})};
+ for(const layer of scene?.effects||[]){
+  if(!layer.enabled)continue;
+  const phase=seconds*(layer.tempo===false?1:bpm()/60)*layer.speed;
+  const time=layer.reverse?-phase:phase;
+  data.lights.forEach((light,index)=>{
+   if(layer.ids.length&&!layer.ids.includes(light.id))return;
+   const position=fixturePosition(light,index);
+   const space=layer.axis==="y"?position.y:layer.axis==="radial"?
+    Math.hypot(position.x-.5,position.y-.5)*1.414:position.x;
+   const cycle=((space-time)%1+1)%1;
+   let amount=1,color=layer.color;
+   if(layer.type==="wave")amount=(1+Math.sin(2*Math.PI*(space-time)))/2;
+   else if(layer.type==="pulse")amount=(1+Math.sin(2*Math.PI*time))/2;
+   else if(layer.type==="chase")amount=cycle<layer.width?1:0;
+   else if(layer.type==="alternate"){amount=1;color=(Math.floor(time*2+space*8)%2+2)%2?layer.color:layer.color2;}
+   else if(layer.type==="rainbow"){
+    const hue=((space-time)%1+1)%1;
+    const rgb=[0,2/3,1/3].map(offset=>{
+     const h=(hue+offset)%1;
+     return Math.round(Math.max(0,Math.min(1,Math.abs(h*6-3)-1))*255).toString(16).padStart(2,"0");
+    });
+    color="#"+rgb.join("");
+   }
+   const previous=result.values[light.id]||defaultValue;
+   const target={color,level:layer.level*amount};
+   if(layer.mix==="add"){
+    const a=colorValues(previous),b=colorValues(target);
+    const rgb=a.rgb.map((value,i)=>Math.min(255,Math.round(value*a.level+b.rgb[i]*b.level)));
+    target.color="#"+rgb.map(value=>value.toString(16).padStart(2,"0")).join("");
+    target.level=100;
+   }else if(layer.mix==="multiply"){
+    target.color=previous.color;
+    target.level=previous.level*amount*layer.level/100;
+   }
+   result.values[light.id]=target;
+  });
+ }
+ return result;
+}
+function visualState(){
+ if(tab===3&&previewDark)return {values:{}};
+ let scene,step;
+ if(tab===3||tab===5){
+  scene=current();
+  step=previewIndex===null?setupDraft:scene?.steps[previewIndex];
+  if(tab===5&&effectsPreview)return effectStep(step,scene);
+  return step||newStep();
+ }
+ scene=running();
+ step=scene?.steps[stageIndex];
+ if(tab===2){
+  const frame=outputFrame();
+  return {outputEncoded:true,values:Object.fromEntries(data.lights.map(light=>[light.id,{
+   ...defaultValue,channels:Object.fromEntries(channelMap(light).map((_,index)=>[index,frame[light.address-1+index]]))
+  }]))};
+ }
+ return effectStep(step,scene);
+}
+function masterPanel(){
+ return '<aside class="panel master-panel"><h3>Master</h3><label class="stack">Helligkeit <input id="master" type="range" min="0" max="100" value="'+master+'"><output>'+master+' %</output></label>'+
+  tempoControls()+'<div class="row">'+button("Blackout","black",flag(override==="black"))+button("White","white",flag(override==="white"))+'</div>'+
+  '<small id="live-caption"></small>'+masterGroupsPanel()+'</aside>';
+}
+function controlsScreen(){
+ const scene=current();
+ const selected=data.lights.filter(light=>setupSelection.has(light.id));
+ return '<div class="workspace controls-workspace"><section class="panel fixture-panel"><div class="row split"><h3>Lichter</h3>'+button("Patch","tab:1")+'</div>'+
+  groupSelector()+'<div class="row">'+button("Alle auswählen","setup-all")+button("Auswahl aufheben","selection-clear")+'</div><div class="list inventory">'+
+  data.lights.map(light=>button(esc(light.name)+'<small>DMX '+light.address+'</small>',"setup-light:"+light.id,
+   'draggable="true" data-fixture="'+light.id+'" '+flag(setupSelection.has(light.id)))).join("")+'</div>'+groupEditor(selected)+'</section>'+
+  '<section class="panel"><h3>Licht einstellen</h3>'+
+  (selected.length?setupControls(selected):'<p class="muted">Wähle Lichter im Visualiser oder in der Liste.</p>')+
+  '</section>'+
+  '<section class="panel preset-edit"><h3>Szene</h3>'+presetChooser("control-scene")+
+  (scene?'<label class="stack">Name<input id="control-name" value="'+esc(scene.name)+'"></label><label class="stack">Bank<input id="control-bank" value="'+esc(bankName(scene))+'"></label>':'')+
+  '<div class="row">'+button("Neue Szene","new-scene")+button("Duplizieren","copy-scene",scene?'':'disabled')+'</div>'+
+  '<label><input id="control-loop" type="checkbox" '+checked(scene?.loop)+'> Steps wiederholen</label>'+
+  '<div class="row">'+button("Live übernehmen","apply-preset",scene?'class="primary"':'disabled')+button("Perform öffnen","tab:2")+'</div></section>'+
+  setupSteps(scene)+'</div>';
+}
+document.addEventListener("click",event=>{
+ const command=event.target.closest("[data-action]")?.dataset.action;
+ if(!command)return;
+ const [action,arg]=command.split(":"),scene=current();
+ const layer=selectedEffect();
+ if(action==="apply-preset"){performQueue.clear();scene.steps=scene.steps.length?scene.steps.map(step=>copy(setupDrafts.get(step)||step)):[copy(setupDraft)];loadSetupStep();save();setupToOutput=false;auto=false;play(scene.id);}
+ else if(action==="perform-bank"){
+  bankFilter=allBanks()[Number(arg)];
+  if(auto&&liveScenes().length)play(liveScenes()[0].id);
+ }else if(action==="preset-prev"||action==="preset-next"){
+  const scenes=performQueue.size?repeatScenes():liveScenes();if(!scenes.length)return;
+  const index=scenes.findIndex(item=>item.id===active);
+  const next=index<0?0:(index+(action==="preset-prev"?-1:1)+scenes.length)%scenes.length;
+  auto=false;play(action==="preset-next"&&performQueue.size&&data.playbackMode==="random"?nextPerformScene(active).id:scenes[next].id);
+ }else if(action==="performance-stop"){
+  performQueue.clear();
+  clearTimeout(timer);active=null;liveSnapshot=null;auto=false;outputStep=null;
+ }else if(action==="fx-add"&&scene){
+  const next={id:uid(),enabled:true,type:"wave",mix:"replace",color:"#ae74ff",color2:"#35d7eb",
+   level:100,speed:1,width:0.25,axis:"x",reverse:false,tempo:true,ids:[...setupSelection]};
+  (scene.effects??=[]).push(next);effectLayerId=next.id;save();
+ }else if(action==="fx-select")effectLayerId=arg;
+ else if(action==="fx-copy"&&layer){const next={...copy(layer),id:uid()};scene.effects.push(next);effectLayerId=next.id;save();}
+ else if(action==="fx-remove"&&layer){scene.effects=scene.effects.filter(item=>item!==layer);effectLayerId=null;save();}
+ else if(action==="fx-scope"&&layer){layer.ids=[...setupSelection];save();}
+ else if(action==="fx-all"&&layer){layer.ids=[];save();}
+ else return;
+ render();
+});
+document.addEventListener("input",event=>{
+const field=event.target,scene=current(),layer=selectedEffect();
+if(field.dataset.channelLight){
+ if(tab!==3||previewIndex!==null)return;
+ const light=data.lights.find(item=>item.id===field.dataset.channelLight);
+ if(!light)return;
+ const value=setupDraft.values[light.id]??={...defaultValue};
+ const frame=encodeFrame({values:{[light.id]:value}},"",100);
+ value.channels=Object.fromEntries(channelMap(light).map((_,index)=>[index,frame[light.address-1+index]]));
+ value.channels[Number(field.dataset.channelOffset)]=Number(field.value);
+ field.nextElementSibling.textContent=field.value;
+ Object.assign(value,displayValues(light,value));
+ setupNotice="";
+ document.querySelector("#setup-notice").textContent="";
+ return;
+}
+ if(field.id==="control-name"){scene.name=field.value.trim()||"Neues Preset";save();}
+ else if(field.id==="control-bank"){scene.bank=field.value.trim()||"Allgemein";save();}
+ else if(field.id==="control-loop"){scene.loop=field.checked;save();}
+ else if(field.id==="fx-preview"){effectsPreview=field.checked;}
+ else if(field.id?.startsWith("fx-")&&layer){
+  const key=field.id.slice(3);
+  if(["enabled","tempo","reverse"].includes(key))layer[key]=field.checked;
+  else if(["level","speed","width"].includes(key)){
+   if(!field.validity.valid||!field.value)return;
+   layer[key]=Number(field.value);
+   if(field.nextElementSibling?.tagName==="OUTPUT")field.nextElementSibling.textContent=field.value+" %";
+  }else if(["type","mix","color","color2","axis"].includes(key))layer[key]=field.value;
+  else return;
+  save();
+ }
+});
+document.addEventListener("change",event=>{
+ if(!["control-scene","effect-scene"].includes(event.target.id))return;
+ stopPreview();editing=event.target.value;stepIndex=0;loadSetupStep();effectLayerId=null;render();
+});
+screen.addEventListener("dragover",event=>{
+ if(setupDrag&&tab===4&&event.target.closest(".rig-canvas"))event.preventDefault();
+});
+screen.addEventListener("drop",event=>{
+ if(!setupDrag||tab!==4)return;
+ const canvas=event.target.closest(".rig-canvas");
+ if(!canvas)return;
+ event.preventDefault();
+ const bounds=canvas.getBoundingClientRect();
+ if(rigView.mode!=="2d")return;
+ const stage=stageMetrics(bounds.width,bounds.height);
+ const x=Math.max(0,Math.min(1,(event.clientX-bounds.left-stage.left)/stage.width));
+ const y=Math.max(0,Math.min(1,(event.clientY-bounds.top-stage.top)/stage.height));
+ const col=Math.min(7,Math.floor(x*8));
+ const row=Math.min(9,Math.floor(y*10));
+ const light=data.lights.find(item=>item.id===setupDrag);
+ if(light){light.position=snapPosition({x,y});light.inLayout=true;delete light.cell;save();}
+ setupDrag=null;render();
+});
+setInterval(paintRig,1000/24);
+
+const rigView={mode:"2d",yaw:-0.4,pitch:0.92,zoom:1,labels:true,grid:true,drag:null};
+function fixtureKind(light){
+ const type=light.visualType==="bar"?"strip":light.visualType;
+ return deviceTypes[type]?type:/panel|wolke/i.test(light.name)?"panel":/strip|streifen|bar|leiste/i.test(light.name)?"strip":/moving/i.test(light.name)?"moving":/strobo|strobe/i.test(light.name)?"strobe":"par";
+}
+function rawProjection(point){
+ const cy=Math.cos(rigView.yaw),sy=Math.sin(rigView.yaw),y=point.x*sy+point.y*cy;
+ return {x:point.x*cy-point.y*sy,y:y*Math.sin(rigView.pitch)-point.z*Math.cos(rigView.pitch),depth:y*Math.cos(rigView.pitch)+point.z*Math.sin(rigView.pitch)};
+}
+function rigFit(width,height){
+ const size=stageSize(),points=[];
+ for(const x of [-size.width/2,size.width/2])for(const y of [-size.depth/2,size.depth/2])for(const z of [0,3])points.push(rawProjection({x,y,z}));
+ data.lights.forEach((light,index)=>{if(fixturePlaced(light))points.push(rawProjection(rigWorld(light,index)))});
+ const minX=Math.min(...points.map(p=>p.x)),maxX=Math.max(...points.map(p=>p.x)),minY=Math.min(...points.map(p=>p.y)),maxY=Math.max(...points.map(p=>p.y));
+ const scale=Math.max(.01,Math.min((width-150)/Math.max(1,maxX-minX),(height-145)/Math.max(1,maxY-minY)))*rigView.zoom;
+ return {scale,x:(minX+maxX)/2,y:(minY+maxY)/2};
+}
+function projectRig(point,width,height){
+ const p=rawProjection(point),fit=rigFit(width,height);
+ return {x:width/2+(p.x-fit.x)*fit.scale,y:height/2-8+(p.y-fit.y)*fit.scale,scale:1,depth:p.depth};
+}
+
+function rigWorld(light,index,height){
+ const position=fixturePosition(light,index);
+ const size=stageSize();
+ return {x:(position.x-.5)*size.width,y:(position.y-.5)*size.depth,z:height??(Number.isFinite(light.height)?light.height:2.4)};
+}
+function lightScreenPosition(light,index,width,height){
+ if(rigView.mode==="3d")return projectRig(rigWorld(light,index),width,height);
+ const position=fixturePosition(light,index);
+ const size=stageSize();
+ const point=projectTop({x:(position.x-.5)*size.width,y:(position.y-.5)*size.depth},width,height);
+ return {...point,scale:1,depth:0};
+}
+function rigVisualizer(){
+ return '<section class="rig-panel"><div class="row split"><div class="row"><h2>Visualiser</h2><small>'+stageSize().width+' × '+stageSize().depth+' m · Raster 0,5 m</small>'+
+  button("2D","view-2d",flag(rigView.mode==="2d"))+button("3D","view-3d",flag(rigView.mode==="3d"))+
+  '</div><div class="row">'+button("Raster","view-grid",flag(rigView.grid))+button("Namen","view-labels",flag(rigView.labels))+
+  (rigView.mode==="3d"?button("−","view-out",'aria-label="Ansicht verkleinern"')+button("+","view-in",'aria-label="Ansicht vergrößern"')+button("Ansicht zurücksetzen","view-reset"):"")+
+  '</div></div><div class="rig-canvas '+(rigView.mode==="3d"?"perspective":"top-down")+'" aria-label="'+(rigView.mode==="3d"?"Drehbare 3D-Bühnenvorschau":"2D-Bühnenaufbau")+'">'+
+  '<canvas class="stage-drawing" aria-hidden="true"></canvas>'+
+  data.lights.filter(fixturePlaced).map(light=>button('<span class="fixture-shell '+fixtureKind(light)+'"><i></i></span><span class="fixture-label">'+esc(light.name)+'<small>'+esc(deviceTypes[fixtureKind(light)].name)+'</small></span>',
+   "setup-light:"+light.id,'class="rig-light" draggable="'+(tab===4&&rigView.mode==="2d")+'" data-fixture="'+light.id+'" '+flag(setupSelection.has(light.id)))).join("")+
+  (!data.lights.some(fixturePlaced)?'<div class="rig-empty"><div><p>Deine Bühne</p><small>'+(data.lights.length?'Wähle links Lichter aus und füge sie dem Aufbau hinzu.':'Lege zuerst deine Lichter an.')+'</small>'+(!data.lights.length?button("Lichter anlegen","tab:1"):'')+'</div></div>':"")+
+  '</div><div class="row split rig-foot"><small id="rig-caption"></small><small>'+
+  (rigView.mode==="3d"?"Hintergrund ziehen zum Drehen · schematische Lichtvorschau":tab===4?"Ziehen · Einrasten im 0,5-m-Raster":"Schematische Lichtvorschau")+'</small></div></section>';
+}
+function drawStage(step){
+ const viewport=screen.querySelector(".rig-canvas"),canvas=screen.querySelector(".stage-drawing");
+ if(!viewport||!canvas)return;
+ const width=viewport.clientWidth,height=viewport.clientHeight;
+ if(!width||!height)return;
+ const ratio=Math.min(window.devicePixelRatio||1,2);
+ if(canvas.width!==Math.round(width*ratio)||canvas.height!==Math.round(height*ratio)){
+  canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);
+ }
+ const context=canvas.getContext("2d");
+ if(!context)return;
+ context.setTransform(ratio,0,0,ratio,0,0);
+ context.clearRect(0,0,width,height);
+ const background=context.createRadialGradient(width*.5,height*.3,0,width*.5,height*.4,width*.75);
+ background.addColorStop(0,"#241c35");background.addColorStop(1,"#0c0b13");
+ context.fillStyle=background;context.fillRect(0,0,width,height);
+ const project=point=>rigView.mode==="3d"?projectRig(point,width,height):
+  projectTop(point,width,height);
+ function path(points,fill,stroke){
+  context.beginPath();points.forEach((point,index)=>{
+   const p=project(point);if(index)context.lineTo(p.x,p.y);else context.moveTo(p.x,p.y);
+  });context.closePath();
+  if(fill){context.fillStyle=fill;context.fill();}
+  if(stroke){context.strokeStyle=stroke;context.lineWidth=1;context.stroke();}
+ }
+ function line(a,b,color,lineWidth=1){
+  const first=project(a),last=project(b);
+  context.beginPath();context.moveTo(first.x,first.y);context.lineTo(last.x,last.y);
+  context.strokeStyle=color;context.lineWidth=lineWidth;context.stroke();
+ }
+ const size=stageSize(),w=size.width/2,d=size.depth/2;
+ const floor=[{x:-w,y:-d,z:0},{x:w,y:-d,z:0},{x:w,y:d,z:0},{x:-w,y:d,z:0}];
+ path(floor,"#17141f","#71627e");
+ if(rigView.grid){
+  for(let half=1;half<size.width*2;half++){const x=-w+half/2;line({x,y:-d,z:0},{x,y:d,z:0},half%2===0?"#bfa3d82b":"#a995bf16");}
+  for(let half=1;half<size.depth*2;half++){const y=-d+half/2;line({x:-w,y,z:0},{x:w,y,z:0},half%2===0?"#bfa3d82b":"#a995bf16");}
+ }
+ if(rigView.mode==="2d")drawMetreScale(context,width,height);
+
+ const sorted=data.lights.map((light,index)=>({light,index,screen:lightScreenPosition(light,index,width,height)})).filter(item=>fixturePlaced(item.light)).sort((a,b)=>a.screen.depth-b.screen.depth);
+ for(const item of sorted){
+  const {light,index}=item;
+  const value=rigDisplayValue(light,step);
+  if(value.level<=0)continue;
+  const color=value.color;
+  const rgb=[1,3,5].map(offset=>parseInt(color.slice(offset,offset+2),16));
+  const alpha=Math.min(1,value.level/100);
+  const point=rigWorld(light,index),ground=project({...point,z:0});
+  if(rigView.mode==="3d"){
+   const radius=fixtureKind(light)==="panel"?.8:.62;
+   const ring=Array.from({length:24},(_,i)=>({x:point.x+Math.cos(i*Math.PI/12)*radius,y:point.y+Math.sin(i*Math.PI/12)*radius,z:0}));
+   const source=project(point),left=project(ring[6]),right=project(ring[18]);
+   const gradient=context.createLinearGradient(source.x,source.y,ground.x,ground.y);
+   gradient.addColorStop(0,"rgba("+rgb+","+alpha*.28+")");gradient.addColorStop(1,"rgba("+rgb+",0)");
+   context.fillStyle=gradient;context.beginPath();context.moveTo(source.x,source.y);context.lineTo(left.x,left.y);context.lineTo(right.x,right.y);context.closePath();context.fill();
+   path(ring,"rgba("+rgb+","+alpha*.18+")",null);
+  }
+  const radius=(rigView.mode==="3d"?28:45)*rigView.zoom;
+  const glow=context.createRadialGradient(ground.x,ground.y,0,ground.x,ground.y,radius);
+  glow.addColorStop(0,"rgba("+rgb+","+alpha*.28+")");glow.addColorStop(1,"rgba("+rgb+",0)");
+  context.fillStyle=glow;context.fillRect(ground.x-radius,ground.y-radius,radius*2,radius*2);
+ }
+ const audience=project({x:0,y:stageSize().depth/2+.35,z:0});
+ context.fillStyle="#a89bb8";context.textAlign="center";context.font="10px system-ui";
+ context.fillText("PUBLIKUM",audience.x,Math.min(height-10,audience.y));
+}
+function rigDisplayValue(light,step,stored=false){
+ const value=displayValues(light,step.values[light.id]||defaultValue);
+ let color=light.mode==="Dimmer"?"#ffffff":value.color,level=value.level;
+ if(tab===2&&!step.outputEncoded&&!stored)level=level*master/100;
+ if(!stored&&override==="black")level=0;
+ if(!stored&&override==="white"){color="#ffffff";level=master;}
+ return {color,level};
+}
+function paintRig(){
+ const step=visualState();
+ paintPerformanceButtons(step);
+ const viewport=screen.querySelector(".rig-canvas");
+ if(!viewport)return;
+ const width=viewport.clientWidth,height=viewport.clientHeight;
+ const depthOrder=data.lights.map((light,index)=>({id:light.id,depth:lightScreenPosition(light,index,width,height).depth})).sort((a,b)=>a.depth-b.depth).map(item=>item.id);
+ screen.querySelectorAll(".rig-light").forEach(node=>{
+  const index=data.lights.findIndex(light=>light.id===node.dataset.fixture);
+  if(index<0)return;
+  const light=data.lights[index],value=rigDisplayValue(light,step);
+  const position=lightScreenPosition(light,index,width,height);
+  node.style.left=position.x+"px";node.style.top=position.y+"px";
+  node.style.zIndex=String(20+depthOrder.indexOf(light.id));
+  node.style.setProperty("--light-color",value.color);node.style.setProperty("--light-level",Math.round(value.level)+"%");
+  node.style.setProperty("--fixture-scale",Math.min(1.2,Math.max(.5,position.scale))*(rigView.mode==="3d"?.8:1));
+  node.classList.toggle("labels-hidden",!rigView.labels);
+  node.setAttribute("aria-label",light.name+" · "+Math.round(value.level)+" %");
+ });
+ drawStage(step);
+ const caption=document.querySelector("#rig-caption");
+ if(caption)caption.textContent=tab===4?data.lights.filter(fixturePlaced).length+" von "+data.lights.length+" Leuchten im Aufbau":tab===3?"Programmieren · "+(current()?.name||""):"Live · "+(running()?.name||"Kein Preset");
+ const status=document.querySelector("#live-caption");
+ if(status)status.textContent=override==="black"?"Blackout aktiv":override==="white"?"White aktiv":running()?running().name+" · Step "+(stageIndex+1):"Kein Preset aktiv";
+}
+function layoutScreen(){
+ const selected=data.lights.filter(light=>setupSelection.has(light.id)),first=selected[0],size=stageSize();
+ return '<div class="arrangement-workspace"><aside class="panel arrangement-lights"><div class="row split"><h3>Lichter</h3>'+button("+ Licht","tab:1")+'</div>'+
+  groupSelector()+'<div class="row">'+button("Mehrfach","setup-multi",flag(setupMulti))+button("Alle","setup-all")+'</div>'+fixtureInventory(true)+'</aside>'+rigVisualizer()+'<aside class="arrangement-sidebar">'+
+  '<section class="panel"><h3>Grundfläche</h3><form id="stage-size-form"><div class="row"><label class="stack">Breite (m)<input name="width" type="number" min="1" max="50" step="0.5" required value="'+size.width+'"></label>'+
+  '<label class="stack">Tiefe (m)<input name="depth" type="number" min="1" max="50" step="0.5" required value="'+size.depth+'"></label></div><button class="primary">Größe übernehmen</button><small id="stage-error" role="status"></small></form>'+
+  '<small>Raster 0,5 m · Geräte rasten beim Platzieren ein.</small>'+button("Alle am Raster ausrichten","layout-snap")+'</section>'+
+  '<section class="panel"><h3>Aufstellung</h3>'+(first?'<strong>'+esc(selected.length===1?first.name:selected.length+" Lichter ausgewählt")+'</strong>'+
+  '<label class="stack">Darstellung<select id="fixture-type">'+Object.entries(deviceTypes).map(([key,info])=>'<option value="'+key+'" '+(fixtureKind(first)===key?'selected':'')+'>'+info.name+'</option>').join('')+'</select></label>'+
+  '<label>Höhe <input id="fixture-height" type="number" min="0" max="5" step="0.1" value="'+(first.height??2.4)+'"> m</label>'+
+  '<div class="row">'+button("Horizontal verteilen","layout-horizontal",selected.filter(fixturePlaced).length>1?'':'disabled')+button("Vertikal verteilen","layout-vertical",selected.filter(fixturePlaced).length>1?'':'disabled')+'</div><div class="row">'+(selected.some(fixturePlaced)?button('Aus Aufbau entfernen','layout-remove','class="danger-button"'):'')+(selected.some(light=>!fixturePlaced(light))?button('Zum Aufbau hinzufügen','layout-add','class="primary"'):'')+'</div><small>Die Geräte und ihre Szenen bleiben beim Entfernen gespeichert.</small>':
+  '<p class="muted">Licht auswählen und im 2D-Aufbau platzieren.</p>')+'</section></aside></div>';
+}
+
+document.addEventListener("click",event=>{
+ const action=event.target.closest("[data-action]")?.dataset.action;
+ if(action==="view-2d")rigView.mode="2d";
+ else if(action==="view-3d")rigView.mode="3d";
+ else if(action==="view-grid")rigView.grid=!rigView.grid;
+ else if(action==="view-labels")rigView.labels=!rigView.labels;
+ else if(action==="view-in")rigView.zoom=Math.min(2,rigView.zoom+.15);
+ else if(action==="view-out")rigView.zoom=Math.max(.5,rigView.zoom-.15);
+ else if(action==="view-reset")Object.assign(rigView,{yaw:-.4,pitch:.92,zoom:1});
+ else if(action==="layout-horizontal"||action==="layout-vertical"){
+  const lights=data.lights.filter(light=>setupSelection.has(light.id)&&fixturePlaced(light));
+  if(lights.length<2)return;
+  const first=fixturePosition(lights[0],data.lights.indexOf(lights[0]));
+  lights.forEach((light,index)=>{
+   light.position=snapPosition({x:action==="layout-horizontal"?(index+.5)/lights.length:first.x,
+    y:action==="layout-vertical"?(index+.5)/lights.length:first.y});
+  });save();
+ }else return;
+ render();
+});
+document.addEventListener("input",event=>{
+ const field=event.target;
+ if(field.id!=="fixture-type"&&field.id!=="fixture-height")return;
+ if(field.id==="fixture-height"&&(!field.validity.valid||field.value===""))return;
+ data.lights.filter(light=>setupSelection.has(light.id)).forEach(light=>{
+  if(field.id==="fixture-type")light.visualType=field.value;else light.height=Number(field.value);
+ });save();
+ if(field.id==="fixture-type")render();
+});
+screen.addEventListener("pointerdown",event=>{
+ const viewport=event.target.closest(".rig-canvas");
+ if(!viewport||rigView.mode!=="3d"||event.target.closest(".rig-light")||event.button!==0)return;
+ rigView.drag={x:event.clientX,y:event.clientY,yaw:rigView.yaw,pitch:rigView.pitch};
+ viewport.setPointerCapture(event.pointerId);
+});
+screen.addEventListener("pointermove",event=>{
+ if(!rigView.drag)return;
+ rigView.yaw=rigView.drag.yaw+(event.clientX-rigView.drag.x)*.008;
+ rigView.pitch=Math.max(.2,Math.min(1.45,rigView.drag.pitch+(event.clientY-rigView.drag.y)*.008));
+ paintRig();
+});
+screen.addEventListener("pointerup",()=>{rigView.drag=null;});
+screen.addEventListener("pointercancel",()=>{rigView.drag=null;});
+
+let mappingDraft=null,mappingMessage="",performEdit=false,performMessage="";
+const defaultTabNames={"1":"Lichter anlegen","4":"Aufbau","3":"Szenen programmieren","2":"Perform","6":"Art-Net Mapping","7":"DMX Mapping"};
+const allBanks=()=>[...new Set([...(data.banks||[]),...data.scenes.map(bankName)])];
+function mappingDefaults(){return {dmx:{enabled:false,passthrough:false,routes:[]},artnet:{enabled:false,passthrough:false,routes:[]}};}
+function validateMapping(input){
+ const result=mappingDefaults();
+ if(!input||typeof input!=="object")throw new Error("Ungültiges Mapping.");
+ for(const kind of ["dmx","artnet"]){
+  const table=input[kind]||result[kind];
+  if(!table||!Array.isArray(table.routes))throw new Error("Ungültige Mapping-Zeilen.");
+  const used=new Set();
+  result[kind].enabled=table.enabled===true;result[kind].passthrough=table.passthrough===true;
+  result[kind].routes=table.routes.map(route=>{
+   const next={};
+   for(const key of ["sourceChannel","targetChannel","count"]){
+    const value=route[key];
+    if(!Number.isInteger(value)||value<1||value>512)throw new Error("Kanäle und Länge müssen zwischen 1 und 512 liegen.");
+    next[key]=value;
+   }
+   if(next.sourceChannel+next.count>513||next.targetChannel+next.count>513)throw new Error("Ein Kanalbereich endet hinter Kanal 512.");
+   if(kind==="artnet"){
+    for(const key of ["sourceUniverse","targetUniverse"]){
+     if(!Number.isInteger(route[key])||route[key]<0||route[key]>32767)throw new Error("Portadressen müssen zwischen 0 und 32767 liegen.");
+     next[key]=route[key];
+    }
+    const ip=route.sourceIP||"";
+    if(typeof ip!=="string"||(ip!==""&&(!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)||ip.split(".").some(part=>Number(part)>255))))throw new Error("Ungültige Sender-IP.");
+    next.sourceIP=ip;
+   }
+   for(let index=0;index<next.count;index++){
+    const slot=(next.targetUniverse||0)+":"+(next.targetChannel+index);
+    if(used.has(slot))throw new Error("Zielkanäle innerhalb einer Tabelle überschneiden sich.");
+    used.add(slot);
+   }
+   return next;
+  });
+ }
+ return result;
+}
+function mappingScreen(kind){
+ if(!mappingDraft)mappingDraft=copy(data.mapping||mappingDefaults());
+ const table=mappingDraft[kind],artnet=kind==="artnet";
+ const field=(index,key,value,max)=>'<input type="number" min="'+(key.includes("Universe")?0:1)+'" max="'+max+'" data-map-kind="'+kind+'" data-map-index="'+index+'" data-map-field="'+key+'" value="'+value+'" aria-label="'+key+'">';
+ return '<div class="wrap"><section class="panel"><div class="row split"><h2>'+ (artnet?"Art-Net Mapping":"DMX Mapping")+'</h2>'+
+  '<label><input type="checkbox" data-map-toggle="'+kind+'" '+checked(table.enabled)+'> Mapping aktivieren</label></div>'+
+  '<p class="muted">'+(artnet?"Leite eingehende Art-Net-Daten auf andere Universen oder Kanalbereiche deines eingestellten Nodes weiter. Net/Sub-Net/Universe werden als Portadresse 0–32767 angegeben.":"Ordne die 512 internen Show-Kanäle anderen Ausgangskanälen zu. Die Geräteadressen im Patch bleiben die internen Quelladressen.")+'</p>'+
+  (artnet?'<small>Portadresse = Net × 256 + Sub-Net × 16 + Universum. Zugeordnete Eingangskanäle haben Vorrang vor der lokalen Show. Nach 2,5 Sekunden ohne Eingang werden diese Kanäle null.</small>':
+   '<label><input type="checkbox" id="map-passthrough" '+checked(table.passthrough)+'> Nicht zugeordnete Kanäle 1:1 übernehmen</label>')+
+  '<div class="mapping-scroll"><table class="mapping-table"><thead><tr>'+(artnet?'<th>Sender-IP (optional)</th><th>Quell-Portadresse</th>':"")+
+  '<th>Quellkanal</th><th>Länge</th>'+(artnet?'<th>Ziel-Portadresse</th>':"")+'<th>Zielkanal</th><th></th></tr></thead><tbody>'+
+  table.routes.map((route,index)=>'<tr>'+(artnet?'<td><input placeholder="Alle Sender" data-map-kind="artnet" data-map-index="'+index+'" data-map-field="sourceIP" value="'+esc(route.sourceIP)+'"></td><td>'+field(index,"sourceUniverse",route.sourceUniverse,32767)+'</td>':"")+
+   '<td>'+field(index,"sourceChannel",route.sourceChannel,512)+'</td><td>'+field(index,"count",route.count,512)+'</td>'+
+   (artnet?'<td>'+field(index,"targetUniverse",route.targetUniverse,32767)+'</td>':"")+'<td>'+field(index,"targetChannel",route.targetChannel,512)+'</td><td>'+button("Entfernen","map-remove:"+kind+"-"+index)+'</td></tr>').join("")+
+  '</tbody></table></div><div class="row">'+button("Zuordnung hinzufügen","map-add:"+kind)+button("Speichern & anwenden","map-apply",'class="primary"')+
+  button("Gespeicherten Stand laden","map-reset")+'</div><p role="status" id="mapping-message">'+esc(mappingMessage)+'</p>'+
+  '<small id="mapping-status">'+(outputState.received||0)+' Eingangspakete · '+outputState.packets+' Ausgangspakete</small><small>Alle Art-Net-Ziele verwenden den Node und die Netzwerkschnittstelle aus dem Reiter Art-Net.</small></section></div>';
+}
+function performanceNumber(scene){
+ if(Number.isInteger(scene.buttonNumber))return scene.buttonNumber;
+ const used=new Set(data.scenes.filter(item=>Number.isInteger(item.buttonNumber)).map(item=>item.buttonNumber));
+ for(const item of data.scenes){if(Number.isInteger(item.buttonNumber))continue;let number=1;while(used.has(number))number++;if(item.id===scene.id)return number;used.add(number);}
+ return 1;
+}
+function performanceCell(item){
+   const color=item.buttonColor||Object.values(item.steps[0]?.values||{}).find(value=>value.level>0)?.color||"#ae8bdd";
+   return '<div class="performance-item"><div class="performance-face">'+button('<span class="selection-badge" aria-hidden="true">'+(performQueue.has(item.id)?[...performQueue].indexOf(item.id)+1:'')+'</span><span class="performance-number">'+performanceNumber(item)+'</span>'+
+    '<small class="scene-card-status">'+(item.id===active?"Aktiv · ":"")+item.steps.length+' Steps</small>',"play:"+item.id,
+    'aria-label="Performance '+performanceNumber(item)+' · '+esc(item.buttonName||item.name)+'" title="'+esc(item.buttonName||item.name)+'" class="tile '+(performSelectOnly?'selection-edit':'')+'" draggable="'+!performSelectOnly+'" data-scene="'+item.id+'" style="--scene-color:'+color+';--tint:color-mix(in srgb,'+color+' 20%,#191923)" '+flag(performQueue.has(item.id)))+
+    fieldOptions("preset",item.id,item.buttonName||item.name)+'</div>'+renameEditor("preset",item.id,item.buttonName||item.name)+performanceColorEditor(item)+'</div>';
+  }
+function emptyPerformanceCell(number,scene){
+ return '<div class="performance-item"><div class="performance-face">'+button('<span class="performance-number">'+number+'</span>',scene?'slot-edit:'+scene.id:'slot-create:'+number,
+  'class="tile empty-performance" aria-label="Button '+number+' programmieren" title="'+esc(scene?.name||'Neue Szene programmieren')+'"')+'</div></div>';
+}
+function performanceGrid(){
+ const visible=data.scenes.filter(scene=>!bankFilter||bankName(scene)===bankFilter),used=new Set(data.scenes.map(performanceNumber)),cells=[];
+ const target=Math.max(48,Math.ceil(visible.length/8)*8);
+ for(let number=1;cells.length<target;number++){
+  const scene=visible.find(item=>performanceNumber(item)===number);
+  if(scene)cells.push(scene.live?performanceCell(scene):emptyPerformanceCell(number,scene));
+  else if(!used.has(number))cells.push(emptyPerformanceCell(number));
+ }
+ return cells.join('');
+}
+function createPerformanceSlot(number){
+ const existing=data.scenes.find(scene=>performanceNumber(scene)===number);
+ const scene=existing||{id:uid(),buttonNumber:number,name:'Szene '+number,buttonName:'Szene '+number,bank:bankFilter||'Allgemein',live:false,loop:true,steps:[newStep()]};
+ if(!existing)data.scenes.push(scene);stopPreview();editing=scene.id;stepIndex=0;tab=3;loadSetupStep();save();
+}
+function performanceScreen(){
+ const banks=allBanks();
+ if(bankFilter&&!banks.includes(bankFilter))bankFilter="";
+ return '<div class="workspace perform-workspace"><section class="panel bank-list"><div class="row split"><h3>Banks</h3>'+button("+","bank-create",'aria-label="Bank hinzufügen"')+'</div>'+
+  '<div class="list">'+button("Alle","bank-all",flag(!bankFilter))+banks.map((name,index)=>
+   '<div class="bank-field"><div class="bank-field-row">'+button(esc(name),"perform-bank:"+index,flag(name===bankFilter))+
+    fieldOptions("bank",index,name)+'</div>'+renameEditor("bank",index,name)+'</div>').join("")+'</div></section>'+
+  '<section class="panel performance-panel"><div class="row split"><h3>Performance Buttons</h3><div class="row">'+button(performSelectOnly?'Auswahl fertig':'Mehrere auswählen','playback-edit',flag(performSelectOnly))+'<small>'+performQueue.size+' ausgewählt</small></div></div>'+
+  '<div class="grid">'+performanceGrid()+'</div><p role="status">'+esc(performMessage)+'</p>'+
+  '<details><summary>Reiternamen ändern</summary><div class="row">'+Object.entries(defaultTabNames).map(([index,name])=>'<label class="stack">'+name+
+   '<input data-tab-name="'+index+'" value="'+esc(data.tabNames?.[index]||name)+'"></label>').join("")+'</div></details></section></div>';
+}
+function programmingScreen(){
+ const scene=current(),selected=data.lights.filter(light=>setupSelection.has(light.id)),step=setupDraft||newStep();
+ return '<div class="program-workspace"><aside class="program-sidebar"><section class="panel fixture-panel"><div class="row split"><h3>Lichter</h3>'+button("+ Licht","tab:1")+'</div>'+groupSelector()+
+  '<div class="row">'+button("Alle","setup-all")+button("Keine","selection-clear")+'</div>'+fixtureInventory(false)+
+  '<details class="group-details"><summary>Gruppen bearbeiten</summary>'+groupEditor(selected)+'</details></section>'+
+  '<section class="panel"><h3>Farbe der Auswahl</h3>'+(selected.length?setupControls(selected):'<p class="muted">Lichter links oder im Visualiser auswählen.</p>')+'</section></aside>'+
+  '<div class="program-center">'+rigVisualizer()+setupSteps(scene)+'</div>'+
+  '<aside class="program-settings"><section class="panel preset-edit"><h3>Szene</h3>'+presetChooser("control-scene")+
+  (scene?'<label class="stack">Name<input id="control-name" value="'+esc(scene.name)+'"></label>':'')+
+  '<div class="row">'+button("Neue Szene","new-scene")+button("Duplizieren","copy-scene",scene?'':'disabled')+'</div>'+
+  '<label><input id="control-loop" type="checkbox" '+checked(scene?.loop)+'> Steps wiederholen</label></section>'+
+  '<section class="panel timing-panel"><h3>Step-Zeiten</h3><label class="stack">Überblendzeit (s)<input id="program-fade" type="number" min="0" max="120" step="0.1" value="'+step.fade+'"></label>'+
+  '<label class="stack">Haltezeit (s)<input id="program-hold" type="number" min="0.1" max="120" step="0.1" value="'+step.hold+'"></label>'+
+  '<label>Beats <input id="program-beats" type="number" min="1" max="32" value="'+(step.beats||1)+'"></label>'+
+  '<label><input id="program-darkAfter" type="checkbox" '+checked(step.darkAfter)+'> Danach dunkel</label>'+
+  '<label>Dunkelzeit <input id="program-darkHold" type="number" min="0.1" max="120" step="0.05" value="'+(step.darkHold??.25)+'"> s</label></section>'+
+  '<section class="panel publish-panel"><h3>In Perform speichern</h3>'+(scene?'<form id="publish-form"><label class="stack">Bank<input name="bank" list="bank-options" required value="'+esc(bankName(scene))+'"></label>'+
+  '<datalist id="bank-options">'+allBanks().map(name=>'<option value="'+esc(name)+'"></option>').join("")+'</datalist>'+
+  '<label class="stack">Name der Taste<input name="buttonName" required value="'+esc(scene.buttonName||scene.name)+'"></label><button class="primary">In Perform speichern</button>'+
+  '<p role="status" id="publish-notice"></p></form>':'')+'</section></aside></div>';
+}
+document.addEventListener("input",event=>{
+ const field=event.target;
+ if(field.id?.startsWith("program-")){
+  if(field.type==="checkbox"){setProgramTiming(field.id.slice(8),field.checked);return;}
+  if(!field.validity.valid||!field.value)return;
+  setProgramTiming(field.id.slice(8),Number(field.value));return;
+ }
+ if(field.dataset.mapField){
+  const route=mappingDraft[field.dataset.mapKind].routes[Number(field.dataset.mapIndex)];
+  route[field.dataset.mapField]=field.dataset.mapField==="sourceIP"?field.value.trim():Number(field.value);
+  mappingMessage="";
+ }else if(field.dataset.mapToggle)mappingDraft[field.dataset.mapToggle].enabled=field.checked;
+ else if(field.id==="map-passthrough")mappingDraft.dmx.passthrough=field.checked;
+ else if(field.dataset.buttonName){
+  const scene=data.scenes.find(item=>item.id===field.dataset.buttonName);
+  if(scene){scene.buttonName=field.value.trim()||scene.name;
+   const tile=document.querySelector('[data-action="play:'+scene.id+'"]');
+   if(tile?.firstChild)tile.firstChild.nodeValue=scene.buttonName;
+   save();}
+ }else if(field.dataset.tabName){
+  (data.tabNames??={})[field.dataset.tabName]=field.value.trim()||defaultTabNames[field.dataset.tabName];
+  const tabButton=document.querySelector('[data-action="tab:'+field.dataset.tabName+'"]');
+  if(tabButton)tabButton.textContent=data.tabNames[field.dataset.tabName];
+  save();
+ }
+});
+document.addEventListener("click",async event=>{
+ const command=event.target.closest("[data-action]")?.dataset.action;
+ if(!command)return;
+ const [action,arg]=command.split(":");
+ if(action==="perform-edit")performEdit=!performEdit;
+ else if(action==="bank-create"){
+  const banks=allBanks();let index=1;
+  while(banks.includes("Neue Bank "+index))index++;
+  const name="Neue Bank "+index;
+  data.banks=[...banks,name];bankFilter=name;renameField="bank:"+allBanks().indexOf(name);renameNotice="";save();
+ }else if(action==="map-add"){
+  mappingDraft??=copy(data.mapping||mappingDefaults());
+  const routes=mappingDraft[arg].routes;
+  const last=routes[routes.length-1];
+  const channel=last?Math.min(512,last.targetChannel+last.count):1;
+  routes.push({sourceChannel:channel,targetChannel:channel,count:1,...(arg==="artnet"?{sourceIP:"",sourceUniverse:0,targetUniverse:0}:{})});
+  mappingMessage="";
+ }else if(action==="map-remove"){
+  const [kind,index]=arg.split("-");mappingDraft[kind].routes.splice(Number(index),1);mappingMessage="";
+ }else if(action==="map-reset"){mappingDraft=copy(data.mapping||mappingDefaults());mappingMessage="Gespeicherter Stand geladen.";}
+ else if(action==="map-apply"){
+  try{
+   const next=validateMapping(mappingDraft);
+   if(nativeAvailable&&outputState.enabled)updateOutputStatus(await nativeRequest("/api/mapping",{mapping:next}));
+   data.mapping=next;save();mappingMessage=storageError?"Speichern fehlgeschlagen.":"Mapping gespeichert"+(outputState.enabled?" und angewendet.":". Wird beim Start der Art-Net-Ausgabe angewendet.");
+  }catch(error){mappingMessage=error.message;}
+ }else return;
+ render();
+});
+document.addEventListener("submit",event=>{
+ const form=event.target;
+ if(form.id==="publish-form"){
+  event.preventDefault();
+  const values=new FormData(form),scene=current();
+  const bank=values.get("bank").trim(),name=values.get("buttonName").trim();
+  if(!bank||!name)return;
+  // Explicitly save the edited step together with its performance assignment.
+  scene.steps=scene.steps.length?scene.steps.map(step=>copy(setupDrafts.get(step)||step)):[copy(setupDraft)];
+  scene.bank=bank;scene.buttonName=name;scene.live=true;data.banks=[...new Set([...allBanks(),bank])];
+  loadSetupStep();save();render();
+  document.querySelector("#publish-notice").textContent=storageError?"Speichern fehlgeschlagen.":"Gespeichert in „"+bank+"“.";
+ }else if(form.dataset.bankIndex!==undefined){
+  event.preventDefault();
+  const banks=allBanks(),oldName=banks[Number(form.dataset.bankIndex)],name=new FormData(form).get("bankName").trim();
+  if(!name)return;
+  if(name!==oldName&&banks.includes(name)){performMessage="Eine Bank mit diesem Namen existiert bereits.";render();return;}
+  data.scenes.filter(scene=>bankName(scene)===oldName).forEach(scene=>scene.bank=name);
+  data.banks=banks.map(bank=>bank===oldName?name:bank);
+  if(bankFilter===oldName)bankFilter=name;
+  performMessage="Bankname gespeichert.";save();render();
+ }
+});
+function render(){
+ if(tab===3&&(!setupDraft||(current()?.steps[stepIndex]&&setupDrafts.get(current().steps[stepIndex])!==setupDraft)))loadSetupStep();
+ document.querySelector("#tabs").innerHTML=[1,4,3,2,6,7].map(index=>
+  button(esc(data.tabNames?.[index]||defaultTabNames[index]),"tab:"+index,flag(index===tab))).join("");
+ document.querySelector("#status").textContent=storageError?"Speichern nicht verfügbar":connectionStatus();
+ let body;
+ if(tab===4)body=layoutScreen();
+ else if(tab===3)body=programmingScreen();
+ else if(tab===2)body=performanceScreen();
+ else if(tab===6||tab===7)body=mappingScreen(tab===6?"artnet":"dmx");
+ else if(tab===1)body=lights();
+ else body=connection();
+ screen.classList.toggle("programming-view",tab===3);
+ screen.classList.toggle("arrangement-view",tab===4);
+  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+body+'<div class="playback-footer">'+playbackControls()+'</div></div>'+masterPanel()+'</div>':body;
+ paintRig();
+}
+
+let renameField=null,renameNotice="";
+function fieldOptions(kind,id,label){
+ const key=kind+":"+id;
+ return '<details class="field-options"><summary aria-label="Optionen für '+esc(label)+'" title="Optionen">⋯</summary><div class="field-menu">'+
+  button("Umbenennen","field-rename:"+key)+(kind==="preset"?button("Buttonfarbe","preset-color:"+id):"")+'</div></details>';
+}
+function renameEditor(kind,id,label){
+ if(renameField!==kind+":"+id)return "";
+ return '<form class="field-rename-form" data-field-kind="'+kind+'" data-field-id="'+id+'">'+
+  '<input name="label" required aria-label="Neuer Name" value="'+esc(label)+'"><div class="row"><button class="primary">Speichern</button>'+
+  button("Abbrechen","field-cancel")+'</div><small role="status">'+esc(renameNotice)+'</small></form>';
+}
+function validateStage(stage){
+ if(stage===undefined)return {width:12,depth:8};
+ if(!stage||![stage.width,stage.depth].every(value=>Number.isFinite(value)&&value>=1&&value<=50&&Number.isInteger(value*2)))throw new Error("Die Grundfläche muss zwischen 1 und 50 m liegen, in 0,5-m-Schritten.");
+ return {width:stage.width,depth:stage.depth};
+}
+function stageSize(){try{return validateStage(data.stage)}catch{return {width:12,depth:8}}}
+function snapPosition(position){
+ const size=stageSize();
+ return {x:Math.max(0,Math.min(size.width,Math.round(position.x*size.width*2)/2))/size.width,
+  y:Math.max(0,Math.min(size.depth,Math.round(position.y*size.depth*2)/2))/size.depth};
+}
+function stageMetrics(width,height){
+ const size=stageSize(),unit=Math.max(.01,Math.min((width-130)/size.width,(height-140)/size.depth));
+ return {unit,left:(width-size.width*unit)/2,top:(height-size.depth*unit)/2+5,width:size.width*unit,height:size.depth*unit};
+}
+function projectTop(point,width,height){
+ const stage=stageMetrics(width,height),size=stageSize();
+ return {x:stage.left+(point.x+size.width/2)*stage.unit,y:stage.top+(point.y+size.depth/2)*stage.unit};
+}
+function drawMetreScale(context,width,height){
+ const stage=stageMetrics(width,height),size=stageSize();
+ context.strokeStyle="#8f7aa7";context.lineWidth=1;context.fillStyle="#cdbbdf";context.font="10px system-ui";
+ function axis(length,horizontal){
+  context.textAlign=horizontal?"center":"right";context.textBaseline=horizontal?"alphabetic":"middle";context.beginPath();
+  for(let half=0;half<=length*2;half++){
+   const metre=half/2,pixel=metre*stage.unit,major=half%2===0;
+   if(horizontal){context.moveTo(stage.left+pixel,stage.top-15);context.lineTo(stage.left+pixel,stage.top-(major?8:11));}
+   else{context.moveTo(stage.left-15,stage.top+pixel);context.lineTo(stage.left-(major?8:11),stage.top+pixel);}
+   const spacing=Math.max(.5,Math.ceil(38/stage.unit*2)/2);
+   if(metre===0||metre===length||Math.abs(metre/spacing-Math.round(metre/spacing))<.001){
+    const label=String(metre).replace('.',',')+(metre===0||metre===length?' m':'');
+    context.fillText(label,horizontal?stage.left+pixel:stage.left-21,horizontal?stage.top-23:stage.top+pixel);
+   }
+  }context.stroke();
+ }
+ axis(size.width,true);axis(size.depth,false);context.textBaseline="alphabetic";context.textAlign="center";
+}
+function automaticLightPosition(){
+ const size=stageSize(),cols=Math.max(1,size.width*2-1),rows=Math.max(1,size.depth*2-1);
+ const occupied=new Set(data.lights.map((light,index)=>({light,index})).filter(item=>fixturePlaced(item.light)).map(({light,index})=>{const p=fixturePosition(light,index);return Math.round(p.x*size.width*2)+':'+Math.round(p.y*size.depth*2)}));
+ for(let row=1;row<=rows;row++)for(let col=1;col<=cols;col++)if(!occupied.has(col+':'+row))return {x:col/2/size.width,y:row/2/size.depth};
+ return snapPosition({x:.5,y:.5});
+}
+function fixtureInventory(draggable){
+ return '<div class="fixture-inventory" aria-label="Lichter auswählen">'+data.lights.map(light=>button(deviceSymbol(fixtureKind(light))+'<strong>'+esc(light.name)+'</strong><small>DMX '+light.address+'</small>'+(!fixturePlaced(light)?'<small class="unplaced-status">Nicht im Aufbau</small>':''),
+  'setup-light:'+light.id,'class="inventory-fixture" draggable="'+draggable+'" data-fixture="'+light.id+'" '+flag(setupSelection.has(light.id)))).join('')+'</div>';
+}
+let deleteCandidate=null;
+function removeFixture(id){
+ stopPreview();
+ if(active){clearTimeout(timer);active=null;liveSnapshot=null;outputStep=null;performQueue.clear();darkenOutput();}
+ for(const group of data.masterGroups||[])group.ids=group.ids.filter(item=>item!==id);
+ for(const scene of data.scenes){
+  for(const step of scene.steps){delete step.values[id];const draft=setupDrafts.get(step);if(draft)delete draft.values[id];}
+  for(const layer of scene.effects||[])if(layer.ids?.includes(id)){layer.ids=layer.ids.filter(item=>item!==id);if(!layer.ids.length)layer.enabled=false;}
+ }
+ if(setupDraft?.values)delete setupDraft.values[id];
+ data.lights=data.lights.filter(light=>light.id!==id);setupSelection.delete(id);
+ if(fixture===id){fixture=null;fixtureDraft=null;fixtureDraftKey=null;}
+ if(stepUndo)stepUndo=null;
+ save();
+}
+function updateStage(width,depth){
+ data.stage=validateStage({width,depth});
+ data.lights.forEach(light=>{if(light.position)light.position=snapPosition(light.position)});save();
+}
+
+function paintPerformanceButtons(step){
+ if(tab!==2)return;
+ screen.querySelectorAll(".performance-item .tile").forEach(tile=>{
+  const id=tile.dataset.scene,scene=data.scenes.find(item=>item.id===id);
+  if(!scene)return;
+  const isActive=id===active;
+  const shown=isActive?step:scene.steps[0];
+  const looks=data.lights.map(light=>rigDisplayValue(light,shown||newStep(),!isActive));
+  const lit=looks.filter(value=>value.level>0);
+  const colors=[...new Set(lit.map(value=>value.color))].slice(0,8);
+  const level=lit.length?Math.max(...lit.map(value=>value.level))/100:0;
+  const gradient=colors.length>1?"linear-gradient(125deg,"+colors.join(",")+")":colors[0]||"#292432";
+  tile.style.setProperty("--button-colors",!isActive&&scene.buttonColor?scene.buttonColor:gradient);
+  tile.style.setProperty("--scene-color",scene.buttonColor||colors[0]||"#54455f");
+  tile.style.setProperty("--button-level",String(isActive?level*.7:(scene.buttonColor?.45:level*.3)));
+  tile.setAttribute("aria-pressed",String(performQueue.has(id)));
+  tile.classList.toggle("is-playing",isActive);
+  tile.classList.toggle("selection-edit",performSelectOnly);
+  const badge=tile.querySelector(".selection-badge");if(badge)badge.textContent=performQueue.has(id)?[...performQueue].indexOf(id)+1:"";
+  const status=tile.querySelector(".scene-card-status");
+  if(status)status.textContent=performSelectOnly?(performQueue.has(id)?"Auswahl "+([...performQueue].indexOf(id)+1):scene.steps.length+" Steps"):isActive?"Läuft · Step "+(stageIndex+1)+" / "+scene.steps.length:performQueue.has(id)?"Ausgewählt · Wiederholung":scene.steps.length+" Steps";
+ });
+}
+document.addEventListener("click",event=>{
+ const command=event.target.closest("[data-action]")?.dataset.action;
+ if(!command)return;
+ if(command.startsWith("field-rename:")){
+  renameField=command.slice("field-rename:".length);renameNotice="";
+ }else if(command==="field-cancel"){renameField=null;renameNotice="";}
+ else return;
+ render();
+ const input=screen.querySelector(".field-rename-form input");
+ if(input){input.focus();input.select();}
+});
+document.addEventListener("submit",event=>{
+ const form=event.target;
+ if(!form.classList.contains("field-rename-form"))return;
+ event.preventDefault();
+ const label=new FormData(form).get("label").trim();
+ if(!label)return;
+ if(form.dataset.fieldKind==="preset"){
+  const scene=data.scenes.find(item=>item.id===form.dataset.fieldId);
+  if(!scene)return;
+  scene.buttonName=label;
+ }else{
+  const banks=allBanks(),old=banks[Number(form.dataset.fieldId)];
+  if(label!==old&&banks.includes(label)){renameNotice="Dieser Bankname wird bereits verwendet.";render();return;}
+  data.scenes.filter(scene=>bankName(scene)===old).forEach(scene=>scene.bank=label);
+  data.banks=banks.map(bank=>bank===old?label:bank);
+  if(bankFilter===old)bankFilter=label;
+ }
+ renameField=null;renameNotice="";save();render();
+});
+
+let stepUndo=null,groupNotice="",stepSelectionScene=null;
+const selectedStepRefs=new Set();
+const quickColors=[['Weiß','#ffffff'],['Rot','#ff2424'],['Gelb','#ffdf22'],['Grün','#2bdd55'],['Blau','#326bff'],['Violett','#a05bff']];
+function programColorChoices(){return [...new Set([...(data.selectedColors||[]),...quickColors.map(item=>item[1])])].slice(0,6);}
+function rememberPickedColor(color){
+ if(!/^#[0-9a-f]{6}$/i.test(color))return;
+ data.selectedColors=[...new Set([color.toLowerCase(),...(data.selectedColors||[])])].slice(0,6);save();
+ const palette=screen.querySelector('.quick-colors');if(palette)palette.outerHTML=quickColorPalette(data.lights.filter(light=>setupSelection.has(light.id)));
+}
+function quickColorPalette(lights){
+ const colorLights=lights.filter(light=>channelMap(light).some(channel=>['R','G','B','W'].includes(channel))),first=colorLights[0],color=first?setupValue(first).color:null;
+ const same=colorLights.every(light=>setupValue(light).color===color);
+ return '<div class="quick-colors" aria-label="Letzte sechs Farben">'+programColorChoices().map(hex=>{
+  const name=quickColors.find(item=>item[1]===hex)?.[0]||hex;
+  return button('<i></i><span>'+name+'</span>','setup-recent:'+hex,'class="quick-color" style="--quick-color:'+hex+'" title="'+name+'" aria-label="'+name+'" '+flag(same&&color?.toLowerCase()===hex)+(previewIndex!==null?' disabled':''));
+ }).join('')+'</div>';
+}
+function groupEditor(selected){
+ const groups=[...new Set(data.lights.map(light=>light.group).filter(Boolean))];
+ const names=[...new Set(selected.map(light=>light.group||""))];
+ const name=names.length===1?names[0]:"";
+ return '<form id="light-group-form" class="group-editor"><label class="stack">Gruppe der Auswahl'+
+  '<input name="groupName" list="light-group-names" maxlength="60" placeholder="z. B. Wolken oder Frontlicht" value="'+esc(name)+'"></label>'+
+  '<datalist id="light-group-names">'+groups.map(group=>'<option value="'+esc(group)+'"></option>').join("")+'</datalist>'+
+  '<small>'+selected.length+' Lichter ausgewählt</small><button '+(selected.length?'':'disabled')+'>Gruppe zuweisen</button>'+
+  button("Aus Gruppe nehmen","group-unassign",selected.length?'':'disabled')+
+  '<small id="group-notice" role="status">'+esc(groupNotice)+'</small></form>';
+}
+document.addEventListener("submit",event=>{
+ if(event.target.id!=="light-group-form")return;
+ event.preventDefault();
+ const name=new FormData(event.target).get("groupName").trim();
+ const selected=data.lights.filter(light=>setupSelection.has(light.id));
+ if(!name){groupNotice="Bitte einen Gruppennamen eingeben.";render();return;}
+ if(!selected.length)return;
+ selected.forEach(light=>light.group=name);save();
+ groupNotice=storageError?"Speichern fehlgeschlagen.":"Gruppe „"+name+"“ mit "+selected.length+" Lichtern gespeichert.";
+ render();
+});
+document.addEventListener("click",event=>{
+ if(event.target.closest("[data-action]")?.dataset.action!=="group-unassign")return;
+ data.lights.filter(light=>setupSelection.has(light.id)).forEach(light=>light.group="");
+ save();groupNotice="Auswahl aus den Gruppen genommen.";render();
+});
+
+const performQueue=new Set();
+function repeatScenes(){
+ return [...performQueue].map(id=>data.scenes.find(scene=>scene.id===id)).filter(scene=>scene?.live&&scene.steps.length);
+}
+function togglePerformScene(id){
+ const scene=data.scenes.find(item=>item.id===id);
+ if(!scene?.steps.length)return;
+ auto=false;
+ if(performQueue.has(id))performQueue.delete(id);else performQueue.add(id);
+ shuffleBag=[];
+ if(performSelectOnly)return;
+ const scenes=repeatScenes();
+ if(!scenes.length){
+  clearTimeout(timer);active=null;liveSnapshot=null;outputStep=null;
+ }else if(!performQueue.has(active)||!running())play(nextPerformScene(null,true).id);
+}
+function resetSelectedLights(){
+ if(previewIndex!==null)return;
+ for(const light of data.lights){
+  if(!setupSelection.has(light.id))continue;
+  setupDraft.values[light.id]={color:"#000000",level:0,channels:Object.fromEntries(channelMap(light).map((_,index)=>[index,0]))};
+ }
+ setupNotice="Auswahl vollständig auf null.";
+}
+let updateInfo=null,updateBusy=false;
+function updatePanel(){
+ const info=updateInfo||{};
+ const pending=Number(info.version)>Number(info.runningVersion);
+ const message=info.state==="unavailable"||info.state==="error"?info.message:
+  pending?"Version "+info.version+" ist geladen. Speichere deine Szenen und öffne NullLight erneut.":
+  info.runningVersion?"Version "+info.runningVersion+" ist aktuell.":"Der Update-Status wird beim Start der Mac-App geprüft.";
+ return '<section class="panel"><h3>Automatische Updates</h3><p role="status">'+esc(message)+'</p>'+
+  '<p class="muted">NullLight prüft beim Start und alle 15 Minuten den lokalen Projektordner. Neue Versionen werden geprüft und für den nächsten Start bereitgestellt.</p>'+
+  '<div class="row">'+button(updateBusy?"Updates werden geprüft…":"Jetzt nach Updates suchen","updates-check",(!nativeAvailable||updateBusy?'disabled':'')+' class="primary"')+'</div>'+
+  (info.source?'<details><summary>Update-Quelle</summary><small style="overflow-wrap:anywhere">'+esc(info.source)+'</small></details>':"")+
+  (!nativeAvailable?'<small>Automatische Updates sind in der Mac-App verfügbar.</small>':"")+'</section>';
+}
+async function checkUpdates(){
+ if(!nativeAvailable||updateBusy)return;
+ updateBusy=true;
+ try{updateInfo=await nativeRequest("/api/update/check",{},10000);}
+ catch(error){updateInfo={...(updateInfo||{}),state:"error",message:error.message};}
+ finally{updateBusy=false;if(tab===0)render();}
+}
+document.addEventListener("click",event=>{
+ const action=event.target.closest("[data-action]")?.dataset.action;
+ if(action==="updates-open"){tab=0;render();}
+ else if(action==="updates-check")checkUpdates();
+});
+setInterval(checkUpdates,15*60*1000);
+
+let fixtureDraft=null,fixtureDraftKey=null,deviceMessage="",deviceBusy=false,deviceProposal=null,deviceDescription="";
+let playbackDark=false,previewDark=false;
+const deviceTypes={
+ panel:{name:"LED-Panel",mapping:"R,G,B,W",height:2.4},
+ par:{name:"PAR-Scheinwerfer",mapping:"R,G,B",height:2.4},
+ strobe:{name:"Strobo",mapping:"D",height:2.4},
+ moving:{name:"Moving Head",mapping:"",height:.4},
+ strip:{name:"LED-Streifen",mapping:"R,G,B",height:.1}
+};
+function deviceSymbol(type){
+ return '<span class="device-symbol" aria-hidden="true"><span class="fixture-shell '+type+'"><i></i></span></span>';
+}
+function deviceMode(mapping){
+ const map=mapping.split(",").map(channel=>channel.trim().toUpperCase()).join(",");
+ return map==="D"?"Dimmer":map==="R,G,B"?"RGB":map==="R,G,B,W"?"RGBW":"Eigenes Profil";
+}
+function prepareFixtureDraft(light){
+ const type=fixtureKind(light||{name:"PAR"});
+ fixtureDraft={name:light?.name||"",group:light?.group||"",address:light?.address??"",visualType:type,
+  mapping:light?channelMap(light).join(","):deviceTypes[type].mapping,mode:light?.mode||deviceMode(deviceTypes[type].mapping)};
+ fixtureDraftKey=fixture;deviceMessage="";deviceProposal=null;
+}
+function captureFixtureForm(){
+ const form=document.querySelector("#light-form");
+ if(!form)return;
+ const values=new FormData(form);
+ fixtureDraft={name:values.get("name"),group:values.get("group"),address:values.get("address"),
+  visualType:values.get("visualType"),mapping:values.get("mapping"),mode:values.get("mode")};
+}
+function lights(){
+ const light=data.lights.find(item=>item.id===fixture);
+ if(fixture&&(!fixtureDraft||fixtureDraftKey!==fixture))prepareFixtureDraft(light);
+ if(!fixture){fixtureDraft=null;fixtureDraftKey=null;}
+ const draft=fixtureDraft;
+ return '<div class="wrap patch-layout"><div class="list"><section class="panel"><div class="row split"><h2>Lichter anlegen</h2>'+
+  button("Licht hinzufügen","new-light",'class="primary" '+(outputState.enabled?"disabled":""))+'</div>'+
+  data.lights.map(item=>'<div class="row split"><div class="row">'+deviceSymbol(fixtureKind(item))+'<div><strong>'+esc(item.name)+'</strong><small> · '+deviceTypes[fixtureKind(item)].name+' · DMX '+item.address+'–'+(item.address+channelCount(item)-1)+'</small></div></div>'+
+   '<div class="row">'+button("Bearbeiten","edit-light:"+item.id,outputState.enabled?"disabled":"")+(deleteCandidate===item.id?'<span class="delete-fixture-prompt">Aus allen Steps entfernen?</span>'+button("Ja, löschen","confirm-delete-light:"+item.id,'class="danger-button"')+button("Abbrechen","cancel-delete-light"):button("Löschen","delete-light:"+item.id,'class="danger-button" '+(outputState.enabled?'disabled':'')))+'</div>'+'</div>').join("")+
+  (!data.lights.length?'<p class="muted">Lege deine Geräte einzeln an. Sie erscheinen automatisch im Aufbau.</p>':"")+'</section>'+
+  (fixture?'<form id="light-form" class="panel"><h3>'+(light?"Licht bearbeiten":"Neues Licht")+'</h3>'+
+   '<div class="device-picker" aria-label="Geräteart">'+Object.entries(deviceTypes).map(([type,info])=>
+    button(deviceSymbol(type)+'<span>'+info.name+'</span>',"device-type:"+type,flag(draft.visualType===type))).join("")+'</div>'+
+   '<input type="hidden" name="visualType" value="'+draft.visualType+'"><input type="hidden" name="mode" value="'+draft.mode+'">'+
+   '<div class="row"><label class="stack">Name<input name="name" required maxlength="60" value="'+esc(draft.name)+'"></label>'+
+   '<label class="stack">DMX-Startadresse<input name="address" type="number" required min="1" max="512" value="'+esc(draft.address)+'"></label>'+
+   '<label class="stack">Gruppe<input name="group" value="'+esc(draft.group)+'"></label></div>'+
+   '<label class="stack">DMX-Kanalfolge<input name="mapping" placeholder="Kanalfolge aus dem Gerätehandbuch" required value="'+esc(draft.mapping)+'"></label>'+
+   '<small>Die Geräteart bestimmt das Symbol. Die vorbelegte Kanalfolge ist ein Beispiel und muss zum DMX-Modus am Gerät passen. D = Dimmer, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert.</small>'+
+   '<p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></form>'+
+   "":"")+'</div>'+patchGrid()+'</div>';
+}
+function darkDuration(step){return Number.isFinite(step.darkHold)?step.darkHold:.25;}
+function darkenOutput(){
+ const zero=Array(512).fill(0);
+ frameTransition={from:zero,to:zero,start:performance.now(),duration:0};outputStep=null;
+}
+function redrawPlayback(){
+ if(tab===2&&!renameField&&!masterGroupDraft&&!presetColorId&&!screen.querySelector(".field-options[open]")&&!screen.querySelector("input:focus"))render();
+}
+function advancePlayback(){
+ const scene=running();if(!scene)return;
+ if(stageIndex+1<scene.steps.length){stageIndex++;schedule();}
+ else if(performQueue.size){
+  const next=nextPerformScene(scene.id);if(next)play(next.id);else{performQueue.clear();active=null;liveSnapshot=null;outputStep=null;}
+ }else if(auto){
+  const choices=liveScenes(),index=choices.findIndex(item=>item.id===scene.id);if(choices.length)play(choices[(index+1)%choices.length].id);else auto=false;
+ }else if(scene.loop){stageIndex=0;schedule();}
+ redrawPlayback();
+}
+function schedule(){
+ clearTimeout(timer);
+ const step=running()?.steps[stageIndex];
+ if(!step||override)return;
+ playbackDark=false;
+ outputFrame();
+ timer=setTimeout(()=>{
+  if(step.darkAfter){
+   playbackDark=true;darkenOutput();redrawPlayback();
+   timer=setTimeout(advancePlayback,1000*darkDuration(step));
+  }else advancePlayback();
+ },1000*stepDuration(step));
+}
+function advancePreview(scene,step){
+ if(previewIndex===null)return;
+ if(previewIndex+1<scene.steps.length){previewIndex++;previewTick();}
+ else if(scene.loop){previewIndex=0;previewTick();}
+ else{
+  clearTimeout(previewTimer);previewIndex=null;previewDark=Boolean(step.darkAfter);render();
+ }
+}
+function previewTick(){
+ const scene=current(),step=scene?.steps[previewIndex];
+ if(!step)return;
+ previewDark=false;render();
+ previewTimer=setTimeout(()=>{
+  if(step.darkAfter){
+   previewDark=true;
+   if(setupToOutput)darkenOutput();
+   render();previewTimer=setTimeout(()=>advancePreview(scene,step),1000*darkDuration(step));
+  }else advancePreview(scene,step);
+ },1000*stepDuration(step));
+}
+document.addEventListener("click",event=>{
+ const command=event.target.closest("[data-action]")?.dataset.action;
+ if(!command)return;
+ if(command.startsWith("device-type:")){
+  captureFixtureForm();
+  const type=command.split(":")[1],previous=deviceTypes[fixtureDraft.visualType];
+  if(!fixtureDraft.mapping||fixtureDraft.mapping===previous.mapping)fixtureDraft.mapping=deviceTypes[type].mapping;
+  fixtureDraft.visualType=type;fixtureDraft.mode=deviceMode(fixtureDraft.mapping);deviceProposal=null;deviceMessage="";
+  render();
+ }else if(command==="fixture-proposal"&&deviceProposal){
+  captureFixtureForm();
+  fixtureDraft.name=deviceProposal.name||fixtureDraft.name;
+  fixtureDraft.visualType=deviceProposal.type;
+  fixtureDraft.mapping=deviceProposal.mapping.join(",");
+  fixtureDraft.mode=deviceMode(fixtureDraft.mapping);
+  deviceMessage="Vorschlag übernommen. Prüfe die Kanalfolge und trage die Startadresse ein.";render();
+ }
+});
+
+document.addEventListener('click',event=>{
+ if(event.target.closest('[data-action]')?.dataset.action!=='layout-snap')return;
+ data.lights.forEach((light,index)=>{if(fixturePlaced(light)){light.position=snapPosition(fixturePosition(light,index));delete light.cell}});save();render();
+});
+document.addEventListener('submit',event=>{
+ if(event.target.id!=='stage-size-form')return;
+ event.preventDefault();const values=new FormData(event.target);
+ try{updateStage(Number(values.get('width')),Number(values.get('depth')));render();}
+ catch(error){document.querySelector('#stage-error').textContent=error.message;}
+});
+if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>paintRig()).observe(screen);
+
+document.addEventListener('click',event=>{
+ const action=event.target.closest('[data-action]')?.dataset.action;
+ if(tab!==4||!['layout-remove','layout-add'].includes(action))return;
+ setLayoutPresence([...setupSelection],action==='layout-add');render();
+});
+function setLayoutPresence(ids,placed){
+ data.lights.filter(light=>ids.includes(light.id)).forEach(light=>{
+  if(!light.position)light.position=placed?automaticLightPosition():fixturePosition(light,data.lights.indexOf(light));
+  light.inLayout=placed;
+ });save();
+}
+
+let masterGroupDraft=null,masterGroupMessage='',shuffleBag=[];
+function validateMasterGroups(groups,lights){
+ if(groups===undefined)return [];
+ if(!Array.isArray(groups)||groups.length>32)throw new Error('Höchstens 32 Master-Gruppen sind möglich.');
+ const used=new Set(),known=new Set(lights.map(light=>light.id));
+ return groups.map(group=>{
+  if(!group||typeof group.id!=='string'||!/^[-a-zA-Z0-9]+$/.test(group.id)||used.has(group.id)||typeof group.name!=='string'||!group.name.trim()||group.name.length>60||!Number.isFinite(group.level)||group.level<0||group.level>100||!Array.isArray(group.ids)||!group.ids.every(id=>known.has(id)))throw new Error('Ungültige Master-Gruppe.');
+  if(group.collapsed!==undefined&&typeof group.collapsed!=='boolean')throw new Error('Ungültige Gruppenansicht.');
+  used.add(group.id);return {id:group.id,name:group.name,level:group.level,ids:[...new Set(group.ids)],collapsed:group.collapsed===true};
+ });
+}
+function applyGroupMasters(frame){
+ const groups=data.masterGroups||[];if(!groups.length)return frame;
+ const result=frame.slice();
+ for(const light of data.lights){
+  const levels=groups.filter(group=>group.ids.includes(light.id)).map(group=>group.level/100);
+  if(!levels.length)continue;const factor=Math.min(...levels),map=channelMap(light);
+  map.forEach((channel,index)=>{if(channel==='D'||(!map.includes('D')&&['R','G','B','W'].includes(channel)))result[light.address-1+index]=Math.round(result[light.address-1+index]*factor)});
+ }
+ return result;
+}
+function masterGroupsPanel(){
+ const hidden=data.masterGroupsCollapsed===true;
+ return '<section class="master-groups"><div class="row split"><h3>Master-Gruppen</h3><div class="row">'+button(hidden?'▸':'▾','master-groups-toggle','aria-label="Master-Gruppen '+(hidden?'ausklappen':'einklappen')+'" aria-expanded="'+!hidden+'"')+button('+','master-group-new','aria-label="Master-Gruppe erstellen"')+'</div></div>'+
+  (hidden?'<small>'+(data.masterGroups||[]).length+' Gruppen · Regler eingeklappt</small>':(data.masterGroups||[]).map(group=>
+   '<div class="master-group"><div class="row split">'+button((group.collapsed?'▸ ':'▾ ')+esc(group.name),'master-group-collapse:'+group.id,'class="master-group-heading" aria-expanded="'+!group.collapsed+'" aria-label="'+esc(group.name)+' '+(group.collapsed?'ausklappen':'einklappen')+'"')+
+   '<span class="master-group-level" data-group-level="'+group.id+'">'+group.level+' %</span>'+button('⋯','master-group-edit:'+group.id,'aria-label="Gruppe '+esc(group.name)+' bearbeiten"')+'</div>'+
+   (!group.collapsed?'<label class="stack">Helligkeit '+esc(group.name)+'<input type="range" min="0" max="100" step="1" data-group-master="'+group.id+'" value="'+group.level+'"><output>'+group.level+' %</output></label><small>'+group.ids.length+' Lichter</small>':'')+'</div>').join(''))+
+  (!(data.masterGroups||[]).length&&!hidden?'<small>Fasse Lichter zusammen und dimme jede Gruppe gemeinsam.</small>':'')+
+  (masterGroupDraft?masterGroupEditor():'')+'<small role="status" id="master-group-message">'+esc(masterGroupMessage)+'</small>'+(!hidden?'<small>Der Gesamtmaster gilt zusätzlich. Bei mehreren Gruppen gilt der niedrigste Gruppenwert.</small>':'')+'</section>';
+}
+function masterGroupEditor(){
+ const draft=masterGroupDraft;
+ return '<form id="master-group-form" class="master-group-editor"><h4>'+((data.masterGroups||[]).some(group=>group.id===draft.id)?'Gruppe bearbeiten':'Neue Master-Gruppe')+'</h4>'+
+  '<label class="stack">Gruppenname<input name="groupName" maxlength="60" required value="'+esc(draft.name)+'"></label><div class="master-group-members">'+data.lights.map(light=>
+   '<label><input type="checkbox" name="member" value="'+light.id+'" '+checked(draft.ids.includes(light.id))+'>'+esc(light.name)+'</label>').join('')+'</div><div class="row"><button class="primary">Speichern</button>'+button('Abbrechen','master-group-cancel')+
+  ((data.masterGroups||[]).some(group=>group.id===draft.id)?button('Gruppe löschen','master-group-delete:'+draft.id,'class="danger-button"'):'')+'</div></form>';
+}
+function saveMasterGroup(draft){
+ if(!draft.name.trim())throw new Error('Bitte einen Gruppennamen eingeben.');
+ if(!draft.ids.length)throw new Error('Bitte mindestens ein Licht auswählen.');
+ const groups=data.masterGroups||[],index=groups.findIndex(group=>group.id===draft.id),next=copy(groups);
+ if(next.some(group=>group.id!==draft.id&&group.name.toLowerCase()===draft.name.trim().toLowerCase()))throw new Error('Dieser Gruppenname existiert bereits.');
+ const group={...draft,name:draft.name.trim()};if(index<0)next.push(group);else next[index]=group;
+ data.masterGroups=validateMasterGroups(next,data.lights);save();
+}
+function nextPerformScene(currentId,restart=false){
+ const scenes=repeatScenes();if(!scenes.length)return null;
+ if(data.playbackMode!=='random')return scenes[restart?0:(scenes.findIndex(scene=>scene.id===currentId)+1)%scenes.length];
+ if(restart)shuffleBag=[];shuffleBag=shuffleBag.filter(id=>scenes.some(scene=>scene.id===id));
+ if(!shuffleBag.length){
+  shuffleBag=scenes.map(scene=>scene.id);
+  for(let index=shuffleBag.length-1;index>0;index--){const other=Math.floor(Math.random()*(index+1));[shuffleBag[index],shuffleBag[other]]=[shuffleBag[other],shuffleBag[index]];}
+  if(shuffleBag.length>1&&shuffleBag[0]===currentId)[shuffleBag[0],shuffleBag[1]]=[shuffleBag[1],shuffleBag[0]];
+ }
+ const id=shuffleBag.shift();return scenes.find(scene=>scene.id===id);
+}
+function moveQueue(id,direction){
+ const ids=[...performQueue],index=ids.indexOf(id),next=index+direction;if(index<0||next<0||next>=ids.length)return;
+ [ids[index],ids[next]]=[ids[next],ids[index]];performQueue.clear();ids.forEach(id=>performQueue.add(id));shuffleBag=[];
+}
+function playbackControls(){
+ const scenes=repeatScenes(),random=data.playbackMode==='random';
+ return '<section class="playback-controls"><h3>Wiedergabe & Reihenfolgen</h3><div class="row split"><div class="row">'+button('In Reihenfolge','playback-sequence',flag(!random))+button('Zufällig','playback-random',flag(random))+
+  button('Auswahl starten','playback-start',scenes.length?'class="primary"':'disabled')+button('←','preset-prev','aria-label="Vorheriges Preset"')+button('→','preset-next','aria-label="Nächstes Preset"')+button('Stop','performance-stop')+'</div><small>'+ (random?'Alle ausgewählten Szenen werden gemischt.':'Reihenfolge mit den Pfeilen ändern.')+'</small></div>'+
+  (scenes.length?'<ol class="playback-queue">'+scenes.map((scene,index)=>'<li><span>Button '+performanceNumber(scene)+'</span><div class="row">'+
+   button('↑','queue-up:'+scene.id,'aria-label="'+esc(scene.name)+' nach vorne" '+(index===0?'disabled':''))+
+   button('↓','queue-down:'+scene.id,'aria-label="'+esc(scene.name)+' nach hinten" '+(index===scenes.length-1?'disabled':''))+
+   button('×','queue-remove:'+scene.id,'aria-label="'+esc(scene.name)+' aus Wiedergabe entfernen"')+'</div></li>').join('')+'</ol>':'<p class="muted">Wähle unten die Performance Buttons für deine Wiedergabe aus.</p>')+playbackListPanel()+'</section>';
+}
+document.addEventListener('change',event=>{
+ if(tab===3&&event.target.id==='setup-color'&&previewIndex===null&&setupSelection.size)rememberPickedColor(event.target.value);
+});
+document.addEventListener('input',event=>{
+ const field=event.target;
+ if(field.dataset.groupMaster){const group=(data.masterGroups||[]).find(group=>group.id===field.dataset.groupMaster);if(group){group.level=Math.max(0,Math.min(100,Number(field.value)));field.nextElementSibling.textContent=group.level+' %';const label=screen.querySelector('[data-group-level="'+group.id+'"]');if(label)label.textContent=group.level+' %';save();paintRig();}}
+ if(masterGroupDraft&&field.closest?.('#master-group-form')){
+  if(field.name==='groupName')masterGroupDraft.name=field.value;
+  if(field.name==='member'){const ids=new Set(masterGroupDraft.ids);if(field.checked)ids.add(field.value);else ids.delete(field.value);masterGroupDraft.ids=[...ids];}
+ }
+});
+document.addEventListener('submit',event=>{
+ if(event.target.id!=='master-group-form')return;event.preventDefault();
+ try{saveMasterGroup(masterGroupDraft);masterGroupDraft=null;masterGroupMessage='Gruppe gespeichert.';render();}catch(error){masterGroupMessage=error.message;document.querySelector('#master-group-message').textContent=error.message;}
+});
+document.addEventListener('click',event=>{
+ const command=event.target.closest('[data-action]')?.dataset.action;if(!command)return;
+ const [action,id]=command.split(':');
+ if(action==='master-group-new'){data.masterGroupsCollapsed=false;masterGroupDraft={id:uid(),name:'',ids:[],level:100};masterGroupMessage='';}
+ else if(action==='master-groups-toggle'){data.masterGroupsCollapsed=!data.masterGroupsCollapsed;save();}
+ else if(action==='master-group-collapse'){const group=(data.masterGroups||[]).find(group=>group.id===id);if(group){group.collapsed=!group.collapsed;save();}}
+ else if(action==='master-group-edit'){const group=(data.masterGroups||[]).find(group=>group.id===id);if(!group)return;masterGroupDraft=copy(group);masterGroupMessage='';}
+ else if(action==='master-group-cancel')masterGroupDraft=null;
+ else if(action==='master-group-delete'){data.masterGroups=(data.masterGroups||[]).filter(group=>group.id!==id);masterGroupDraft=null;save();}
+ else if(action==='playback-sequence'||action==='playback-random'){data.playbackMode=action==='playback-random'?'random':'sequence';shuffleBag=[];save();}
+ else if(action==='playback-start'){performSelectOnly=false;const next=nextPerformScene(null,true);if(next){auto=false;play(next.id);}}
+ else if(action==='queue-up'||action==='queue-down')moveQueue(id,action==='queue-up'?-1:1);
+ else if(action==='queue-remove')togglePerformScene(id);
+ else return;
+ render();
+});
+
+
+let performSelectOnly=false,presetColorId=null,presetColorDraft='#ae8bdd',playbackListName='',loadedPlaybackList='';
+function performanceColorEditor(scene){
+ if(presetColorId!==scene.id)return '';
+ return '<form id="preset-color-form" class="preset-color-editor"><label>Buttonfarbe<input name="buttonColor" type="color" value="'+presetColorDraft+'"></label><div class="row"><button class="primary">Speichern</button>'+button('Zurücksetzen','preset-color-reset:'+scene.id)+button('Abbrechen','preset-color-cancel')+'</div></form>';
+}
+function validatePlaybackLists(lists,scenes){
+ if(lists===undefined)return [];
+ if(!Array.isArray(lists)||lists.length>64)throw new Error('Höchstens 64 Wiedergabegruppen sind möglich.');
+ const known=new Set(scenes.map(scene=>scene.id)),used=new Set();
+ return lists.map(list=>{
+  if(!list||typeof list.id!=='string'||!/^[-a-zA-Z0-9]+$/.test(list.id)||used.has(list.id)||typeof list.name!=='string'||!list.name.trim()||list.name.length>60||!['sequence','random'].includes(list.mode)||!Array.isArray(list.ids)||!list.ids.length||!list.ids.every(id=>known.has(id)))throw new Error('Ungültige Wiedergabegruppe.');
+  used.add(list.id);return {id:list.id,name:list.name,mode:list.mode,ids:[...new Set(list.ids)]};
+ });
+}
+function playbackListPanel(){
+ const lists=data.playbackLists||[];
+ return '<div class="playback-list-panel"><h4>Wiedergabegruppen & Reihenfolgen</h4><div class="row">'+lists.map(list=>
+  button(esc(list.name)+(list.mode==='random'?' · Zufall':''),'playback-list-load:'+list.id,flag(loadedPlaybackList===list.id))).join('')+'</div>'+
+  '<form id="playback-list-form" class="row"><label>Gruppenname<input name="listName" maxlength="60" required placeholder="z. B. Party-Abfolge" value="'+esc(playbackListName)+'"></label><button '+(performQueue.size?'':'disabled')+'>Auswahl speichern</button>'+
+  (loadedPlaybackList?button('Gruppe löschen','playback-list-delete:'+loadedPlaybackList,'class="danger-button"'):'')+'</form><small>Gespeichert werden Auswahl, Reihenfolge und Wiedergabemodus.</small></div>';
+}
+function savePlaybackList(name){
+ const ids=repeatScenes().map(scene=>scene.id);name=name.trim();
+ if(!name||!ids.length)throw new Error('Bitte einen Namen und mindestens eine Szene auswählen.');
+ const lists=copy(data.playbackLists||[]),existing=lists.find(list=>list.name.toLowerCase()===name.toLowerCase());
+ const list={id:existing?.id||uid(),name,ids,mode:data.playbackMode==='random'?'random':'sequence'};
+ if(existing)lists[lists.indexOf(existing)]=list;else lists.push(list);
+ data.playbackLists=validatePlaybackLists(lists,data.scenes);loadedPlaybackList=list.id;playbackListName=name;save();return list;
+}
+function loadPlaybackList(id){
+ const list=(data.playbackLists||[]).find(list=>list.id===id);if(!list)return;
+ clearTimeout(timer);active=null;liveSnapshot=null;outputStep=null;auto=false;performSelectOnly=true;shuffleBag=[];
+ performQueue.clear();list.ids.filter(id=>data.scenes.some(scene=>scene.id===id&&scene.live&&scene.steps.length)).forEach(id=>performQueue.add(id));
+ data.playbackMode=list.mode;loadedPlaybackList=id;playbackListName=list.name;save();
+}
+document.addEventListener('input',event=>{
+ if(event.target.name==='buttonColor'&&event.target.closest('#preset-color-form'))presetColorDraft=event.target.value;
+ if(event.target.name==='listName'&&event.target.closest('#playback-list-form'))playbackListName=event.target.value;
+});
+document.addEventListener('submit',event=>{
+ if(event.target.id==='preset-color-form'){
+  event.preventDefault();const scene=data.scenes.find(scene=>scene.id===presetColorId);if(scene&&/^#[0-9a-f]{6}$/i.test(presetColorDraft)){scene.buttonColor=presetColorDraft;save();}presetColorId=null;render();
+ }else if(event.target.id==='playback-list-form'){
+  event.preventDefault();try{savePlaybackList(playbackListName);performMessage='Wiedergabegruppe gespeichert.';}catch(error){performMessage=error.message;}render();
+ }
+});
+document.addEventListener('click',event=>{
+ const command=event.target.closest('[data-action]')?.dataset.action;if(!command)return;const [action,id]=command.split(':');
+ if(action==='preset-color'){presetColorId=id;presetColorDraft=data.scenes.find(scene=>scene.id===id)?.buttonColor||'#ae8bdd';}
+ else if(action==='preset-color-cancel')presetColorId=null;
+ else if(action==='preset-color-reset'){const scene=data.scenes.find(scene=>scene.id===id);if(scene)delete scene.buttonColor;presetColorId=null;save();}
+ else if(action==='playback-edit'){performSelectOnly=!performSelectOnly;if(performSelectOnly){clearTimeout(timer);active=null;liveSnapshot=null;outputStep=null;auto=false;}}
+ else if(action==='playback-list-load')loadPlaybackList(id);
+ else if(action==='playback-list-delete'){data.playbackLists=(data.playbackLists||[]).filter(list=>list.id!==id);loadedPlaybackList='';playbackListName='';save();}
+ else return;render();
+});
+
+document.addEventListener('click',event=>{
+ const command=event.target.closest('[data-action]')?.dataset.action;if(!command)return;const [action,id]=command.split(':');
+ if(action==='slot-create')createPerformanceSlot(Number(id));
+ else if(action==='slot-edit'){const scene=data.scenes.find(scene=>scene.id===id);if(!scene)return;stopPreview();editing=id;stepIndex=0;tab=3;loadSetupStep();}
+ else return;render();screen.scrollTop=0;
+});
+
+function selectedProgramSteps(){
+ const scene=current();if(!scene)return [];
+ if(stepSelectionScene!==scene.id){selectedStepRefs.clear();stepSelectionScene=scene.id;}
+ for(const step of selectedStepRefs)if(!scene.steps.includes(step))selectedStepRefs.delete(step);
+ return scene.steps.filter(step=>selectedStepRefs.has(step));
+}
+function selectProgramStep(index,multiple){
+ const scene=current(),step=scene?.steps[index];if(!step)return;
+ selectedProgramSteps();
+ if(!multiple){selectedStepRefs.clear();selectedStepRefs.add(step);stepIndex=index;return;}
+ if(!selectedStepRefs.size&&scene.steps[stepIndex])selectedStepRefs.add(scene.steps[stepIndex]);
+ if(selectedStepRefs.has(step))selectedStepRefs.delete(step);else selectedStepRefs.add(step);
+ const selected=selectedProgramSteps();stepIndex=selected.length&&!selectedStepRefs.has(step)?scene.steps.indexOf(selected[0]):index;
+}
+function setProgramTiming(key,value){
+ if(!['fade','hold','beats','darkAfter','darkHold'].includes(key)||previewIndex!==null)return;
+ const scene=current();if(!scene)return;
+ const selected=selectedProgramSteps(),steps=selected.length?selected:[scene.steps[stepIndex]].filter(Boolean);
+ if(!steps.length){setupDraft[key]=value;return;}
+ for(const step of steps){
+  step[key]=value;
+  let draft=setupDrafts.get(step);if(!draft){draft=copy(step);setupDrafts.set(step,draft);}draft[key]=value;
+ }
+ setupDraft=setupDrafts.get(scene.steps[stepIndex])||setupDraft;
+ setupNotice=steps.length>1?'Zeiten für '+steps.length+' Steps gespeichert.':'Step-Zeiten gespeichert.';
+ const notice=document.querySelector('#setup-notice');if(notice)notice.textContent=setupNotice;save();
+ const sceneSteps=screen.querySelectorAll('.step-card [data-action^="setup-step:"]');
+ sceneSteps.forEach(button=>{const step=scene.steps[Number(button.dataset.action.split(':')[1])];const small=button.querySelector('small');if(step&&small)small.textContent=step.fade+' s Fade · '+step.hold+' s Halt';});
+}
+
+render();
+</script>
+
+</html>
