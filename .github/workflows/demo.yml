@@ -7,7 +7,7 @@ permissions:
   contents: read
 concurrency:
   group: nulllight-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   windows-demo:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
           name: windows-demo
           path: dist/*.zip
   mac:
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
