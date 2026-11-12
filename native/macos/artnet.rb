@@ -11,6 +11,101 @@ module ArtNet
   PORT = 6454
   ID = "Art-Net\0".b.freeze
 
+  # Passive Pro DJ Link beat reception; no virtual player or commands are sent.
+  # Layout: https://djl-analysis.deepsymmetry.org/djl-analysis/beats.html
+  class DJLink
+    MAGIC = 'Qspt1WmJOL'.b.freeze
+
+    def self.parse(packet)
+      return nil unless packet.bytesize == 96 && packet[0, 10] == MAGIC &&
+        packet.getbyte(10) == 0x28 && packet.getbyte(32) == 0 && packet[34, 2].unpack('n')[0] == 60
+      player = packet.getbyte(33)
+      beat = packet.getbyte(92)
+      pitch = packet[85, 3].unpack('C3').inject(0) { |value, byte| (value << 8) | byte }
+      raw_bpm = packet[90, 2].unpack('n')[0]
+      bpm = raw_bpm * pitch / 104857600.0
+      return nil unless player.between?(1, 6) && beat.between?(1, 4) &&
+        raw_bpm != 65_535 && pitch.between?(1, 2_097_152) && bpm.between?(30, 300)
+      { player: player, beat: beat, bpm: bpm.round(2), name: packet[11, 20].delete("\0").force_encoding('UTF-8').scrub }
+    end
+
+    def initialize
+      @lock = Mutex.new
+      @sequence = 0
+      @error = nil
+    end
+
+    def now
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
+
+    def status
+      @lock.synchronize { status_unlocked }
+    end
+
+    def status_unlocked
+      { enabled: !!@socket, connected: !!(@socket && @last && now - @last < 3),
+        sequence: @sequence, selectedPlayer: @player || 0, device: @device, error: @error }
+    end
+
+    def enable(input)
+      player = input.fetch('player')
+      raise ArgumentError, 'Player muss zwischen 0 (erster aktiver Player) und 6 liegen.' unless player.is_a?(Integer) && player.between?(0, 6)
+      @lock.synchronize do
+        @socket.close if @socket
+        @socket = nil
+        @last = @device = nil
+        @error = nil
+        @player = player
+        socket = UDPSocket.new
+        begin
+          socket.bind('0.0.0.0', 50_001)
+          @socket = socket
+        rescue SystemCallError
+          socket.close
+          raise
+        end
+        status_unlocked
+      end
+    end
+
+    def stop
+      @lock.synchronize do
+        @socket.close if @socket
+        @socket = nil
+        @last = @device = nil
+        status_unlocked
+      end
+    end
+
+    def receive(packet, ip)
+      value = DJLink.parse(packet)
+      return unless value && (@player == 0 || @player == value[:player])
+      # Lock to one IP/player while its beat stream is alive; never mix two decks.
+      return if @last && now - @last < 3 && @device && [@device[:ip], @device[:player]] != [ip, value[:player]]
+      return if @last && now - @last < 0.08
+      @last = now
+      @device = value.merge(ip: ip)
+      @sequence += 1
+    end
+
+    def tick
+      @lock.synchronize do
+        return unless @socket
+        64.times do
+          incoming = @socket.recvfrom_nonblock(2048, exception: false)
+          break if incoming == :wait_readable
+          packet, peer = incoming
+          receive(packet, peer[3])
+        end
+      rescue SystemCallError, IOError => error
+        @socket.close if @socket && !@socket.closed?
+        @socket = nil
+        @error = "Pro DJ Link unterbrochen: #{error.message}"
+      end
+    end
+  end
+
   def self.dmx(channels, address, sequence)
     raise ArgumentError, '512 ganzzahlige Kanalwerte von 0 bis 255 erforderlich.' unless
       channels.is_a?(Array) && channels.length == 512 &&
@@ -245,19 +340,86 @@ module ArtNet
     end
   end
 
-  def self.run(page_path)
-    token = SecureRandom.hex(32)
+  # Commands are acknowledged by the active UI, never reported as executed on enqueue.
+  class RemoteControl
+    def initialize
+      @lock = Mutex.new
+      @changed = ConditionVariable.new
+      @queue = []
+      @results = {}
+      @state = nil
+      @last = 0
+    end
+
+    def now
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
+
+    def status
+      @lock.synchronize { { connected: now - @last < 2, ui: @state } }
+    end
+
+    def poll(input)
+      @lock.synchronize do
+        state = input.fetch('state')
+        raise ArgumentError, 'Ungültiger Bedienstatus.' unless state.is_a?(Hash)
+        @state = state
+        @last = now
+        ack = input['ack']
+        if ack.is_a?(Hash) && @results.key?(ack['id'])
+          @results[ack['id']] = ack
+          @changed.broadcast
+        end
+        command = @queue.shift
+        { command: command }
+      end
+    end
+
+    def command(input)
+      action = input.fetch('action')
+      args = input.fetch('args', {})
+      raise ArgumentError, 'Unbekannter Steuerbefehl.' unless %w[play_scene blackout stop set_master].include?(action) && args.is_a?(Hash)
+      if action == 'play_scene'
+        raise ArgumentError, 'Szenen-ID fehlt.' unless args['sceneId'].is_a?(String) && args['sceneId'].match?(/\A[-a-zA-Z0-9]+\z/)
+      elsif action == 'set_master'
+        raise ArgumentError, 'Helligkeit muss zwischen 0 und 100 liegen.' unless args['level'].is_a?(Numeric) && args['level'].between?(0, 100)
+      end
+      @lock.synchronize do
+        raise ArgumentError, 'Keine aktive Bedienoberfläche.' unless now - @last < 2
+        raise ArgumentError, 'MCP-Fernsteuerung in Verbindung aktivieren.' unless @state && @state['remoteEnabled'] == true
+        raise ArgumentError, 'Zu viele ausstehende Befehle.' if @results.length >= 8
+        id = SecureRandom.hex(12)
+        @results[id] = nil
+        @queue << { id: id, action: action, args: args }
+        deadline = now + 4
+        begin
+          while !@results[id] && now < deadline
+            @changed.wait(@lock, deadline - now)
+          end
+          raise ArgumentError, 'Keine Ausführungsbestätigung von der Bedienoberfläche.' unless @results[id]
+          @results[id]
+        ensure
+          @results.delete(id)
+          @queue.reject! { |item| item[:id] == id }
+        end
+      end
+    end
+  end
+
+  def self.run(page_path, bind: '127.0.0.1', port: 49365, token: SecureRandom.hex(32), platform: 'mac')
     sender = Sender.new
+    dj = DJLink.new
+    control = RemoteControl.new
     bundle_resources = ENV['NULLLIGHT_BUNDLE_RESOURCES'] || File.dirname(page_path)
     begin
-      updates = NullLightUpdater.new(bundle_resources, cache: ENV['NULLLIGHT_UPDATE_CACHE_DIR'])
+      updates = platform == 'mac' ? NullLightUpdater.new(bundle_resources, cache: ENV['NULLLIGHT_UPDATE_CACHE_DIR']) : nil
     rescue StandardError
       updates = nil
     end
     begin
       running_version = JSON.parse(File.read(File.join(File.dirname(page_path), 'version.json'))).fetch('version')
     rescue StandardError
-      running_version = 0
+      running_version = JSON.parse(File.read(File.expand_path('../version.json', File.dirname(page_path)))).fetch('version') rescue 0
     end
     update_status = lambda do
       info = updates ? updates.status : { 'state' => 'unavailable', 'message' => 'Update-Quelle nicht erreichbar.' }
@@ -267,38 +429,53 @@ module ArtNet
       info.merge('runningVersion' => running_version)
     end
     server = WEBrick::HTTPServer.new(
-      BindAddress: '127.0.0.1', Port: 49365,
+      BindAddress: bind, Port: port,
       Logger: WEBrick::Log.new(File::NULL), AccessLog: [],
       RequestTimeout: 5, MaxClients: 8
     )
-    origin = 'http://127.0.0.1:49365'
+    origin = "http://#{bind == '0.0.0.0' ? '127.0.0.1' : bind}:#{port}"
+    hosts = ['127.0.0.1', 'localhost', Socket.gethostname, Socket.gethostname + '.local', *interfaces.map { |item| item[:ip] }].map { |host| "#{host}:#{port}" }
     server.mount_proc('/') do |request, response|
       response['Cache-Control'] = 'no-store'
       response['X-Content-Type-Options'] = 'nosniff'
       response['Referrer-Policy'] = 'no-referrer'
       response['Content-Type'] = 'application/json; charset=utf-8'
       begin
-        raise ArgumentError, 'Zugriff abgelehnt.' unless request['host'] == '127.0.0.1:49365'
+        raise ArgumentError, 'Zugriff abgelehnt.' unless hosts.include?(request['host'])
         if request.path == '/' && request.request_method == 'GET' && request.query['session'] == token
           response['Content-Type'] = 'text/html; charset=utf-8'
           response['Content-Security-Policy'] = "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' blob: data:; frame-ancestors 'none'"
-          response.body = File.read(page_path, encoding: 'UTF-8').sub('/* NATIVE_SESSION */', "window.lichtpultSession = #{JSON.generate(token)};")
+          response.body = File.read(page_path, encoding: 'UTF-8').sub('/* NATIVE_SESSION */', "window.lichtpultSession = #{JSON.generate(token)}; window.lichtpultPlatform = #{JSON.generate(platform)};")
           next
         end
         raise ArgumentError, 'Zugriff abgelehnt.' unless request['x-lichtpult-session'] == token
+        raise ArgumentError, 'Fremder Ursprung.' if request['origin'] && request['origin'] != "http://#{request['host']}"
+        if request.path == '/api/dj/status' && request.request_method == 'GET'
+          response.body = JSON.generate(dj.status)
+          next
+        end
+        if request.path == '/api/control/status' && request.request_method == 'GET'
+          response.body = JSON.generate(control.status.merge(output: sender.status, dj: dj.status))
+          next
+        end
         if request.path == '/api/status' && request.request_method == 'GET'
-          response.body = JSON.generate(sender.status.merge(interfaces: interfaces, update: update_status.call))
+          response.body = JSON.generate(sender.status.merge(interfaces: interfaces, platform: platform, dj: dj.status, update: update_status.call))
           next
         end
         raise ArgumentError, 'Ungültige Anfrage.' unless request.request_method == 'POST' &&
           request['content-type'].to_s.start_with?('application/json') &&
-          request.body.to_s.bytesize <= 16_384
+          request.body.to_s.bytesize <= (request.path == '/api/control/poll' ? 262_144 : 16_384)
         input = JSON.parse(request.body)
+        raise ArgumentError, 'JSON-Objekt erforderlich.' unless input.is_a?(Hash)
         result = case request.path
                  when '/api/enable' then sender.enable(input)
                  when '/api/frame' then sender.frame(input.fetch('channels'))
                  when '/api/stop' then sender.stop
                  when '/api/mapping' then sender.set_mapping(input.fetch('mapping'))
+                 when '/api/dj/enable' then dj.enable(input)
+                 when '/api/dj/stop' then dj.stop
+                 when '/api/control/poll' then control.poll(input)
+                 when '/api/control' then control.command(input)
                  when '/api/update/install'
                    updates.install if updates
                    update_status.call
@@ -324,6 +501,7 @@ module ArtNet
           break
         end
         sender.tick
+        dj.tick
         sleep(1.0 / 30)
       end
     end
@@ -336,6 +514,7 @@ module ArtNet
       running = false
       worker.join
       sender.stop
+      dj.stop
     end
   end
 end

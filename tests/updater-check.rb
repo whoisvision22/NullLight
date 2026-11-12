@@ -6,6 +6,9 @@ def assert(condition, message)
   raise message unless condition
 end
 Dir.mktmpdir('nulllight-update-check-') do |root|
+  # Ruby on Windows accepts /Users/... on the current drive; the updater's
+  # local fixture source deliberately follows its macOS absolute-path format.
+  root = root.sub(/\A[A-Za-z]:/, '') if Gem.win_platform?
   bundle = File.join(root, 'bundle'); cache = File.join(root, 'cache'); source = File.join(root, 'source')
   [bundle, source].each { |path| FileUtils.mkdir_p(path) }
   File.write(File.join(bundle, 'version.json'), JSON.generate(version: 17))

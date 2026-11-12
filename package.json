@@ -1,14 +1,18 @@
 {
   "name": "nulllight",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "private": true,
   "description": "NullLight Lichtsteuerung und Offline-Demo",
   "scripts": {
-    "test": "node tests/all.cjs app/NullLight.html",
-    "test:demo": "node tests/all.cjs demo/NullLight.html",
+    "test": "node tests/all.cjs app/NullLight.html && node tests/djlink-ui.cjs app/NullLight.html && node tests/mcp.cjs",
+    "test:demo": "node tests/all.cjs demo/NullLight.html && node tests/djlink-ui.cjs demo/NullLight.html",
     "build:demo": "node scripts/package-demo.cjs",
     "build:mac": "ruby scripts/build-mac.rb",
-    "test:updates": "ruby tests/updater-check.rb"
+    "test:updates": "ruby tests/updater-check.rb",
+    "test:pi": "ruby tests/artnet-check.rb && ruby tests/djlink-check.rb && ruby tests/server-check.rb",
+    "build:pi": "node scripts/package-pi.cjs",
+    "start:pi": "ruby native/raspberrypi/server.rb",
+    "mcp": "node native/mcp/server.cjs"
   },
   "engines": {
     "node": ">=22"
