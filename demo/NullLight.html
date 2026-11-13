@@ -381,13 +381,28 @@ body{padding-top:30px}.online-demo-note{position:fixed;top:0;left:0;right:0;heig
 @media(max-width:1150px){.performance-panel .grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:700px){.performance-panel .grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .step-card button[aria-pressed=true]{outline:2px solid #d0b3ff;outline-offset:-2px}.program-center .step-panel>small{font-size:10px;color:var(--muted)}
+.program-sidebar>.color-panel{order:0}.program-sidebar>.fixture-panel{order:1}
+.color-panel .row button{font-size:11px;padding:7px 8px}.saved-layouts{display:flex;flex-direction:column;gap:10px}
+.saved-layouts summary{font-weight:650;cursor:pointer;color:#d9c5f4}.saved-layouts:not([open])>*:not(summary){display:none}
+.saved-layouts summary small{font-size:10px;font-weight:400;display:block}.saved-layouts form{display:grid;gap:10px}
+.saved-layouts label,.saved-layouts p{font-size:12px}.saved-layouts input,.saved-layouts select{width:100%;min-width:0}.saved-layouts button{font-size:11px;padding:6px 8px}
+.fixture-tilt{margin:0;padding:10px 0;border:0;border-top:1px solid var(--line);min-width:0}.fixture-tilt legend{font-size:12px;font-weight:650}
+.tilt-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.arrangement-sidebar .tilt-fields input{width:100%;min-width:0;padding:7px 4px;font-size:12px}
+.rig-light>.fixture-shell{transform:rotate(var(--fixture-angle,0deg))}
+.perform-shell{grid-template-columns:minmax(0,1fr) 380px;gap:12px}.perform-sidebars{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;align-items:start;position:sticky;top:0;min-width:0}
+.perform-sidebars>.bank-list,.perform-sidebars>.master-panel{padding:12px;min-width:0;max-height:calc(100vh - 155px);overflow:auto}
+.perform-main .perform-workspace{grid-template-columns:minmax(0,1fr)}.perform-main .rig-canvas{height:clamp(400px,53vh,660px)}
+.program-settings .publish-panel select{width:100%;min-width:0}
+@media(max-width:1150px){.perform-shell{grid-template-columns:minmax(0,1fr) 320px}.perform-sidebars{grid-template-columns:115px minmax(0,1fr)}.perform-sidebars button{font-size:11px;padding:7px}}
+@media(max-width:850px){.perform-shell{grid-template-columns:minmax(0,1fr) 285px}.perform-sidebars{grid-template-columns:100px minmax(0,1fr)}.perform-main .rig-canvas{height:420px}}
+@media(max-width:650px){.perform-shell{grid-template-columns:1fr}.perform-sidebars{position:static;grid-template-columns:130px minmax(0,1fr)}.perform-sidebars>.master-panel,.perform-sidebars>.bank-list{max-height:none}.perform-main .rig-canvas{height:380px}}
 </style>
 
 
 
 
 
-<div class="online-demo-note">NullLight · Windows-Demo · Offline-Vorschau ohne DMX-Ausgabe · Speicherung in diesem Browser</div><header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v18</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<div class="online-demo-note">NullLight · Windows-Demo · Offline-Vorschau ohne DMX-Ausgabe · Speicherung in diesem Browser</div><header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v19</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -410,6 +425,7 @@ initial.scenes = initial.scenes.map(scene => ({
 }));
 const storageKey = "lichtpult.demo.v1";
 let data;
+let layoutLoading=false,layoutNameDraft="",layoutNotice="";
 try { data = JSON.parse(localStorage.getItem(storageKey)) || initial; } catch { data = initial; }
 if(!data.layoutVersion){
  const defaults=[
@@ -426,6 +442,7 @@ if(!data.layoutVersion){
 }
 let storageError = false;
 function save(){
+ syncActiveLayout();
  try {localStorage.setItem(storageKey,JSON.stringify(data));}
  catch {storageError = true;document.querySelector("#status").textContent="Speichern nicht verfügbar";}
 }
@@ -567,7 +584,7 @@ function setupControls(lights){
  return '<strong>'+esc(name)+'</strong><small>Farbe anklicken → Auswahl mit 100 % Helligkeit</small>'+
   quickColorPalette(lights)+
   '<div class="row"><label class="custom-color-button">Eigene Farbe<input id="setup-color" type="color" aria-label="Eigene Farbe wählen" value="'+(colorLight?setupValue(colorLight).color:"#ffffff")+
-  '" '+(previewIndex===null?'':'disabled')+'></label>'+button("Alles auf null","selection-off",previewIndex===null?'':'disabled')+'</div>'+
+  '" '+(previewIndex===null?'':'disabled')+'></label>'+button("Farbe auf null","selection-off",previewIndex===null?'':'disabled')+button("Alles abwählen","selection-clear")+'</div>'+
   '<small>Die sechs Felder merken sich deine zuletzt gewählten Farben.</small>';
 }
 function selectSetupLight(id,multiple){
@@ -1224,6 +1241,7 @@ function validateShow(show){
   if(!light||typeof light.id!=="string"||ids.has(light.id)||!/^[-a-zA-Z0-9]+$/.test(light.id)||
    typeof light.name!=="string"||!Object.keys(modes).includes(light.mode))throw new Error("Ungültiges Licht.");
 ids.add(light.id);
+validateTilt(light.tilt);
 if(light.inLayout!==undefined&&typeof light.inLayout!=="boolean")throw new Error("Ungültiger Aufbau-Status.");
 if(light.position&&(!Number.isFinite(light.position.x)||!Number.isFinite(light.position.y)||light.position.x<0||light.position.x>1||light.position.y<0||light.position.y>1))throw new Error("Ungültige Lichtposition.");
 if(light.visualType&&!["par","panel","bar","strobe","moving","strip"].includes(light.visualType))throw new Error("Ungültige Darstellung.");
@@ -1278,7 +1296,7 @@ for(const value of Object.values(step.values)){
  const importedMapping=validateMapping(show.mapping||mappingDefaults());
  if(show.recentColors&&!show.recentColors.every(color=>/^#[0-9a-f]{6}$/i.test(color)))throw new Error("Ungültige Farbpalette.");
  // Only show data is imported. The network destination is configured in this app.
- return {djBeats:show.djBeats||4,masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
+ return {savedLayouts:validateLayouts(show.savedLayouts,show.lights),activeLayoutId:typeof show.activeLayoutId==="string"&&validateLayouts(show.savedLayouts,show.lights).some(item=>item.id===show.activeLayoutId)?show.activeLayoutId:null,layoutPanelOpen:show.layoutPanelOpen!==false,djBeats:show.djBeats||4,masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
 }
 document.addEventListener("click",async event=>{
  const action=event.target.closest("[data-action]")?.dataset.action;
@@ -1517,7 +1535,7 @@ if(field.dataset.channelLight){
  }
 });
 document.addEventListener("change",event=>{
- if(!["control-scene","effect-scene"].includes(event.target.id))return;
+ if(!["control-scene","effect-scene","publish-scene"].includes(event.target.id))return;
  stopPreview();editing=event.target.value;stepIndex=0;loadSetupStep();effectLayerId=null;render();
 });
 screen.addEventListener("dragover",event=>{
@@ -1635,10 +1653,10 @@ function drawStage(step){
   const color=value.color;
   const rgb=[1,3,5].map(offset=>parseInt(color.slice(offset,offset+2),16));
   const alpha=Math.min(1,value.level/100);
-  const point=rigWorld(light,index),ground=project({...point,z:0});
+  const point=rigWorld(light,index),beam=fixtureBeam(light,index),ground=project(beam.tip);
   if(rigView.mode==="3d"){
    const radius=fixtureKind(light)==="panel"?.8:.62;
-   const ring=Array.from({length:24},(_,i)=>({x:point.x+Math.cos(i*Math.PI/12)*radius,y:point.y+Math.sin(i*Math.PI/12)*radius,z:0}));
+   const ring=Array.from({length:24},(_,i)=>({x:beam.tip.x+Math.cos(i*Math.PI/12)*radius,y:beam.tip.y+Math.sin(i*Math.PI/12)*radius,z:beam.tip.z}));
    const source=project(point),left=project(ring[6]),right=project(ring[18]);
    const gradient=context.createLinearGradient(source.x,source.y,ground.x,ground.y);
    gradient.addColorStop(0,"rgba("+rgb+","+alpha*.28+")");gradient.addColorStop(1,"rgba("+rgb+",0)");
@@ -1676,6 +1694,7 @@ function paintRig(){
   const position=lightScreenPosition(light,index,width,height);
   node.style.left=position.x+"px";node.style.top=position.y+"px";
   node.style.zIndex=String(20+depthOrder.indexOf(light.id));
+  node.style.setProperty("--fixture-angle",fixtureAngle(light,index,width,height)+"deg");
   node.style.setProperty("--light-color",value.color);node.style.setProperty("--light-level",Math.round(value.level)+"%");
   node.style.setProperty("--fixture-scale",Math.min(1.2,Math.max(.5,position.scale))*(rigView.mode==="3d"?.8:1));
   node.classList.toggle("labels-hidden",!rigView.labels);
@@ -1690,13 +1709,13 @@ function paintRig(){
 function layoutScreen(){
  const selected=data.lights.filter(light=>setupSelection.has(light.id)),first=selected[0],size=stageSize();
  return '<div class="arrangement-workspace"><aside class="panel arrangement-lights"><div class="row split"><h3>Lichter</h3>'+button("+ Licht","tab:1")+'</div>'+
-  groupSelector()+'<div class="row">'+button("Mehrfach","setup-multi",flag(setupMulti))+button("Alle","setup-all")+'</div>'+fixtureInventory(true)+'</aside>'+rigVisualizer()+'<aside class="arrangement-sidebar">'+
+  groupSelector()+'<div class="row">'+button("Mehrfach","setup-multi",flag(setupMulti))+button("Alle","setup-all")+'</div>'+fixtureInventory(true)+'</aside>'+rigVisualizer()+'<aside class="arrangement-sidebar">'+savedLayoutsPanel()+
   '<section class="panel"><h3>Grundfläche</h3><form id="stage-size-form"><div class="row"><label class="stack">Breite (m)<input name="width" type="number" min="1" max="50" step="0.5" required value="'+size.width+'"></label>'+
   '<label class="stack">Tiefe (m)<input name="depth" type="number" min="1" max="50" step="0.5" required value="'+size.depth+'"></label></div><button class="primary">Größe übernehmen</button><small id="stage-error" role="status"></small></form>'+
   '<small>Raster 0,5 m · Geräte rasten beim Platzieren ein.</small>'+button("Alle am Raster ausrichten","layout-snap")+'</section>'+
   '<section class="panel"><h3>Aufstellung</h3>'+(first?'<strong>'+esc(selected.length===1?first.name:selected.length+" Lichter ausgewählt")+'</strong>'+
   '<label class="stack">Darstellung<select id="fixture-type">'+Object.entries(deviceTypes).map(([key,info])=>'<option value="'+key+'" '+(fixtureKind(first)===key?'selected':'')+'>'+info.name+'</option>').join('')+'</select></label>'+
-  '<label>Höhe <input id="fixture-height" type="number" min="0" max="5" step="0.1" value="'+(first.height??2.4)+'"> m</label>'+
+  '<label>Höhe <input id="fixture-height" type="number" min="0" max="5" step="0.1" value="'+(first.height??2.4)+'"> m</label>'+tiltControls(first)+
   '<div class="row">'+button("Horizontal verteilen","layout-horizontal",selected.filter(fixturePlaced).length>1?'':'disabled')+button("Vertikal verteilen","layout-vertical",selected.filter(fixturePlaced).length>1?'':'disabled')+'</div><div class="row">'+(selected.some(fixturePlaced)?button('Aus Aufbau entfernen','layout-remove','class="danger-button"'):'')+(selected.some(light=>!fixturePlaced(light))?button('Zum Aufbau hinzufügen','layout-add','class="primary"'):'')+'</div><small>Die Geräte und ihre Szenen bleiben beim Entfernen gespeichert.</small>':
   '<p class="muted">Licht auswählen und im 2D-Aufbau platzieren.</p>')+'</section></aside></div>';
 }
@@ -1812,7 +1831,7 @@ function performanceCell(item){
    const color=item.buttonColor||Object.values(item.steps[0]?.values||{}).find(value=>value.level>0)?.color||"#ae8bdd";
    return '<div class="performance-item"><div class="performance-face">'+button('<span class="selection-badge" aria-hidden="true">'+(performQueue.has(item.id)?[...performQueue].indexOf(item.id)+1:'')+'</span><span class="performance-number">'+performanceNumber(item)+'</span>'+
     '<small class="scene-card-status">'+(item.id===active?"Aktiv · ":"")+item.steps.length+' Steps</small>',"play:"+item.id,
-    'aria-label="Performance '+performanceNumber(item)+' · '+esc(item.buttonName||item.name)+'" title="'+esc(item.buttonName||item.name)+'" class="tile '+(performSelectOnly?'selection-edit':'')+'" draggable="'+!performSelectOnly+'" data-scene="'+item.id+'" style="--scene-color:'+color+';--tint:color-mix(in srgb,'+color+' 20%,#191923)" '+flag(performQueue.has(item.id)))+
+    'aria-label="Szene '+performanceNumber(item)+' · '+esc(item.buttonName||item.name)+'" title="'+esc(item.buttonName||item.name)+'" class="tile '+(performSelectOnly?'selection-edit':'')+'" draggable="'+!performSelectOnly+'" data-scene="'+item.id+'" style="--scene-color:'+color+';--tint:color-mix(in srgb,'+color+' 20%,#191923)" '+flag(performQueue.has(item.id)))+
     fieldOptions("preset",item.id,item.buttonName||item.name)+'</div>'+renameEditor("preset",item.id,item.buttonName||item.name)+performanceColorEditor(item)+'</div>';
   }
 function emptyPerformanceCell(number,scene){
@@ -1834,24 +1853,29 @@ function createPerformanceSlot(number){
  const scene=existing||{id:uid(),buttonNumber:number,name:'Szene '+number,buttonName:'Szene '+number,bank:bankFilter||'Allgemein',live:false,loop:true,steps:[newStep()]};
  if(!existing)data.scenes.push(scene);stopPreview();editing=scene.id;stepIndex=0;tab=3;loadSetupStep();save();
 }
+function banksPanel(){
+ const banks=allBanks();
+ return '<section class="panel bank-list"><div class="row split"><h3>Banks</h3>'+button("+","bank-create",'aria-label="Bank hinzufügen"')+'</div>'+
+  '<div class="list">'+button("Alle","bank-all",flag(!bankFilter))+banks.map((name,index)=>
+   '<div class="bank-field"><div class="bank-field-row">'+button(esc(name),"perform-bank:"+index,flag(name===bankFilter))+
+    fieldOptions("bank",index,name)+'</div>'+renameEditor("bank",index,name)+'</div>').join("")+'</div></section>';
+}
 function performanceScreen(){
  const banks=allBanks();
  if(bankFilter&&!banks.includes(bankFilter))bankFilter="";
- return '<div class="workspace perform-workspace"><section class="panel bank-list"><div class="row split"><h3>Banks</h3>'+button("+","bank-create",'aria-label="Bank hinzufügen"')+'</div>'+
-  '<div class="list">'+button("Alle","bank-all",flag(!bankFilter))+banks.map((name,index)=>
-   '<div class="bank-field"><div class="bank-field-row">'+button(esc(name),"perform-bank:"+index,flag(name===bankFilter))+
-    fieldOptions("bank",index,name)+'</div>'+renameEditor("bank",index,name)+'</div>').join("")+'</div></section>'+
-  '<section class="panel performance-panel"><div class="row split"><h3>Performance Buttons</h3><div class="row">'+button(performSelectOnly?'Auswahl fertig':'Mehrere auswählen','playback-edit',flag(performSelectOnly))+'<small>'+performQueue.size+' ausgewählt</small></div></div>'+
+ return '<div class="workspace perform-workspace">'+
+  '<section class="panel performance-panel"><div class="row split"><h3>Szenen</h3><div class="row">'+button(performSelectOnly?'Auswahl fertig':'Mehrere auswählen','playback-edit',flag(performSelectOnly))+'<small>'+performQueue.size+' ausgewählt</small></div></div>'+
   '<div class="grid">'+performanceGrid()+'</div><p role="status">'+esc(performMessage)+'</p>'+
   '<details><summary>Reiternamen ändern</summary><div class="row">'+Object.entries(defaultTabNames).map(([index,name])=>'<label class="stack">'+name+
    '<input data-tab-name="'+index+'" value="'+esc(data.tabNames?.[index]||name)+'"></label>').join("")+'</div></details></section></div>';
 }
 function programmingScreen(){
  const scene=current(),selected=data.lights.filter(light=>setupSelection.has(light.id)),step=setupDraft||newStep();
- return '<div class="program-workspace"><aside class="program-sidebar"><section class="panel fixture-panel"><div class="row split"><h3>Lichter</h3>'+button("+ Licht","tab:1")+'</div>'+groupSelector()+
-  '<div class="row">'+button("Alle","setup-all")+button("Keine","selection-clear")+'</div>'+fixtureInventory(false)+
-  '<details class="group-details"><summary>Gruppen bearbeiten</summary>'+groupEditor(selected)+'</details></section>'+
-  '<section class="panel"><h3>Farbe der Auswahl</h3>'+(selected.length?setupControls(selected):'<p class="muted">Lichter links oder im Visualiser auswählen.</p>')+'</section></aside>'+
+ return '<div class="program-workspace"><aside class="program-sidebar"><section class="panel color-panel"><h3>Farbe der Auswahl</h3>'+
+  (selected.length?setupControls(selected):'<p class="muted">Lichter unten oder im Visualiser auswählen.</p>')+'</section>'+
+  '<section class="panel fixture-panel"><div class="row split"><h3>Lichter</h3>'+button('+ Licht','tab:1')+'</div>'+groupSelector()+
+  '<div class="row">'+button('Alle auswählen','setup-all')+'</div>'+fixtureInventory(false)+
+  '<details class="group-details"><summary>Gruppen bearbeiten</summary>'+groupEditor(selected)+'</details></section></aside>'+
   '<div class="program-center">'+rigVisualizer()+setupSteps(scene)+'</div>'+
   '<aside class="program-settings"><section class="panel preset-edit"><h3>Szene</h3>'+presetChooser("control-scene")+
   (scene?'<label class="stack">Name<input id="control-name" value="'+esc(scene.name)+'"></label>':'')+
@@ -1862,7 +1886,7 @@ function programmingScreen(){
   '<label>Beats <input id="program-beats" type="number" min="1" max="32" value="'+(step.beats||1)+'"></label>'+
   '<label><input id="program-darkAfter" type="checkbox" '+checked(step.darkAfter)+'> Danach dunkel</label>'+
   '<label>Dunkelzeit <input id="program-darkHold" type="number" min="0.1" max="120" step="0.05" value="'+(step.darkHold??.25)+'"> s</label></section>'+
-  '<section class="panel publish-panel"><h3>In Perform speichern</h3>'+(scene?'<form id="publish-form"><label class="stack">Bank<input name="bank" list="bank-options" required value="'+esc(bankName(scene))+'"></label>'+
+  '<section class="panel publish-panel"><h3>In Perform speichern</h3><label class="stack">Bearbeitete Szene<select id="publish-scene" aria-label="Bearbeitete Szene">'+data.scenes.map(item=>'<option value="'+item.id+'" '+(item===scene?'selected':'')+'>'+esc('Szene '+performanceNumber(item)+' · '+item.name)+'</option>').join('')+'</select></label>'+(scene?'<form id="publish-form"><label class="stack">Bank<input name="bank" list="bank-options" required value="'+esc(bankName(scene))+'"></label>'+
   '<datalist id="bank-options">'+allBanks().map(name=>'<option value="'+esc(name)+'"></option>').join("")+'</datalist>'+
   '<label class="stack">Name der Taste<input name="buttonName" required value="'+esc(scene.buttonName||scene.name)+'"></label><button class="primary">In Perform speichern</button>'+
   '<p role="status" id="publish-notice"></p></form>':'')+'</section></aside></div>';
@@ -1959,7 +1983,7 @@ function render(){
  else body=connection();
  screen.classList.toggle("programming-view",tab===3);
  screen.classList.toggle("arrangement-view",tab===4);
-  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+body+'<div class="playback-footer">'+playbackControls()+'</div></div>'+masterPanel()+'</div>':body;
+  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+banksPanel()+masterPanel()+'</div></div>':body;
  paintRig();
 }
 
@@ -2032,6 +2056,7 @@ function removeFixture(id){
   for(const layer of scene.effects||[])if(layer.ids?.includes(id)){layer.ids=layer.ids.filter(item=>item!==id);if(!layer.ids.length)layer.enabled=false;}
  }
  if(setupDraft?.values)delete setupDraft.values[id];
+ for(const layout of data.savedLayouts||[])delete layout.fixtures[id];
  data.lights=data.lights.filter(light=>light.id!==id);setupSelection.delete(id);
  if(fixture===id){fixture=null;fixtureDraft=null;fixtureDraftKey=null;}
  if(stepUndo)stepUndo=null;
@@ -2161,9 +2186,11 @@ function resetSelectedLights(){
  if(previewIndex!==null)return;
  for(const light of data.lights){
   if(!setupSelection.has(light.id))continue;
-  setupDraft.values[light.id]={color:"#000000",level:0,channels:Object.fromEntries(channelMap(light).map((_,index)=>[index,0]))};
+  const previous=setupDraft.values[light.id]||defaultValue,map=channelMap(light);
+  const channels={...previous.channels};map.forEach((channel,index)=>{if(['D','R','G','B','W'].includes(channel))channels[index]=0;});
+  setupDraft.values[light.id]={...previous,color:'#000000',level:0,channels};
  }
- setupNotice="Auswahl vollständig auf null.";
+ setupNotice="Farbe der Auswahl auf null gesetzt.";
 }
 let updateInfo=null,updateBusy=false;
 function updatePanel(){
@@ -2418,7 +2445,7 @@ function playbackControls(){
   (scenes.length?'<ol class="playback-queue">'+scenes.map((scene,index)=>'<li><span>Button '+performanceNumber(scene)+'</span><div class="row">'+
    button('↑','queue-up:'+scene.id,'aria-label="'+esc(scene.name)+' nach vorne" '+(index===0?'disabled':''))+
    button('↓','queue-down:'+scene.id,'aria-label="'+esc(scene.name)+' nach hinten" '+(index===scenes.length-1?'disabled':''))+
-   button('×','queue-remove:'+scene.id,'aria-label="'+esc(scene.name)+' aus Wiedergabe entfernen"')+'</div></li>').join('')+'</ol>':'<p class="muted">Wähle unten die Performance Buttons für deine Wiedergabe aus.</p>')+playbackListPanel()+'</section>';
+   button('×','queue-remove:'+scene.id,'aria-label="'+esc(scene.name)+' aus Wiedergabe entfernen"')+'</div></li>').join('')+'</ol>':'<p class="muted">Wähle unten die Szenen für deine Wiedergabe aus.</p>')+playbackListPanel()+'</section>';
 }
 document.addEventListener('change',event=>{
  if(tab===3&&event.target.id==='setup-color'&&previewIndex===null&&setupSelection.size)rememberPickedColor(event.target.value);
@@ -2546,6 +2573,95 @@ function setProgramTiming(key,value){
  const sceneSteps=screen.querySelectorAll('.step-card [data-action^="setup-step:"]');
  sceneSteps.forEach(button=>{const step=scene.steps[Number(button.dataset.action.split(':')[1])];const small=button.querySelector('small');if(step&&small)small.textContent=step.fade+' s Fade · '+step.hold+' s Halt';});
 }
+
+
+function validateTilt(value){
+ if(value===undefined)return {x:0,y:0,z:0};
+ if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Ungültige Neigung.');
+ const result={};for(const axis of ['x','y','z']){const number=value[axis]??0;if(!Number.isFinite(number)||number < -180||number>180)throw new Error('Neigung muss zwischen −180° und 180° liegen.');result[axis]=number;}return result;
+}
+function tiltControls(light){
+ const value=validateTilt(light.tilt);
+ return '<fieldset class="fixture-tilt"><legend>Neigung / Drehung</legend><div class="tilt-fields">'+['x','y','z'].map(axis=>'<label class="stack">'+axis.toUpperCase()+' (°)<input type="number" min="-180" max="180" step="1" data-fixture-tilt="'+axis+'" aria-label="Neigung '+axis.toUpperCase()+'" value="'+value[axis]+'"></label>').join('')+'</div><small>Schematische Ausrichtung im Visualiser.</small></fieldset>';
+}
+function rotateFixture(vector,tilt){
+ const rotation=validateTilt(tilt),[x,y,z]=['x','y','z'].map(axis=>rotation[axis]*Math.PI/180);
+ let p={x:vector.x,y:vector.y*Math.cos(x)-vector.z*Math.sin(x),z:vector.y*Math.sin(x)+vector.z*Math.cos(x)};
+ p={x:p.x*Math.cos(y)+p.z*Math.sin(y),y:p.y,z:-p.x*Math.sin(y)+p.z*Math.cos(y)};
+ return {x:p.x*Math.cos(z)-p.y*Math.sin(z),y:p.x*Math.sin(z)+p.y*Math.cos(z),z:p.z};
+}
+function fixtureBeam(light,index){
+ const point=rigWorld(light,index),direction=rotateFixture({x:0,y:0,z:-1},light.tilt);
+ const floorDistance=direction.z<-.001?Math.max(0,point.z/-direction.z):Infinity,distance=Math.min(12,floorDistance);
+ return {tip:{x:point.x+direction.x*distance,y:point.y+direction.y*distance,z:point.z+direction.z*distance},direction,groundHit:floorDistance<=12};
+}
+function fixtureAngle(light,index,width,height){
+ if(rigView.mode==='2d')return validateTilt(light.tilt).z;
+ const point=rigWorld(light,index),forward=rotateFixture({x:0,y:-1,z:0},light.tilt),a=projectRig(point,width,height),b=projectRig({x:point.x+forward.x,y:point.y+forward.y,z:point.z+forward.z},width,height);
+ return Math.hypot(b.x-a.x,b.y-a.y)<.01?0:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI+90;
+}
+function captureLayout(){
+ return {stage:{...stageSize()},fixtures:Object.fromEntries(data.lights.map((light,index)=>[light.id,{position:{...fixturePosition(light,index)},height:light.height??2.4,inLayout:fixturePlaced(light),tilt:validateTilt(light.tilt)}]))};
+}
+function syncActiveLayout(){
+ if(layoutLoading||!data?.activeLayoutId)return;const active=(data.savedLayouts||[]).find(item=>item.id===data.activeLayoutId);if(active)Object.assign(active,captureLayout());
+}
+function validateLayouts(layouts,lights){
+ if(layouts===undefined)return [];if(!Array.isArray(layouts)||layouts.length>64)throw new Error('Höchstens 64 Aufbauten sind möglich.');
+ const ids=new Set(),known=new Set(lights.map(light=>light.id));return layouts.map(layout=>{
+  if(!layout||typeof layout.id!=='string'||!/^[-a-zA-Z0-9]+$/.test(layout.id)||ids.has(layout.id)||typeof layout.name!=='string'||!layout.name.trim()||layout.name.length>60||!layout.fixtures||typeof layout.fixtures!=='object'||Array.isArray(layout.fixtures))throw new Error('Ungültiger gespeicherter Aufbau.');
+  ids.add(layout.id);const fixtures=Object.fromEntries(Object.entries(layout.fixtures).map(([id,value])=>{
+   if(!known.has(id)||!value||!value.position||![value.position.x,value.position.y].every(number=>Number.isFinite(number)&&number>=0&&number<=1)||!Number.isFinite(value.height)||value.height<0||value.height>5||typeof value.inLayout!=='boolean')throw new Error('Ungültige Leuchte im gespeicherten Aufbau.');
+   return [id,{position:{x:value.position.x,y:value.position.y},height:value.height,inLayout:value.inLayout,tilt:validateTilt(value.tilt)}];
+  }));return {id:layout.id,name:layout.name,stage:validateStage(layout.stage),fixtures};
+ });
+}
+function savedLayoutsPanel(){
+ const layouts=data.savedLayouts||[],active=layouts.find(item=>item.id===data.activeLayoutId),name=layoutNameDraft||(active?.name||'Aufbau '+(layouts.length+1));
+ return '<details class="panel saved-layouts" id="saved-layouts" '+(data.layoutPanelOpen===false?'':'open')+'><summary>Aufbauten <small>'+layouts.length+' gespeichert</small></summary>'+
+  '<label class="stack">Aufbau wechseln<select id="layout-picker"><option value="">Aktueller Aufbau</option>'+layouts.map(item=>'<option value="'+item.id+'" '+(item===active?'selected':'')+'>'+esc(item.name)+'</option>').join('')+'</select></label>'+
+  '<form id="layout-save-form"><label class="stack">Name<input id="layout-name" name="layoutName" maxlength="60" required value="'+esc(name)+'"></label><div class="row"><button class="primary">Speichern</button>'+button('Neu','layout-new')+button('Kopie','layout-copy')+(active?button('Löschen','layout-delete','class="danger-button"'):'')+'</div></form>'+
+  '<small>Änderungen am aktiven Aufbau bleiben beim Wechsel erhalten. Lichter und Szenen werden gemeinsam verwendet.</small><p id="layout-notice" role="status">'+esc(layoutNotice)+'</p></details>';
+}
+function storeLayout(name){
+ name=name.trim();if(!name||name.length>60)throw new Error('Bitte einen Namen mit höchstens 60 Zeichen eingeben.');
+ const layouts=data.savedLayouts||[],active=layouts.find(item=>item.id===data.activeLayoutId);
+ if(layouts.some(item=>item!==active&&item.name.toLowerCase()===name.toLowerCase()))throw new Error('Dieser Aufbau-Name existiert bereits.');
+ if(!active&&layouts.length>=64)throw new Error('Höchstens 64 Aufbauten sind möglich.');
+ const record={id:active?.id||uid(),name,...captureLayout()};if(active)Object.assign(active,record);else (data.savedLayouts??=[]).push(record);
+ data.activeLayoutId=record.id;layoutNameDraft=name;layoutNotice='Aufbau gespeichert.';save();return record.id;
+}
+function loadLayout(id){
+ const record=(data.savedLayouts||[]).find(item=>item.id===id);if(!record)return;
+ syncActiveLayout();layoutLoading=true;
+ try{
+  data.stage={...record.stage};for(const light of data.lights){const value=Object.prototype.hasOwnProperty.call(record.fixtures,light.id)?record.fixtures[light.id]:null;
+   if(value){light.position={...value.position};light.height=value.height;light.inLayout=value.inLayout;light.tilt={...value.tilt};}else light.inLayout=false;
+  }
+  data.activeLayoutId=id;layoutNameDraft=record.name;setupSelection.clear();layoutNotice='Aufbau „'+record.name+'“ geladen.';
+ }finally{layoutLoading=false;}save();
+}
+function newLayout(copyCurrent=false){
+ if(!data.activeLayoutId)storeLayout(layoutNameDraft||"Aktueller Aufbau");syncActiveLayout();if((data.savedLayouts||[]).length>=64)throw new Error('Höchstens 64 Aufbauten sind möglich.');
+ if(!copyCurrent)data.lights.forEach(light=>light.inLayout=false);
+ data.activeLayoutId=null;let base=copyCurrent?(layoutNameDraft||'Aufbau')+' Kopie':'Aufbau',number=1,name=base;
+ while((data.savedLayouts||[]).some(item=>item.name===name))name=base+' '+number++;
+ layoutNameDraft=name;storeLayout(name);layoutNotice=copyCurrent?'Kopie angelegt.':'Neuer Aufbau angelegt.';
+}
+document.addEventListener('input',event=>{
+ const field=event.target;if(field.id==='layout-name')layoutNameDraft=field.value;
+ const axis=field.dataset.fixtureTilt;if(!axis||!field.validity.valid||field.value==='')return;
+ data.lights.filter(light=>setupSelection.has(light.id)).forEach(light=>{light.tilt={...validateTilt(light.tilt),[axis]:Number(field.value)};});save();paintRig();
+});
+document.addEventListener('change',event=>{if(event.target.id==='layout-picker'&&event.target.value){loadLayout(event.target.value);render();}});
+document.addEventListener('toggle',event=>{if(event.target.id==='saved-layouts'){data.layoutPanelOpen=event.target.open;save();}},true);
+document.addEventListener('submit',event=>{
+ if(event.target.id!=='layout-save-form')return;event.preventDefault();try{storeLayout(new FormData(event.target).get('layoutName'));}catch(error){layoutNotice=error.message;}render();
+});
+document.addEventListener('click',event=>{
+ const action=event.target.closest('[data-action]')?.dataset.action;if(!['layout-new','layout-copy','layout-delete'].includes(action))return;
+ try{if(action==='layout-delete'){data.savedLayouts=(data.savedLayouts||[]).filter(item=>item.id!==data.activeLayoutId);data.activeLayoutId=null;layoutNameDraft='';layoutNotice='Gespeicherter Aufbau gelöscht. Die aktuelle Aufstellung bleibt erhalten.';save();}else newLayout(action==='layout-copy');}catch(error){layoutNotice=error.message;}render();
+});
 
 render();
 </script>

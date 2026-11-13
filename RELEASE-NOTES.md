@@ -1,3 +1,13 @@
+NullLight v19 – Szenen und mehrere Aufbauten
+
+- Performance Buttons heißen jetzt Szenen; die bearbeitete Szene lässt sich beim Speichern direkt wählen.
+- Einklappbare Aufbauten mit Speichern, Kopieren und Wechseln. Grundfläche, Positionen und X-/Y-/Z-Ausrichtung bleiben pro Aufbau erhalten.
+- Farbe der Auswahl über der Lichterliste; getrennte Aktionen für Farbe auf null und Alles abwählen.
+- Banks links neben dem Master; höherer, schmalerer Perform-Visualiser mit Szenentasten darunter.
+- Enthält Woodwarths Raspberry-Pi-, CDJ-3000- und MCP-Erweiterungen aus v18. Reale Hardwaretests stehen noch aus.
+
+Downloads: NullLight-Mac-v19.zip, NullLight-Windows-Demo-v19.zip und NullLight-Raspberry-Pi-v19.zip.
+
 NullLight v18 – Raspberry Pi, Pioneer CDJ-3000 und MCP
 
 - Raspberry-Pi-/Linux-Server mit echter Art-Net-Ausgabe, geschützter Browser-Bedienung im LAN und optionalem systemd-Benutzerdienst.
