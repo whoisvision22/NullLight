@@ -395,13 +395,15 @@ nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
 @media(max-width:1150px){.perform-shell{grid-template-columns:minmax(0,1fr) 320px}.perform-sidebars{grid-template-columns:minmax(0,1fr)}.perform-sidebars button{font-size:11px;padding:7px}}
 @media(max-width:850px){.perform-shell{grid-template-columns:minmax(0,1fr) 285px}.perform-sidebars{grid-template-columns:minmax(0,1fr)}.perform-main .rig-canvas{height:420px}}
 @media(max-width:650px){.perform-shell{grid-template-columns:1fr}.perform-sidebars{position:static;grid-template-columns:minmax(0,1fr)}.perform-sidebars>.master-panel,.perform-sidebars>.bank-list{max-height:none}.perform-main .rig-canvas{height:380px}}
+
+.workflow-bar{display:flex;justify-content:space-between;gap:8px;padding:6px 16px;background:#211b2b;border-bottom:1px solid #44384e;flex-wrap:wrap;flex-shrink:0}.workflow-bar button{padding:5px 9px;font-size:12px}.workflow-bar small{font-size:11px}.draft-dirty{color:#e7bdff}#status[data-state="alert"]{color:#ff919e}#status[data-state="live"]{color:#8be5b3}.central-scene{order:-1!important}.step-color-dots{display:flex;gap:3px;margin:5px 0}.step-color-dots i{width:10px;height:10px;border-radius:50%;border:1px solid #ffffff44}.step-card[draggable="true"]{cursor:grab}.perform-scene-name{display:block;font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.performance-panel .tile{gap:4px}.playback-progress{margin:10px 0;padding:10px 14px;display:flex;flex-direction:column;gap:5px}.playback-progress progress{width:100%;height:7px;accent-color:#b38be5}.playback-progress small{color:var(--muted)}
 </style>
 
 
 
 
 
-<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v21</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v22</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header><div id="workflow-bar" class="workflow-bar"></div>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -907,7 +909,7 @@ const mappingInput=form.get("mapping").trim().toUpperCase();
  if(error)return;
  const existing=data.lights.find(light=>light.id===fixture);
  if(existing)Object.assign(existing,{name,mode,address,group,mapping,visualType});
- else data.lights.push({id:uid(),name,mode,address,group,mapping,visualType,height:deviceTypes[visualType].height,position:automaticLightPosition()});
+ else {try{addFixtureBatch({name,mode,address,group,mapping,visualType},Number(form.get('count')||1));}catch(error){document.querySelector('#light-error').textContent=error.message;return;}}
  patchPage=Math.floor((address-1)/128);fixture=null;save();render();
 });
 screen.addEventListener("dragstart",event=>{
@@ -1029,7 +1031,7 @@ function consumeDJStatus(result){
    djBeatCount+=delta;
    if(djBeatCount>=(data.djBeats||4)){
     djBeatCount=0;
-    if(running().steps[stageIndex]?.darkAfter&&!playbackDark){playbackDark=true;darkenOutput();redrawPlayback();}
+    if(running().steps[stageIndex]?.darkAfter&&!playbackDark){playbackDark=true;playbackStarted=performance.now();playbackSeconds=darkDuration(running().steps[stageIndex]);darkenOutput();redrawPlayback();}
     else{playbackDark=false;advancePlayback();}
    }
   }
@@ -1295,7 +1297,7 @@ for(const value of Object.values(step.values)){
  const importedMapping=validateMapping(show.mapping||mappingDefaults());
  if(show.recentColors&&!show.recentColors.every(color=>/^#[0-9a-f]{6}$/i.test(color)))throw new Error("Ungültige Farbpalette.");
  // Only show data is imported. The network destination is configured in this app.
- return {savedLayouts:validateLayouts(show.savedLayouts,show.lights),activeLayoutId:typeof show.activeLayoutId==="string"&&validateLayouts(show.savedLayouts,show.lights).some(item=>item.id===show.activeLayoutId)?show.activeLayoutId:null,layoutPanelOpen:show.layoutPanelOpen!==false,djBeats:show.djBeats||4,masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
+ return {showSceneNames:show.showSceneNames===true,savedLayouts:validateLayouts(show.savedLayouts,show.lights),activeLayoutId:typeof show.activeLayoutId==="string"&&validateLayouts(show.savedLayouts,show.lights).some(item=>item.id===show.activeLayoutId)?show.activeLayoutId:null,layoutPanelOpen:show.layoutPanelOpen!==false,djBeats:show.djBeats||4,masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
 }
 document.addEventListener("click",async event=>{
  const action=event.target.closest("[data-action]")?.dataset.action;
@@ -1982,7 +1984,7 @@ function render(){
  else body=connection();
  screen.classList.toggle("programming-view",tab===3);
  screen.classList.toggle("arrangement-view",tab===4);
-  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+masterPanel()+banksPanel()+'</div></div>':body;
+  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+playbackProgressPanel()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+masterPanel()+banksPanel()+'</div></div>':body;
  paintRig();
 }
 
@@ -2276,6 +2278,7 @@ function lights(){
    '<div class="row"><label class="stack">Name<input name="name" required maxlength="60" value="'+esc(draft.name)+'"></label>'+
    '<label class="stack">DMX-Startadresse<input name="address" type="number" required min="1" max="512" value="'+esc(draft.address)+'"></label>'+
    '<label class="stack">Gruppe<input name="group" value="'+esc(draft.group)+'"></label></div>'+
+   (light?'':'<label class="stack">Anzahl gleicher Geräte<input name="count" type="number" min="1" max="64" value="1" required></label>')+
    '<label class="stack">DMX-Kanalfolge<input name="mapping" placeholder="Kanalfolge aus dem Gerätehandbuch" required value="'+esc(draft.mapping)+'"></label>'+
    '<small>Die Geräteart bestimmt das Symbol. Die vorbelegte Kanalfolge ist ein Beispiel und muss zum DMX-Modus am Gerät passen. D = Dimmer, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert.</small>'+
    '<p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></form>'+
@@ -2661,6 +2664,132 @@ document.addEventListener('click',event=>{
  const action=event.target.closest('[data-action]')?.dataset.action;if(!['layout-new','layout-copy','layout-delete'].includes(action))return;
  try{if(action==='layout-delete'){data.savedLayouts=(data.savedLayouts||[]).filter(item=>item.id!==data.activeLayoutId);data.activeLayoutId=null;layoutNameDraft='';layoutNotice='Gespeicherter Aufbau gelöscht. Die aktuelle Aufstellung bleibt erhalten.';save();}else newLayout(action==='layout-copy');}catch(error){layoutNotice=error.message;}render();
 });
+
+
+// Workflow: history includes working step drafts; backups remain separate from show data.
+let workflowRestoring=false,historyPast=[],historyFuture=[],workflowMessage='',backupOpen=false;
+let workflowBaseline=null,backupLastTime=0,stepDrag=null,playbackStarted=0,playbackSeconds=0;
+const backupKey=storageKey+'.backups.v1';
+function workflowSnapshot(){
+ return {show:copy(data),drafts:data.scenes.map(scene=>({id:scene.id,steps:scene.steps.map(step=>copy(setupDrafts.get(step)||step))})),editing,stepIndex,selection:[...setupSelection]};
+}
+function snapshotContent(snapshot){return JSON.stringify({show:snapshot.show,drafts:snapshot.drafts});}
+function recordHistory(){
+ if(workflowRestoring)return;
+ const next=workflowSnapshot();
+ if(workflowBaseline&&snapshotContent(next)!==snapshotContent(workflowBaseline)){
+  historyPast.push(workflowBaseline);if(historyPast.length>40)historyPast.shift();historyFuture=[];
+ }
+ workflowBaseline=next;refreshWorkflow();
+}
+function restoreHistorySnapshot(snapshot){
+ workflowRestoring=true;
+ try{
+  stopPreview();clearTimeout(timer);active=null;liveSnapshot=null;outputStep=null;performQueue.clear();auto=false;override='';stepUndo=null;
+  data=copy(snapshot.show);editing=data.scenes.some(scene=>scene.id===snapshot.editing)?snapshot.editing:data.scenes[0]?.id;
+  stepIndex=snapshot.stepIndex;setupSelection.clear();snapshot.selection.filter(id=>data.lights.some(light=>light.id===id)).forEach(id=>setupSelection.add(id));selectedStepRefs.clear();
+  snapshot.drafts.forEach(record=>{const scene=data.scenes.find(scene=>scene.id===record.id);scene?.steps.forEach((step,index)=>{if(record.steps[index])setupDrafts.set(step,copy(record.steps[index]));});});
+  setupDraft=null;loadSetupStep();save();workflowBaseline=workflowSnapshot();
+ }finally{workflowRestoring=false;}render();
+}
+function historyMove(forward=false){
+ if(outputState.enabled){workflowMessage='Bitte vor Rückgängig oder Wiederholen die Ausgabe stoppen.';refreshWorkflow();return;}
+ recordHistory();const from=forward?historyFuture:historyPast,to=forward?historyPast:historyFuture;if(!from.length)return;
+ to.push(workflowSnapshot());restoreHistorySnapshot(from.pop());
+}
+function readBackups(){try{const items=JSON.parse(localStorage.getItem(backupKey)||'[]');return Array.isArray(items)?items.filter(item=>item&&typeof item.id==='string'&&typeof item.time==='number'&&item.show).slice(0,10):[];}catch{return [];}}
+function backupShow(){
+ const show=copy(data);show.scenes.forEach((scene,si)=>scene.steps=scene.steps.map((step,index)=>copy(setupDrafts.get(data.scenes[si].steps[index])||step)));return show;
+}
+function createBackup(reason='Automatische Sicherung'){
+ try{
+  const show=backupShow(),items=readBackups();if(reason==='Automatische Sicherung'&&items[0]&&JSON.stringify(items[0].show)===JSON.stringify(show))return;
+  items.unshift({id:uid(),time:Date.now(),reason,show});localStorage.setItem(backupKey,JSON.stringify(items.slice(0,10)));backupLastTime=Date.now();
+  workflowMessage='Sicherung erstellt.';
+ }catch{workflowMessage='Sicherung fehlgeschlagen. Bitte Show exportieren.';}
+}
+function restoreBackup(id){
+ if(outputState.enabled)throw new Error('Bitte vor dem Wiederherstellen die Ausgabe stoppen.');
+ const item=readBackups().find(item=>item.id===id);if(!item)throw new Error('Sicherung nicht gefunden.');
+ const show=validateShow(copy(item.show));createBackup('Vor Wiederherstellung');recordHistory();historyPast.push(workflowSnapshot());historyFuture=[];
+ restoreHistorySnapshot({show,drafts:[],editing:show.scenes[0]?.id,stepIndex:0,selection:[]});workflowMessage='Sicherung wiederhergestellt. Rückgängig ist möglich.';refreshWorkflow();
+}
+function backupsPanel(){
+ return '<details class="panel" id="show-backups" '+(backupOpen?'open':'')+'><summary>Show-Sicherungen</summary><p>Die letzten zehn Sicherungen bleiben auf diesem Gerät. Für eine zusätzliche Kopie bitte Show exportieren.</p>'+button('Jetzt sichern','backup-now')+
+ '<div class="list">'+(readBackups().map(item=>'<div class="row split"><span>'+esc(new Date(item.time).toLocaleString('de-DE'))+' · '+esc(item.reason)+'</span>'+button('Wiederherstellen','backup-restore:'+item.id,outputState.enabled?'disabled':'')+'</div>').join('')||'<small>Noch keine Sicherung vorhanden.</small>')+'</div></details>';
+}
+function stepIsDirty(){const step=current()?.steps[stepIndex];return Boolean(setupDraft&&JSON.stringify(setupDraft)!==JSON.stringify(step||newStep()));}
+function refreshWorkflow(){
+ const bar=document.querySelector('#workflow-bar');if(!bar)return;
+ const dirty=tab===3&&stepIsDirty();
+ const markup='<div class="row">'+button('↶ Rückgängig','history-undo','aria-label="Rückgängig" '+(!historyPast.length||outputState.enabled?'disabled':''))+button('↷ Wiederholen','history-redo','aria-label="Wiederholen" '+(!historyFuture.length||outputState.enabled?'disabled':''))+button('Sicherungen','backups-open')+'</div><div class="row">'+(tab===3?'<strong class="'+(dirty?'draft-dirty':'')+'">'+(dirty?'Step geändert · noch nicht gespeichert':'Step gespeichert')+'</strong>'+button('Step speichern','setup-update',(dirty?'class="primary" ':'')+(previewIndex!==null||!data.lights.length?'disabled':'')):'')+'<small role="status">'+esc(workflowMessage)+'</small></div>';
+ if(bar.innerHTML!==markup)bar.innerHTML=markup;
+ const status=document.querySelector('#status');if(status){let message=storageError?'Speichern nicht verfügbar':override==='black'?'● BLACKOUT':outputState.error?'● Verbindung verloren':outputState.enabled?(outputState.subscribed?'● DMX-Ausgabe aktiv':'◌ Ausgabe gestartet · warte auf Node'):'○ Nur Vorschau · keine DMX-Ausgabe';status.textContent=message;status.dataset.state=override==='black'||outputState.error||storageError?'alert':outputState.enabled?'live':'preview';}
+ updatePlaybackProgress();
+}
+function stepColors(step){return [...new Set(Object.values(step.values||{}).filter(value=>value.level>0).map(value=>value.color))].slice(0,8);}
+function stepColorDots(step){const colors=stepColors(step);return '<span class="step-color-dots" aria-label="'+(colors.length?colors.length+' Farben':'Dunkel')+'">'+(colors.length?colors:['#111111']).map(color=>'<i style="background:'+esc(color)+'"></i>').join('')+'</span>';}
+function reorderProgramStep(from,to,duplicate=false){
+ const scene=current();if(previewIndex!==null||!scene||!Number.isInteger(from)||!Number.isInteger(to)||from<0||to<0||from>=scene.steps.length||to>=scene.steps.length||from===to&&!duplicate)return;
+ recordHistory();const source=scene.steps[from];let moved=source;
+ if(duplicate){moved=copy(setupDrafts.get(source)||source);scene.steps.splice(to,0,moved);}else{scene.steps.splice(from,1);scene.steps.splice(to,0,moved);}
+ stepIndex=scene.steps.indexOf(moved);selectedStepRefs.clear();selectedStepRefs.add(moved);loadSetupStep();save();setupNotice=duplicate?'Step kopiert.':'Step verschoben.';render();
+}
+function addFixtureBatch(base,count){
+ if(!Number.isInteger(count)||count<1||count>64)throw new Error('Bitte zwischen 1 und 64 Geräten wählen.');
+ const channels=channelCount(base),end=base.address+channels*count-1;if(end>512)throw new Error('Die Geräte passen nicht mehr in das Universum.');
+ const collision=data.lights.find(light=>base.address<light.address+channelCount(light)&&end>=light.address);if(collision)throw new Error('Überschneidung mit '+collision.name+'.');
+ const added=Array.from({length:count},(_,index)=>({...base,id:uid(),name:count>1?base.name+' '+(index+1):base.name,address:base.address+index*channels,height:deviceTypes[base.visualType].height,position:snapPosition({x:((data.lights.length+index)%8+1)/9,y:.25+Math.floor((data.lights.length+index)/8)*.1})}));
+ data.lights.push(...added);return added;
+}
+function playbackProgressPanel(){return '<section class="panel playback-progress"><strong id="playback-state">Keine Szene aktiv</strong><progress id="playback-progress" max="1" value="0" aria-label="Fortschritt des aktuellen Steps"></progress><small id="playback-next"></small></section>';}
+function updatePlaybackProgress(){
+ const state=document.querySelector('#playback-state'),progress=document.querySelector('#playback-progress'),nextLabel=document.querySelector('#playback-next');if(!state||!progress||!nextLabel)return;
+ const scene=running(),step=scene?.steps[stageIndex];if(!step){state.textContent='Keine Szene aktiv';progress.value=0;nextLabel.textContent='';return;}
+ const elapsed=Math.max(0,(performance.now()-playbackStarted)/1000),remaining=Math.max(0,playbackSeconds-elapsed);
+ state.textContent=scene.name+' · Step '+(stageIndex+1)+' / '+scene.steps.length+' · '+(override==='black'?'Blackout':override?'White':playbackDark?'Dunkelphase':djSync?'Beat '+djBeatCount+' / '+(data.djBeats||4):remaining.toFixed(1)+' s');
+ progress.value=override?0:djSync?Math.min(1,djBeatCount/(data.djBeats||4)):playbackSeconds?Math.min(1,elapsed/playbackSeconds):0;
+ let next='Wiederholung: '+scene.name;const queue=repeatScenes();
+ if(stageIndex+1<scene.steps.length)next='Step '+(stageIndex+2)+' in '+scene.name;
+ else if(queue.length){const index=queue.findIndex(item=>item.id===scene.id);next=data.playbackMode==='random'?'Zufällige Szene aus der Auswahl':queue[(index+1)%queue.length].name;}
+ else if(auto&&liveScenes().length){const scenes=liveScenes(),index=scenes.findIndex(item=>item.id===scene.id);next=scenes[(index+1)%scenes.length].name;}else if(!scene.loop)next='Wiedergabe endet';
+ nextLabel.textContent='Danach: '+next;
+}
+const workflowSave=save;save=function(){workflowSave();if(!workflowRestoring){recordHistory();if(Date.now()-backupLastTime>30000)createBackup();}refreshWorkflow();};
+const workflowApply=applySetupValue;applySetupValue=function(...args){workflowApply(...args);recordHistory();};
+const workflowReset=resetSelectedLights;resetSelectedLights=function(){workflowReset();recordHistory();};
+const workflowRender=render;render=function(){workflowRender();refreshWorkflow();};
+const workflowProgramming=programmingScreen;programmingScreen=function(){
+ let html=workflowProgramming();
+ html=html.replace(/<label class="stack">Bearbeitete Szene<select id="publish-scene"[\s\S]*?<\/select><\/label>/,'').replace(/<label>Szene <select id="setup-scene">[\s\S]*?<\/select><\/label>/,'').replace(presetChooser('control-scene'),'');
+ const chooser='<section class="panel central-scene"><label class="stack">Bearbeitete Szene<select id="publish-scene" aria-label="Bearbeitete Szene">'+data.scenes.map(scene=>'<option value="'+scene.id+'" '+(scene===current()?'selected':'')+'>'+esc(scene.name)+'</option>').join('')+'</select></label></section>';
+ return html.replace('<aside class="program-sidebar">','<aside class="program-sidebar">'+chooser);
+};
+const workflowSteps=setupSteps;setupSteps=function(scene){let html=workflowSteps(scene);if(!scene)return html;html=html.replace('<div class="row">'+button("Als neuen Step speichern","setup-save",'class="primary" '+(!data.lights.length||previewIndex!==null?'disabled':'')), '<div class="row">'+button('← Verschieben','program-move-left',stepIndex===0?'disabled':'')+button('Verschieben →','program-move-right',stepIndex>=scene.steps.length-1?'disabled':'')+button('Step kopieren','program-copy')+button("Als neuen Step speichern","setup-save",'class="primary" '+(!data.lights.length||previewIndex!==null?'disabled':'')));scene.steps.forEach((step,index)=>{html=html.replace('<div class="step-card">','<div class="step-card" draggable="true" data-program-step="'+index+'" title="Ziehen zum Sortieren · ⌥ / Alt beim Ablegen zum Kopieren">').replace('Step '+(index+1)+'<small>','Step '+(index+1)+stepColorDots(setupDrafts.get(step)||step)+'<small>');});return html;};
+const workflowPerformance=performanceScreen;performanceScreen=function(){return workflowPerformance().replace('<h3>Szenen</h3>','<h3>Szenen</h3><label><input id="show-scene-names" type="checkbox" '+checked(data.showSceneNames)+'> Namen anzeigen</label>');};
+const workflowCell=performanceCell;performanceCell=function(scene){return workflowCell(scene).replace('<small class="scene-card-status">',(data.showSceneNames?'<span class="perform-scene-name">'+esc(scene.buttonName||scene.name)+'</span>':'')+'<small class="scene-card-status">');};
+const workflowConnection=connection;connection=function(){return workflowConnection()+backupsPanel();};
+const workflowSchedule=schedule;schedule=function(){playbackStarted=performance.now();playbackSeconds=stepDuration(running()?.steps[stageIndex]||newStep());workflowSchedule();updatePlaybackProgress();};
+document.addEventListener('click',event=>{
+ const command=event.target.closest('[data-action]')?.dataset.action;if(!command)return;
+ if(command==='program-move-left')reorderProgramStep(stepIndex,stepIndex-1);else if(command==='program-move-right')reorderProgramStep(stepIndex,stepIndex+1);else if(command==='program-copy')reorderProgramStep(stepIndex,stepIndex,true);else if(command==='history-undo')historyMove();else if(command==='history-redo')historyMove(true);
+ else if(command==='backups-open'){backupOpen=true;tab=0;render();}
+ else if(command==='backup-now'){createBackup('Manuelle Sicherung');backupOpen=true;render();}
+ else if(command.startsWith('backup-restore:')){try{restoreBackup(command.slice(15));}catch(error){workflowMessage=error.message;refreshWorkflow();}}
+});
+document.addEventListener('change',event=>{if(event.target.id==='show-scene-names'){data.showSceneNames=event.target.checked;save();render();}});
+document.addEventListener('keydown',event=>{
+ if(!(event.metaKey||event.ctrlKey)||event.altKey||event.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+ if(event.key.toLowerCase()==='z'){event.preventDefault();historyMove(event.shiftKey);}else if(event.key.toLowerCase()==='y'){event.preventDefault();historyMove(true);}
+});
+screen.addEventListener('dragstart',event=>{const card=event.target.closest('[data-program-step]');if(!card||previewIndex!==null)return;stepDrag=Number(card.dataset.programStep);event.dataTransfer.setData('text/plain','step:'+stepDrag);event.dataTransfer.effectAllowed='copyMove';});
+screen.addEventListener('dragover',event=>{if(stepDrag!==null&&event.target.closest('[data-program-step]')){event.preventDefault();event.dataTransfer.dropEffect=event.altKey?'copy':'move';}});
+screen.addEventListener('drop',event=>{const card=event.target.closest('[data-program-step]');if(stepDrag===null||!card)return;event.preventDefault();const from=stepDrag;stepDrag=null;reorderProgramStep(from,Number(card.dataset.programStep),event.altKey);});
+screen.addEventListener('dragend',()=>stepDrag=null);
+workflowBaseline=workflowSnapshot();
+setInterval(refreshWorkflow,250);
+setInterval(()=>{if(!workflowRestoring)createBackup();},30000);
+window.addEventListener('beforeunload',event=>{if(data.scenes.some(scene=>scene.steps.some(step=>setupDrafts.has(step)&&JSON.stringify(setupDrafts.get(step))!==JSON.stringify(step)))){event.preventDefault();event.returnValue='';}});
 
 render();
 </script>

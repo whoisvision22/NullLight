@@ -1,3 +1,13 @@
+NullLight v22 – Einfacher programmieren und sicherer arbeiten
+
+- Eine zentrale Szenenauswahl beim Programmieren, sichtbare ungespeicherte Step-Farben und direkter Speichern-Knopf.
+- Rückgängig/Wiederholen für Show-Änderungen und Farbentwürfe, auch per ⌘/Strg+Z und Umschalt+⌘/Strg+Z. Während echter Ausgabe gesperrt.
+- Steps ziehen zum Sortieren, Alt/Option beim Ablegen zum Kopieren; zusätzliche Pfeile und Kopieren-Taste. Mehrfarbige Vorschau pro Step.
+- Optionale Szenennamen unter den Perform-Zahlen; Anzeige von aktivem Step, Fortschritt und nächster Szene. CDJ-Sync zeigt Beats statt geschätzter Sekunden.
+- Bis zu 64 gleiche Geräte in einem Vorgang, fortlaufende manuell änderbare DMX-Adressen und gemeinsame Konfliktprüfung vor dem Anlegen.
+- Zehn lokale automatische/manuelle Sicherungen inklusive Farbentwürfen, Wiederherstellung und Sicherung vor dem Wiederherstellen. Export bleibt für geräteübergreifende Sicherungen nötig.
+- Vorschau, echte DMX-Ausgabe, Blackout und Verbindungsfehler werden in jedem Reiter angezeigt.
+
 NullLight v21 – Szenennamen auswählen
 
 - Beim Speichern in Perform ist Name der Taste eine Auswahlliste der vorhandenen Szenennamen. Die bearbeitete Szene wird ebenfalls mit ihrem Namen angezeigt.

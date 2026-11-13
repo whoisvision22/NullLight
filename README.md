@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v18**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v22**.
 
 ## Herunterladen
 
@@ -24,6 +24,12 @@ In der Mac-App: **Updates → Updates prüfen → Herunterladen und vorbereiten 
 Dieses erste GitHub-Updatepaket benötigt die neue Mac-App einmalig als Download. Die Dateidemo unter Windows wird durch Herunterladen der neuen Demo ersetzt.
 
 Jeder geprüfte neue Versionsstand auf main wird durch GitHub Actions gebaut. Wenn version.json eine neue Versionsnummer enthält, veröffentlicht der Workflow automatisch Mac-App, Windows-Demo und Update-Dateien. Ein bereits vorhandenes Release wird nicht überschrieben. Die verbindlichen Arbeitsschritte für künftige Änderungen stehen in AGENTS.md.
+
+## Neuer Arbeitsablauf in v22
+
+Die bearbeitete Szene wird zentral über der Farbauswahl gewählt. Ungespeicherte Step-Änderungen erscheinen oben mit direktem Speichern-Knopf. Rückgängig/Wiederholen umfasst Show-Änderungen und Farbentwürfe; Texteingaben behalten ihre üblichen Tastenkürzel. Rückgängig und Wiederherstellen sind bei aktiver echter Ausgabe gesperrt.
+
+Steps können gezogen oder mit den Pfeilen sortiert werden. Alt/Option beim Ablegen kopiert einen Step. Unter Verbindung bzw. über Sicherungen sind die letzten zehn lokalen Sicherungsstände zugänglich. Automatische Sicherungen erfolgen bei Änderungen spätestens nach 30 Sekunden; bitte wichtige Shows zusätzlich exportieren. Die Sicherungen liegen im selben Browser/App-Speicher und ersetzen keine externe Sicherung.
 
 ## Funktionen
 
