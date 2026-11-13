@@ -1,3 +1,10 @@
+NullLight v0.2.6 – Geräte übersichtlich verwalten
+
+- Einklappbare Gerätegruppen in Patch, Aufbau und Programmierung. Mehrere Geräte im Patch auswählen und gemeinsam einer Gruppe zuweisen.
+- Geräteliste und Bearbeitungsformular scrollen unabhängig; Speichern und Abbrechen bleiben im Editor sichtbar. Listenposition bleibt beim Bearbeiten erhalten.
+- Auswahl gängiger DMX-Kanalfolgen mit eigener Kanalfolge als Alternative. Vorhandene Profile bleiben erhalten.
+- Neue Strobos starten mit zwei Kanälen: Dimmer und Strobe (D,S), alternativ S,D. Der Strobe-DMX-Wert ist pro Step einstellbar; Blackout setzt alle Kanäle auf null.
+
 NullLight v0.2.5
 
 - Jeder Aufbau hat eigene Banks, Szenen, Wiedergabegruppen und Tempo-Faktoren. Neue Aufbauten beginnen mit einer leeren Szene, Kopien sind unabhängig. Alte gemeinsame Szenen bleiben durch Kopien in den bestehenden Aufbauten erhalten.

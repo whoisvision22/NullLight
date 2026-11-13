@@ -399,13 +399,45 @@ nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
 .workflow-bar{display:flex;justify-content:space-between;gap:8px;padding:6px 16px;background:#211b2b;border-bottom:1px solid #44384e;flex-wrap:wrap;flex-shrink:0}.workflow-bar button{padding:5px 9px;font-size:12px}.workflow-bar small{font-size:11px}.draft-dirty{color:#e7bdff}#status[data-state="alert"]{color:#ff919e}#status[data-state="live"]{color:#8be5b3}.central-scene{order:-1!important}.step-color-dots{display:flex;gap:3px;margin:5px 0}.step-color-dots i{width:10px;height:10px;border-radius:50%;border:1px solid #ffffff44}.step-card[draggable="true"]{cursor:grab}.perform-scene-name{display:block;font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.performance-panel .tile{gap:4px}.playback-progress{margin:10px 0;padding:10px 14px;display:flex;flex-direction:column;gap:5px}.playback-progress progress{width:100%;height:7px;accent-color:#b38be5}.playback-progress small{color:var(--muted)}
 .scene-picker-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;max-height:220px;overflow:auto}.scene-picker-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:65px;padding:6px!important}.scene-picker-grid strong{font-size:22px}.scene-picker-grid small{font-size:10px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.scene-bank-panel input:not([type="checkbox"]),.scene-bank-panel select{width:100%;box-sizing:border-box}.scene-bank-panel details{display:grid;gap:6px}
 #update-dialog{width:min(600px,calc(100vw - 50px));box-sizing:border-box;padding:24px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink)}#update-dialog[open]{display:flex;flex-direction:column;gap:14px}#update-dialog::backdrop{background:#0009}#update-dialog p{font-size:14px}#update-dialog small,#update-dialog a{font-size:12px;color:var(--muted)}#update-dialog progress{width:100%;height:8px;accent-color:var(--accent)}.update-message{min-height:38px}.rig-canvas,.rig-canvas *{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}.rig-light[aria-pressed=true]{outline:1px solid var(--accent);outline-offset:2px}
-.rig-canvas{background:#000!important}.rig-canvas::before,.rig-canvas::after{background:none!important}.master-live-box{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--accent);border-radius:8px;background:#161020}.master-live-box strong{font-size:18px;overflow-wrap:anywhere}.master-live-box [data-mode="black"]{color:#ff9cab}.master-live-box [data-mode="flash"]{color:#fff}.master-tools{display:flex;flex-direction:column;gap:9px;padding-block:10px;border-bottom:1px solid var(--line)}.master-tools h4{margin:0}.master-tools input{width:65px}.master-tools button{font-size:12px}.perform-shell[data-locked="true"] .performance-panel{opacity:.65}</style>
+.rig-canvas{background:#000!important}.rig-canvas::before,.rig-canvas::after{background:none!important}.master-live-box{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--accent);border-radius:8px;background:#161020}.master-live-box strong{font-size:18px;overflow-wrap:anywhere}.master-live-box [data-mode="black"]{color:#ff9cab}.master-live-box [data-mode="flash"]{color:#fff}.master-tools{display:flex;flex-direction:column;gap:9px;padding-block:10px;border-bottom:1px solid var(--line)}.master-tools h4{margin:0}.master-tools input{width:65px}.master-tools button{font-size:12px}.perform-shell[data-locked="true"] .performance-panel{opacity:.65}
+/* Bounded device management: only the lists and form fields scroll. */
+#screen.patch-view{overflow:hidden}
+.patch-layout{height:100%;min-height:0;box-sizing:border-box;grid-template-columns:minmax(300px,1.1fr) minmax(340px,1fr);align-items:stretch;padding:12px 16px;overflow:hidden}
+.patch-devices,.patch-detail{min-height:0;overflow:hidden}
+.patch-devices{gap:10px}.patch-devices h2{font-size:18px}
+.patch-device-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.fixture-group{border:1px solid var(--line);border-radius:6px;margin-bottom:8px;min-width:0;overflow:hidden}
+.fixture-group>summary{cursor:pointer;padding:9px 10px;background:#30283d;font-size:13px;font-weight:650;overflow-wrap:anywhere}
+.fixture-group>summary small{float:right;color:var(--muted)}
+.fixture-group-items{display:grid;gap:6px;padding:7px}.fixture-group-items.tile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fixture-inventory{display:block;min-height:0;overflow:auto;max-height:45vh;scrollbar-width:thin}
+.patch-fixture-row{display:grid;gap:7px;padding:8px;border-bottom:1px solid var(--line)}
+.patch-fixture-row .device-symbol{transform:scale(.65);width:40px;height:34px}
+.fixture-row-name{flex:1;min-width:0}.fixture-row-name strong,.fixture-row-name small{display:block;overflow-wrap:anywhere}
+.fixture-row-name small{font-size:11px;color:var(--muted)}
+.patch-group-editor{max-height:210px;overflow:auto;flex-shrink:0}.patch-group-editor>summary{cursor:pointer;font-size:13px;color:var(--accent)}
+.patch-group-editor .group-editor{display:flex;flex-wrap:wrap;align-items:end;gap:6px;padding-top:8px;font-size:12px}
+.patch-group-editor .group-editor small{flex-basis:100%}
+.patch-detail{display:flex;flex-direction:column;gap:10px}
+#light-form{flex:1;min-height:0;overflow:hidden;gap:10px}
+#light-form h3{margin:0}.fixture-fields{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;overscroll-behavior:contain}
+#light-form .device-picker{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+#light-form .device-picker>button{min-height:76px;padding:5px 2px;gap:3px}#light-form .device-picker .device-symbol{transform:scale(.65);height:35px;width:100%}
+#light-form .device-picker>button>span:last-child{font-size:10px;overflow-wrap:anywhere}
+#light-form input:not([type=number]),#light-form select{max-width:100%;box-sizing:border-box}
+#light-form label.stack{max-width:100%}#mapping-preset{width:100%}
+.fixture-form-actions{flex-shrink:0;border-top:1px solid var(--line);padding-top:8px}.fixture-form-actions .error:empty{display:none}
+.patch-grid-fold{flex-shrink:0;max-height:40%;overflow:auto}.patch-grid-fold>summary{padding:8px;cursor:pointer;color:var(--accent)}
+.program-sidebar>.fixture-panel{min-height:160px;display:flex;flex-direction:column;overflow:hidden;flex:1}
+.program-sidebar>.fixture-panel>.fixture-inventory{flex:1;min-height:80px;max-height:none;overflow:auto}
+@media(max-width:700px){.patch-layout{grid-template-columns:1fr;grid-template-rows:minmax(150px,.8fr) minmax(230px,1.2fr);padding:8px;gap:8px}.patch-devices{padding:10px}.patch-devices h2{font-size:15px}.patch-devices> .row button{font-size:11px;padding:5px}.patch-group-editor{max-height:100px}#light-form .device-picker>button{min-height:60px}.patch-grid-fold{max-height:25%}}
+</style>
 
 
 
 
 
-<header><h1><img alt="" width="28" height="28" style="vertical-align:middle;margin-right:8px" src="data:image/png;base64,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">NullLight <small style="font-size:11px;color:var(--muted)">v0.2.5</small></h1><small id="layout-context"></small><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header><dialog id="update-dialog" aria-label="NullLight Updates"></dialog><div id="workflow-bar" class="workflow-bar"></div>
+<header><h1><img alt="" width="28" height="28" style="vertical-align:middle;margin-right:8px" src="data:image/png;base64,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">NullLight <small style="font-size:11px;color:var(--muted)">v0.2.6</small></h1><small id="layout-context"></small><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header><dialog id="update-dialog" aria-label="NullLight Updates"></dialog><div id="workflow-bar" class="workflow-bar"></div>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -589,7 +621,7 @@ function setupControls(lights){
   quickColorPalette(lights)+
   '<div class="row"><label class="custom-color-button">Eigene Farbe<input id="setup-color" type="color" aria-label="Eigene Farbe wählen" value="'+(colorLight?setupValue(colorLight).color:"#ffffff")+
   '" '+(previewIndex===null?'':'disabled')+'></label>'+button("Farbe auf null","selection-off",previewIndex===null?'':'disabled')+button("Alles abwählen","selection-clear")+'</div>'+
-  '<small>Die sechs Felder merken sich deine zuletzt gewählten Farben.</small>';
+  '<small>Die sechs Felder merken sich deine zuletzt gewählten Farben.</small>'+strobeControls(lights);
 }
 function selectSetupLight(id,multiple){
  if(!multiple){setupSelection.clear();setupSelection.add(id);}
@@ -603,6 +635,7 @@ function applySetupValue(key,newValue){
  for(const light of data.lights){
   if(!setupSelection.has(light.id))continue;
   const value=setupDraft.values[light.id]??={...defaultValue};
+  if(key==='strobe'&&!channelMap(light).includes('S'))continue;
   delete value.channels;
   value[key]=key==="color"&&!channelMap(light).some(channel=>["R","G","B","W"].includes(channel))?"#ffffff":newValue;
   if(key==="color")value.level=100;
@@ -703,9 +736,13 @@ document.addEventListener("click",event=>{
  const control=event.target.closest("button[data-action]");
  if(!control)return;
  const [action,arg]=control.dataset.action.split(":");
+ if(tab===1&&fixture)captureFixtureForm();
  const scene=current();
  const step=scene?.steps[stepIndex];
  switch(action){
+case 'patch-select':if(setupSelection.has(arg))setupSelection.delete(arg);else setupSelection.add(arg);break;
+case 'patch-select-all':data.lights.forEach(light=>setupSelection.add(light.id));break;
+case 'fixture-fold':fixtureGroups().forEach(([name])=>closedFixtureGroups.add(name));break;
 case "tab":
  stopPreview();
  setupToOutput=false;
@@ -904,7 +941,7 @@ const mappingInput=form.get("mapping").trim().toUpperCase();
  const mapping=mappingInput||({Dimmer:"D",RGB:"R,G,B",RGBW:"R,G,B,W"}[mode]||"");
  const group=form.get("group").trim();
  const channelList=mapping.split(",").map(channel=>channel.trim());
- const validMapping=channelList.length>0&&channelList.every(channel=>["D","R","G","B","W","0","255"].includes(channel));
+ const validMapping=channelList.length>0&&channelList.every(channel=>["D","R","G","B","W","S","0","255"].includes(channel));
  const end=address+channelList.length-1;
  const overlap=data.lights.find(light=>light.id!==fixture&&address<light.address+channelCount(light)&&end>=light.address);
  const error=!name?"Bitte gib einen Namen ein.":!deviceTypes[visualType]?"Bitte eine Geräteart auswählen.":!validMapping?"Bitte eine gültige Kanalfolge eingeben.":!Number.isInteger(address)||address<1?"Bitte eine gültige DMX-Adresse eingeben.":end>512?"Der Kanalbereich endet hinter Kanal 512.":overlap?"Überschneidung mit "+overlap.name+".":"";
@@ -1142,7 +1179,7 @@ function patchProblem(){
  for(const light of data.lights){
   const map=channelMap(light);
   if(!Number.isInteger(light.address)||light.address<1||light.address+map.length-1>512)return "Die DMX-Adresse von "+light.name+" ist ungültig.";
-  if(!map.length||!map.every(value=>["D","R","G","B","W","0","255"].includes(value)))return "Bitte die Kanalbelegung von "+light.name+" prüfen.";
+  if(!map.length||!map.every(value=>["D","R","G","B","W","S","0","255"].includes(value)))return "Bitte die Kanalbelegung von "+light.name+" prüfen.";
   for(let index=0;index<map.length;index++){
    const address=light.address+index;
    if(used.has(address))return "Die DMX-Kanäle überschneiden sich bei "+light.name+".";
@@ -1173,6 +1210,7 @@ function encodeFrame(step,mode="",scale=master){
    let out=0;
    if(channel==="255")out=mode==="black"?0:255;
    else if(channel==="D")out=Math.round(level*255);
+   else if(channel==='S')out=mode==='white'?0:Math.max(0,Math.min(255,Number(value.strobe)||0));
    else if(channel in colors)out=Math.round(colors[channel]*(map.includes("D")?1:level));
 const raw=mode===""?value.channels?.[index]:undefined;
 if(Number.isInteger(raw)){
@@ -1253,7 +1291,7 @@ if(light.visualType&&!["par","panel","bar","strobe","moving","strip"].includes(l
 if(light.height!==undefined&&(!Number.isFinite(light.height)||light.height<0||light.height>5))throw new Error("Ungültige Höhe.");
   const map=channelMap(light);
   if(!Number.isInteger(light.address)||light.address<1||light.address+map.length-1>512||
-   !map.every(value=>["D","R","G","B","W","0","255"].includes(value)))throw new Error("Ungültige Kanalbelegung.");
+   !map.every(value=>["D","R","G","B","W","S","0","255"].includes(value)))throw new Error("Ungültige Kanalbelegung.");
   if(light.cell!==undefined&&(!Number.isInteger(light.cell)||light.cell<0||light.cell>=setupCellCount))throw new Error("Ungültige Rasterposition.");
   if(light.group!==undefined&&typeof light.group!=="string")throw new Error("Ungültige Gruppe.");
   for(let index=0;index<map.length;index++){
@@ -1293,6 +1331,7 @@ for(const value of Object.values(step.values)){
    !Object.entries(value.channels).every(([index,out])=>/^\d+$/.test(index)&&Number(index)<512&&Number.isInteger(out)&&out>=0&&out<=255)))
    throw new Error("Ungültige Kanalwerte.");
     if(!value||!/^#[0-9a-f]{6}$/i.test(value.color)||!Number.isFinite(value.level)||value.level<0||value.level>100)throw new Error("Ungültige Lichtwerte.");
+    if(value.strobe!==undefined&&(!Number.isInteger(value.strobe)||value.strobe<0||value.strobe>255))throw new Error("Ungültiger Strobe-Wert.");
    }
   }
  }
@@ -1976,6 +2015,7 @@ document.addEventListener("submit",event=>{
  }
 });
 function render(){
+ const scrollPositions=Array.from(screen.querySelectorAll('[data-scroll-key]'),node=>[node.dataset.scrollKey,node.scrollTop]);
  if(tab===3&&(!setupDraft||(current()?.steps[stepIndex]&&setupDrafts.get(current().steps[stepIndex])!==setupDraft)))loadSetupStep();
  document.querySelector("#tabs").innerHTML=[1,4,3,2,6,7].map(index=>
   button(esc(data.tabNames?.[index]||defaultTabNames[index]),"tab:"+index,flag(index===tab))).join("");
@@ -1989,8 +2029,10 @@ function render(){
  else body=connection();
  screen.classList.toggle("programming-view",tab===3);
  screen.classList.toggle("arrangement-view",tab===4);
+ screen.classList.toggle("patch-view",tab===1);
   screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+playbackProgressPanel()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+masterPanel()+banksPanel()+'</div></div>':body;
  paintRig();
+ for(const [key,top] of scrollPositions){const node=Array.from(screen.querySelectorAll('[data-scroll-key]')).find(item=>item.dataset.scrollKey===key);if(node)node.scrollTop=top;}
 }
 
 let renameField=null,renameNotice="";
@@ -2049,9 +2091,22 @@ function automaticLightPosition(){
  return snapPosition({x:.5,y:.5});
 }
 function fixtureInventory(draggable){
- return '<div class="fixture-inventory" aria-label="Lichter auswählen">'+data.lights.map(light=>button(deviceSymbol(fixtureKind(light))+'<strong>'+esc(light.name)+'</strong><small>DMX '+light.address+'</small>'+(!fixturePlaced(light)?'<small class="unplaced-status">Nicht im Aufbau</small>':''),
-  'setup-light:'+light.id,'class="inventory-fixture" draggable="'+draggable+'" data-fixture="'+light.id+'" '+flag(setupSelection.has(light.id)))).join('')+'</div>';
+ return '<div class="fixture-inventory" data-scroll-key="fixture-inventory" aria-label="Lichter auswählen">'+groupedFixtures(light=>button(deviceSymbol(fixtureKind(light))+'<strong>'+esc(light.name)+'</strong><small>DMX '+light.address+'</small>'+(!fixturePlaced(light)?'<small class="unplaced-status">Nicht im Aufbau</small>':''),
+  'setup-light:'+light.id,'class="inventory-fixture" draggable="'+draggable+'" data-fixture="'+light.id+'" '+flag(setupSelection.has(light.id))),'tile-grid')+'</div>';
 }
+const closedFixtureGroups=new Set();
+function fixtureGroups(){
+ const groups=new Map();
+ for(const light of data.lights){const name=(light.group||'').trim();if(!groups.has(name))groups.set(name,[]);groups.get(name).push(light);}
+ return [...groups].sort(([a],[b])=>!a?1:!b?-1:a.localeCompare(b,'de'));
+}
+function groupedFixtures(itemMarkup,kind=''){
+ return fixtureGroups().map(([name,items])=>'<details class="fixture-group" data-fixture-group="'+esc(name)+'" '+(closedFixtureGroups.has(name)?'':'open')+'><summary>'+esc(name||'Ohne Gruppe')+' <small>'+items.length+'</small></summary><div class="fixture-group-items '+kind+'">'+items.map(itemMarkup).join('')+'</div></details>').join('');
+}
+document.addEventListener('toggle',event=>{
+ if(!event.target.matches?.('[data-fixture-group]'))return;
+ const name=event.target.dataset.fixtureGroup;if(event.target.open)closedFixtureGroups.delete(name);else closedFixtureGroups.add(name);
+},true);
 let deleteCandidate=null;
 function removeFixture(id){
  stopPreview();
@@ -2235,7 +2290,7 @@ let playbackDark=false,previewDark=false;
 const deviceTypes={
  panel:{name:"LED-Panel",mapping:"R,G,B,W",height:2.4},
  par:{name:"PAR-Scheinwerfer",mapping:"R,G,B",height:2.4},
- strobe:{name:"Strobo",mapping:"D",height:2.4},
+ strobe:{name:"Strobo",mapping:"D,S",height:2.4},
  moving:{name:"Moving Head",mapping:"",height:.4},
  strip:{name:"LED-Streifen",mapping:"R,G,B",height:.1}
 };
@@ -2246,10 +2301,37 @@ function deviceMode(mapping){
  const map=mapping.split(",").map(channel=>channel.trim().toUpperCase()).join(",");
  return map==="D"?"Dimmer":map==="R,G,B"?"RGB":map==="R,G,B,W"?"RGBW":"Eigenes Profil";
 }
+const mappingPresets=[
+ ['D','Dimmer · 1 Kanal'],['D,S','Strobo: Dimmer → Strobe · 2 Kanäle'],['S,D','Strobo: Strobe → Dimmer · 2 Kanäle'],
+ ['R,G,B','RGB'],['G,R,B','GRB'],['R,B,G','RBG'],['B,G,R','BGR'],['G,B,R','GBR'],['B,R,G','BRG'],
+ ['D,R,G,B','Dimmer → RGB'],['R,G,B,D','RGB → Dimmer'],['R,G,B,W','RGBW'],['D,R,G,B,W','Dimmer → RGBW'],
+ ['R,G,B,W,D','RGBW → Dimmer'],['D,R,G,B,S','Dimmer → RGB → Strobe'],['D,R,G,B,W,S','Dimmer → RGBW → Strobe']
+];
+function mappingFields(draft){
+ const custom=draft.customMapping||!mappingPresets.some(([mapping])=>mapping===draft.mapping);
+ return '<label class="stack">DMX-Kanalfolge<select id="mapping-preset" name="mappingPreset">'+mappingPresets.map(([mapping,label])=>'<option value="'+mapping+'" '+(!custom&&draft.mapping===mapping?'selected':'')+'>'+label+' ('+mapping+')</option>').join('')+'<option value="custom" '+(custom?'selected':'')+'>Eigene Kanalfolge …</option></select></label>'+
+  (custom?'<label class="stack">Eigene DMX-Kanalfolge<input name="mapping" placeholder="z. B. D,R,G,B,S" required value="'+esc(draft.mapping)+'"></label>':'<input type="hidden" name="mapping" value="'+esc(draft.mapping)+'">');
+}
+function strobeControls(lights){
+ const light=lights.find(item=>channelMap(item).includes('S'));if(!light)return '';
+ const value=setupValue(light).strobe||0;
+ return '<label class="stack">Strobe · DMX-Wert (0–255)<input id="setup-strobe" type="range" min="0" max="255" step="1" value="'+value+'" '+(previewIndex!==null?'disabled':'')+'><output>'+value+'</output></label><small>Strobe-Belegung und Wertebereiche im Gerätehandbuch prüfen.</small>';
+}
+document.addEventListener('input',event=>{
+ if(event.target.closest?.('#light-form'))captureFixtureForm();
+ if(event.target.id==='setup-strobe'){applySetupValue('strobe',Number(event.target.value));event.target.nextElementSibling.textContent=event.target.value;}
+});
+document.addEventListener('change',event=>{
+ if(event.target.id!=='mapping-preset')return;
+ captureFixtureForm();fixtureDraft.customMapping=event.target.value==='custom';
+ if(!fixtureDraft.customMapping)fixtureDraft.mapping=event.target.value;
+ fixtureDraft.mode=deviceMode(fixtureDraft.mapping);render();
+});
 function prepareFixtureDraft(light){
  const type=fixtureKind(light||{name:"PAR"});
  fixtureDraft={name:light?.name||"",group:light?.group||"",address:light?.address??"",visualType:type,
   mapping:light?channelMap(light).join(","):deviceTypes[type].mapping,mode:light?.mode||deviceMode(deviceTypes[type].mapping)};
+ fixtureDraft.customMapping=!mappingPresets.some(([mapping])=>mapping===fixtureDraft.mapping);fixtureDraft.count=1;
  fixtureDraftKey=fixture;deviceMessage="";deviceProposal=null;
 }
 function captureFixtureForm(){
@@ -2257,30 +2339,31 @@ function captureFixtureForm(){
  if(!form)return;
  const values=new FormData(form);
  fixtureDraft={name:values.get("name"),group:values.get("group"),address:values.get("address"),
-  visualType:values.get("visualType"),mapping:values.get("mapping"),mode:values.get("mode")};
+  visualType:values.get("visualType"),mapping:values.get("mapping"),mode:values.get("mode"),count:Number(values.get('count')||1),customMapping:values.get('mappingPreset')==='custom'};
 }
 function lights(){
  const light=data.lights.find(item=>item.id===fixture);
  if(fixture&&(!fixtureDraft||fixtureDraftKey!==fixture))prepareFixtureDraft(light);
  if(!fixture){fixtureDraft=null;fixtureDraftKey=null;}
  const draft=fixtureDraft;
- return '<div class="wrap patch-layout"><div class="list"><section class="panel"><div class="row split"><h2>Lichter anlegen</h2>'+
-  button("Licht hinzufügen","new-light",'class="primary" '+(outputState.enabled?"disabled":""))+'</div>'+
-  data.lights.map(item=>'<div class="row split"><div class="row">'+deviceSymbol(fixtureKind(item))+'<div><strong>'+esc(item.name)+'</strong><small> · '+deviceTypes[fixtureKind(item)].name+' · DMX '+item.address+'–'+(item.address+channelCount(item)-1)+'</small></div></div>'+
-   '<div class="row">'+button("Bearbeiten","edit-light:"+item.id,outputState.enabled?"disabled":"")+(deleteCandidate===item.id?'<span class="delete-fixture-prompt">Aus allen Steps entfernen?</span>'+button("Ja, löschen","confirm-delete-light:"+item.id,'class="danger-button"')+button("Abbrechen","cancel-delete-light"):button("Löschen","delete-light:"+item.id,'class="danger-button" '+(outputState.enabled?'disabled':'')))+'</div>'+'</div>').join("")+
-  (!data.lights.length?'<p class="muted">Lege deine Geräte einzeln an. Sie erscheinen automatisch im Aufbau.</p>':"")+'</section>'+
-  (fixture?'<form id="light-form" class="panel"><h3>'+(light?"Licht bearbeiten":"Neues Licht")+'</h3>'+
+ return '<div class="wrap patch-layout"><section class="panel patch-devices"><div class="row split"><h2>Lichter · '+data.lights.length+'</h2>'+
+  button("Licht hinzufügen","new-light",'class="primary" '+(outputState.enabled?"disabled":""))+'</div><div class="row">'+button('Alle auswählen','patch-select-all')+button('Auswahl aufheben','selection-clear')+button('Gruppen einklappen','fixture-fold')+'</div>'+
+  '<div class="patch-device-scroll" data-scroll-key="patch-devices" aria-label="Geräteliste">'+groupedFixtures(item=>'<div class="patch-fixture-row"><div class="row">'+button(setupSelection.has(item.id)?'✓':'○','patch-select:'+item.id,flag(setupSelection.has(item.id))+' aria-label="'+esc(item.name)+' auswählen"')+deviceSymbol(fixtureKind(item))+'<div class="fixture-row-name"><strong>'+esc(item.name)+'</strong><small>'+deviceTypes[fixtureKind(item)].name+' · DMX '+item.address+'–'+(item.address+channelCount(item)-1)+'</small></div></div>'+
+   '<div class="row">'+button("Bearbeiten","edit-light:"+item.id,outputState.enabled?"disabled":"")+(deleteCandidate===item.id?'<span class="delete-fixture-prompt">Aus allen Steps entfernen?</span>'+button("Ja, löschen","confirm-delete-light:"+item.id,'class="danger-button"')+button("Abbrechen","cancel-delete-light"):button("Löschen","delete-light:"+item.id,'class="danger-button" '+(outputState.enabled?'disabled':'')))+'</div></div>')+
+  (!data.lights.length?'<p class="muted">Lege deine Geräte einzeln an. Sie erscheinen automatisch im Aufbau.</p>':"")+'</div><details class="patch-group-editor" '+(setupSelection.size?'open':'')+'><summary>Ausgewählte Geräte gruppieren · '+setupSelection.size+'</summary>'+groupEditor(data.lights.filter(item=>setupSelection.has(item.id)))+'</details></section>'+
+  '<div class="patch-detail">'+(fixture?'<form id="light-form" class="panel"><h3>'+(light?"Licht bearbeiten":"Neues Licht")+'</h3><div class="fixture-fields" data-scroll-key="fixture-fields">'+
    '<div class="device-picker" aria-label="Geräteart">'+Object.entries(deviceTypes).map(([type,info])=>
     button(deviceSymbol(type)+'<span>'+info.name+'</span>',"device-type:"+type,flag(draft.visualType===type))).join("")+'</div>'+
    '<input type="hidden" name="visualType" value="'+draft.visualType+'"><input type="hidden" name="mode" value="'+draft.mode+'">'+
    '<div class="row"><label class="stack">Name<input name="name" required maxlength="60" value="'+esc(draft.name)+'"></label>'+
    '<label class="stack">DMX-Startadresse<input name="address" type="number" required min="1" max="512" value="'+esc(draft.address)+'"></label>'+
-   '<label class="stack">Gruppe<input name="group" value="'+esc(draft.group)+'"></label></div>'+
-   (light?'':'<label class="stack">Anzahl gleicher Geräte<input name="count" type="number" min="1" max="64" value="1" required></label>')+
-   '<label class="stack">DMX-Kanalfolge<input name="mapping" placeholder="Kanalfolge aus dem Gerätehandbuch" required value="'+esc(draft.mapping)+'"></label>'+
-   '<small>Die Geräteart bestimmt das Symbol. Die vorbelegte Kanalfolge ist ein Beispiel und muss zum DMX-Modus am Gerät passen. D = Dimmer, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert.</small>'+
-   '<p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></form>'+
-   "":"")+'</div>'+patchGrid()+'</div>';
+   '<label class="stack">Gruppe<input name="group" list="fixture-group-names" maxlength="60" value="'+esc(draft.group)+'"></label><datalist id="fixture-group-names">'+fixtureGroups().filter(([name])=>name).map(([name])=>'<option value="'+esc(name)+'"></option>').join('')+'</datalist></div>'+
+   (light?'':'<label class="stack">Anzahl gleicher Geräte<input name="count" type="number" min="1" max="64" value="'+draft.count+'" required></label>')+
+   mappingFields(draft)+
+   '<small>Die Kanalfolge muss zum DMX-Modus am Gerät passen. D = Dimmer, S = Strobe, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert. Vorhandene Profile werden nicht automatisch geändert.</small></div>'+
+   '<div class="fixture-form-actions"><p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></div></form>':
+   '<section class="panel"><h3>Gerät bearbeiten</h3><p>Links ein Gerät wählen oder ein neues Licht hinzufügen. Mehrere Geräte auswählen, um ihnen gemeinsam eine Gruppe zuzuweisen.</p></section>')+
+   '<details class="patch-grid-fold" '+(!fixture?'open':'')+'><summary>DMX-Adressraster</summary>'+patchGrid()+'</details></div></div>';
 }
 function darkDuration(step){return (Number.isFinite(step.darkHold)?step.darkHold:.25)/playbackRate();}
 function darkenOutput(){
@@ -2341,6 +2424,7 @@ document.addEventListener("click",event=>{
   captureFixtureForm();
   const type=command.split(":")[1],previous=deviceTypes[fixtureDraft.visualType];
   if(!fixtureDraft.mapping||fixtureDraft.mapping===previous.mapping)fixtureDraft.mapping=deviceTypes[type].mapping;
+  fixtureDraft.customMapping=!mappingPresets.some(([mapping])=>mapping===fixtureDraft.mapping);
   fixtureDraft.visualType=type;fixtureDraft.mode=deviceMode(fixtureDraft.mapping);deviceProposal=null;deviceMessage="";
   render();
  }else if(command==="fixture-proposal"&&deviceProposal){
