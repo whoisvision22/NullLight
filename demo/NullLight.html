@@ -662,9 +662,10 @@ function applySetupValue(key,newValue){
  if(previewIndex!==null)return;
  for(const light of data.lights){
   if(!setupSelection.has(light.id))continue;
+  if(['laser','fog'].includes(fixtureKind(light)))continue;
   const value=setupDraft.values[light.id]??={...defaultValue};
   if(key==='strobe'&&!channelMap(light).includes('S'))continue;
-  const retained=value.channels?Object.fromEntries(Object.entries(value.channels).filter(([index])=>!['D','R','G','B','W'].includes(channelMap(light)[Number(index)]))):{};
+  const retained=value.channels?Object.fromEntries(Object.entries(value.channels).filter(([index])=>!(key==='strobe'?['S']:['D','R','G','B','W']).includes(channelMap(light)[Number(index)]))):{};
   delete value.channels;if(Object.keys(retained).length)value.channels=retained;
   value[key]=key==="color"&&!channelMap(light).some(channel=>["R","G","B","W"].includes(channel))?"#ffffff":newValue;
   if(key==="color")value.level=100;

@@ -20,6 +20,10 @@ assert(run('presetsForType("par").every(([mapping])=>!mapping.includes("F"))'));
 assert(run('universalChannelControls(data.lights).includes("Nebelausstoß")'));assert.equal((run('universalChannelControls(data.lights)').match(/data-channel-offset=/g)||[]).length,10);
 run('stopEffectDevices()');assert.equal(run('encodeFrame(setupDraft)[19]'),0);assert.equal(run('encodeFrame(setupDraft)[3]'),0);assert.equal(run('encodeFrame(setupDraft)[29]'),255);
 run('tab=1;fixture="new";prepareFixtureDraft();fixtureDraft.visualType="laser";fixtureDraft.mapping=deviceTypes.laser.mapping;render()');assert(nodes.get('#screen').innerHTML.includes('name="visualType" value="laser"'));assert(nodes.get('#screen').innerHTML.includes('universal-channel-count'));
+
+run('addFixtureBatch({name:"Fog mixed",visualType:"fog",mode:"Eigenes Profil",mapping:"D,F,R,G,B",address:60,group:"Effekte"},1);var mixedFog=data.lights.at(-1).id;setFixtureChannel(mixedFog,0,0);setFixtureChannel(mixedFog,1,200);setupSelection.add(mixedFog);var fogFrame=JSON.stringify(encodeFrame(setupDraft).slice(59,64));applySetupValue("color","#00ff00")');assert.equal(run('JSON.stringify(encodeFrame(setupDraft).slice(59,64))'),run('fogFrame'));
+run('addFixtureBatch({name:"Strobe raw",visualType:"strobe",mode:"Eigenes Profil",mapping:"D,S",address:80,group:"Licht"},1);var rawStrobe=data.lights.at(-1).id;setFixtureChannel(rawStrobe,0,91);setFixtureChannel(rawStrobe,1,220);setupSelection.clear();setupSelection.add(rawStrobe);applySetupValue("strobe",33)');assert.equal(run('encodeFrame(setupDraft)[79]'),91);assert.equal(run('encodeFrame(setupDraft)[80]'),33);
+console.log('Passed: effect fixture channels survive global color changes; strobe changes preserve raw dimmer and replace raw strobe.');
 console.log('Passed: universal laser/fog profiles, raw channel output and limits, retained values, White/Blackout behaviour, effect isolation, show import and individual stop.');
 `;
 new Function('require','process',harness+checks)(require,process);
