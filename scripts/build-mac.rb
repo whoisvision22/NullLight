@@ -27,9 +27,11 @@ vendor = File.join(resources, 'vendor')
 FileUtils.mkdir_p(vendor)
 FileUtils.cp(webrick, vendor)
 FileUtils.cp_r(File.join(File.dirname(webrick), 'webrick'), vendor)
+FileUtils.cp(File.join(root, 'assets', 'NullLight.icns'), File.join(resources, 'NullLight.icns'))
 plist = File.join(app, 'Contents', 'Info.plist')
 {
   'CFBundleIdentifier' => 'de.lichtpult.macdemo',
+  'CFBundleIconFile' => 'NullLight.icns',
   'CFBundleName' => 'NullLight', 'CFBundleDisplayName' => 'NullLight',
   'CFBundleVersion' => version.to_s, 'CFBundleShortVersionString' => "#{version}.0",
   'LSMinimumSystemVersion' => '12.0',

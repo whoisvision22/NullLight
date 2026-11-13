@@ -1,3 +1,8 @@
+NullLight v23 – Bank- und Szenenauswahl, neues Logo
+
+- Fester Bereich Bank & Szene beim Programmieren: Bank wählen, Szene laden, neue Szene/Bank anlegen und direkt in Perform speichern. Farbentwürfe bleiben beim Wechsel erhalten.
+- Weißer Leuchtring auf violettem Grund als neues App-Logo und Mac-Dock-Symbol. Für das Dock-Symbol die neue Mac-App herunterladen und die bisherige App ersetzen; das normale Inhaltsupdate ändert das Bundle-Symbol nicht.
+
 NullLight v22 – Einfacher programmieren und sicherer arbeiten
 
 - Eine zentrale Szenenauswahl beim Programmieren, sichtbare ungespeicherte Step-Farben und direkter Speichern-Knopf.
