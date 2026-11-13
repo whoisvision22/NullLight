@@ -402,7 +402,7 @@ body{padding-top:30px}.online-demo-note{position:fixed;top:0;left:0;right:0;heig
 
 
 
-<div class="online-demo-note">NullLight · Windows-Demo · Offline-Vorschau ohne DMX-Ausgabe · Speicherung in diesem Browser</div><header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v20</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<div class="online-demo-note">NullLight · Windows-Demo · Offline-Vorschau ohne DMX-Ausgabe · Speicherung in diesem Browser</div><header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v21</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -1886,9 +1886,9 @@ function programmingScreen(){
   '<label>Beats <input id="program-beats" type="number" min="1" max="32" value="'+(step.beats||1)+'"></label>'+
   '<label><input id="program-darkAfter" type="checkbox" '+checked(step.darkAfter)+'> Danach dunkel</label>'+
   '<label>Dunkelzeit <input id="program-darkHold" type="number" min="0.1" max="120" step="0.05" value="'+(step.darkHold??.25)+'"> s</label></section>'+
-  '<section class="panel publish-panel"><h3>In Perform speichern</h3><label class="stack">Bearbeitete Szene<select id="publish-scene" aria-label="Bearbeitete Szene">'+data.scenes.map(item=>'<option value="'+item.id+'" '+(item===scene?'selected':'')+'>'+esc('Szene '+performanceNumber(item)+' · '+item.name)+'</option>').join('')+'</select></label>'+(scene?'<form id="publish-form"><label class="stack">Bank<input name="bank" list="bank-options" required value="'+esc(bankName(scene))+'"></label>'+
+  '<section class="panel publish-panel"><h3>In Perform speichern</h3><label class="stack">Bearbeitete Szene<select id="publish-scene" aria-label="Bearbeitete Szene">'+data.scenes.map(item=>'<option value="'+item.id+'" '+(item===scene?'selected':'')+'>'+esc(item.name)+'</option>').join('')+'</select></label>'+(scene?'<form id="publish-form"><label class="stack">Bank<input name="bank" list="bank-options" required value="'+esc(bankName(scene))+'"></label>'+
   '<datalist id="bank-options">'+allBanks().map(name=>'<option value="'+esc(name)+'"></option>').join("")+'</datalist>'+
-  '<label class="stack">Name der Taste<input name="buttonName" required value="'+esc(scene.buttonName||scene.name)+'"></label><button class="primary">In Perform speichern</button>'+
+  '<label class="stack">Name der Taste<select name="buttonName" required>'+[...new Set([scene.buttonName||scene.name,...data.scenes.map(item=>item.name)])].map(name=>'<option value="'+esc(name)+'" '+(name===(scene.buttonName||scene.name)?'selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label><button class="primary">In Perform speichern</button>'+
   '<p role="status" id="publish-notice"></p></form>':'')+'</section></aside></div>';
 }
 document.addEventListener("input",event=>{

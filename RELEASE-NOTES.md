@@ -1,3 +1,8 @@
+NullLight v21 – Szenennamen auswählen
+
+- Beim Speichern in Perform ist Name der Taste eine Auswahlliste der vorhandenen Szenennamen. Die bearbeitete Szene wird ebenfalls mit ihrem Namen angezeigt.
+- Enthält die Anordnung aus v20: Banks unter dem Master.
+
 NullLight v20 – Banks unter Master
 
 - Im Perform-Bereich stehen die Banks jetzt unter dem Master. Beide Bereiche nutzen die volle Breite der rechten Seitenleiste.
