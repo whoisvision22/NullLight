@@ -1,3 +1,8 @@
+NullLight v0.2.6 – Szenenliste 1 bis 48
+
+- Im Feld Szene ersetzt eine einspaltige nummerierte Liste die quadratischen Tasten. Sie zeigt die Plätze 1 bis 48 des aktuellen Aufbaus mit Szenenname und Bank.
+- Bestehende Einträge laden die zugehörige Szene samt Bank. Ein leerer Platz legt eine Szene mit genau dieser Perform-Nummer in der ausgewählten Bank an.
+
 NullLight v0.2.5
 
 - Jeder Aufbau hat eigene Banks, Szenen, Wiedergabegruppen und Tempo-Faktoren. Neue Aufbauten beginnen mit einer leeren Szene, Kopien sind unabhängig. Alte gemeinsame Szenen bleiben durch Kopien in den bestehenden Aufbauten erhalten.
