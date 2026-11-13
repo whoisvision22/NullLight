@@ -10,8 +10,17 @@ sender = ArtNet::Sender.new
 sender.define_singleton_method(:now) { clock }
 node = UDPSocket.new
 begin
-  node.bind('127.0.0.2', ArtNet::PORT)
-  sender.enable('source' => '127.0.0.1', 'target' => '127.0.0.2', 'net' => 0, 'subnet' => 0, 'universe' => 0)
+  node_ip = '127.0.0.2'
+  begin
+    node.bind(node_ip, ArtNet::PORT)
+  rescue Errno::EADDRNOTAVAIL
+    # macOS does not create additional loopback aliases by default. Bind a
+    # different address owned by this same host; packets still stay local.
+    node_ip = ArtNet.interfaces.map { |item| item[:ip] }.find { |ip| ip != '127.0.0.1' }
+    raise 'No second local IPv4 address available for the UDP integration test.' unless node_ip
+    node.bind(node_ip, ArtNet::PORT)
+  end
+  sender.enable('source' => '127.0.0.1', 'target' => node_ip, 'net' => 0, 'subnet' => 0, 'universe' => 0)
   channels = Array.new(512, 0); channels[0] = 255
   sender.frame(channels)
   sender.tick
