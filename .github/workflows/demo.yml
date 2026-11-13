@@ -3,10 +3,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  pull_request:
 permissions:
   contents: read
 concurrency:
-  group: nulllight-release
+  group: nulllight-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   windows-demo:
@@ -19,11 +20,19 @@ jobs:
       - run: npm test
       - run: npm run test:demo
       - run: npm run build:demo
+      - run: npm run build:pi
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - run: gem install webrick --no-document
+      - run: npm run test:pi
+      - run: ruby tests/updater-check.rb
       - name: Demo verpacken
         working-directory: dist
         run: |
           VERSION=$(node -p 'require("../version.json").version')
           zip -qr "NullLight-Windows-Demo-v${VERSION}.zip" NullLight-Windows-Demo
+          zip -qr "NullLight-Raspberry-Pi-v${VERSION}.zip" NullLight-Raspberry-Pi
       - uses: actions/upload-artifact@v4
         with:
           name: windows-demo
@@ -46,6 +55,7 @@ jobs:
             dist/NullLight-update.json
             dist/NullLight-release-*.json
   release:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: [windows-demo, mac]
     runs-on: ubuntu-latest
     permissions:

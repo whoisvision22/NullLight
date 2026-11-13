@@ -1,0 +1,34 @@
+const fs=require('fs');
+// Reuse the app's existing VM/DOM harness, then exercise the new beat clock.
+const harness=fs.readFileSync('tests/workspace.cjs','utf8').split('for(const tab of')[0];
+const checks=`
+run('data.djBeats=8');assert.equal(run('validateShow(data).djBeats'),8);
+assert.throws(()=>run('validateShow({...data,djBeats:3})'));
+run('data.scenes=[{id:"a",name:"A",live:true,loop:true,steps:[newStep(),newStep(),newStep()]}];data.djBeats=2;play("a");');
+const state=(sequence,connected=true,player=1)=>({enabled:true,connected,sequence,device:{ip:'10.0.0.'+player,player,name:'CDJ-3000',bpm:128,beat:1}});
+const consume=value=>run('consumeDJStatus('+JSON.stringify(value)+')');
+consume(state(5));run('setDJSync(true)');
+consume(state(6));assert.equal(run('stageIndex'),0);
+consume(state(7));assert.equal(run('stageIndex'),1);assert.equal(run('data.bpm'),128);
+consume(state(7));assert.equal(run('stageIndex'),1);
+consume(state(8,false));assert(run('outputFrame().every(value=>value===0)'));
+consume(state(9));assert.equal(run('stageIndex'),1);
+consume(state(10));consume(state(11));assert.equal(run('stageIndex'),2);
+consume(state(12,true,2));assert.equal(run('stageIndex'),2);
+consume(state(100,true,2));assert.equal(run('stageIndex'),2);
+run('override="black"');consume(state(101,true,2));consume(state(102,true,2));assert.equal(run('stageIndex'),2);
+run('override="";liveSnapshot.steps[2].darkAfter=true');consume(state(103,true,2));consume(state(104,true,2));assert.equal(run('playbackDark'),true);
+consume(state(105,true,2));consume(state(106,true,2));assert.equal(run('playbackDark'),false);assert.equal(run('stageIndex'),0);
+consume({enabled:false,connected:false,sequence:106});assert.equal(run('djSync'),false);
+assert(run('djPanel().includes("CDJ-3000")'));
+run('remoteEnabled=true;executeRemote({action:"set_master",args:{level:25}})');assert.equal(run('master'),25);
+run('executeRemote({action:"play_scene",args:{sceneId:"a"}})');assert.equal(run('active'),'a');assert.equal(run('override'),'');
+run('executeRemote({action:"blackout"})');assert.equal(run('override'),'black');
+run('executeRemote({action:"stop"})');assert.equal(run('active'),null);assert.equal(run('override'),'black');
+assert.throws(()=>run('executeRemote({action:"set_master",args:{level:101}})'));
+assert.throws(()=>run('executeRemote({action:"play_scene",args:{sceneId:"unknown"}})'));
+run('remoteEnabled=false');assert.throws(()=>run('executeRemote({action:"play_scene",args:{sceneId:"a"}})'));
+console.log('Passed: beat-driven steps, BPM, dark phases, duplicate updates, source changes, signal loss, backlog rejection and manual blackout.');
+console.log('Passed: MCP UI actions, brightness validation, missing scenes and remote control lock.');
+`;
+new Function('require','process',harness+checks)(require,process);

@@ -9,6 +9,7 @@ require 'time'
 require 'open3'
 require 'net/http'
 require 'uri'
+require 'rbconfig'
 
 class NullLightUpdater
   BOOTSTRAP = 2
@@ -169,7 +170,7 @@ class NullLightUpdater
         hashes[name] = digest
       end
       %w[artnet.rb routing.rb scene_ai.rb updater.rb].each do |name|
-        _, status = Open3.capture2e('/usr/bin/ruby', '-c', File.join(staged, name))
+        _, status = Open3.capture2e(RbConfig.ruby, '-c', File.join(staged, name))
         raise ArgumentError, "Die Programmprüfung für #{name} ist fehlgeschlagen." unless status.success?
       end
       raise ArgumentError, 'Widersprüchliche Programmversion.' unless JSON.parse(File.read(File.join(staged, 'version.json'))).fetch('version') == version

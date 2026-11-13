@@ -386,7 +386,7 @@ nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
 
 
 
-<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v17</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v18</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -452,17 +452,17 @@ const checked=value=>value?"checked":"";
 function connection(){
  const config=data.artnet||{target:"",source:"",net:0,subnet:0,universe:0};
  return '<div class="wrap"><section class="panel"><h2>Art-Net über LAN</h2>'+
-  '<p>Verbinde den Mac und deinen Art-Net-Node über Ethernet. Wähle die LAN-Schnittstelle des Macs und trage die IP-Adresse und das Universum des Nodes ein.</p>'+
+  '<p>Verbinde den Rechner oder Raspberry Pi und deinen Art-Net-Node über Ethernet. Wähle die LAN-Schnittstelle und trage die IP-Adresse und das Universum des Nodes ein.</p>'+
   (nativeAvailable?'<form id="artnet-form"><div class="row"><label class="stack">Node-IP<input name="target" placeholder="IP des Nodes" required value="'+esc(config.target)+'" '+(outputState.enabled?'disabled':'')+'></label>'+
-  '<label class="stack">Mac-Netzwerkschnittstelle<select name="source" required '+(outputState.enabled?'disabled':'')+'><option value="">Bitte auswählen</option>'+
+  '<label class="stack">Netzwerkschnittstelle<select name="source" required '+(outputState.enabled?'disabled':'')+'><option value="">Bitte auswählen</option>'+
   localInterfaces.map(item=>'<option value="'+esc(item.ip)+'" '+(item.ip===config.source?'selected':'')+'>'+esc(item.name+' · '+item.ip)+'</option>').join("")+'</select></label>'+
   ['net','subnet','universe'].map((key,index)=>'<label class="stack">'+['Net','Sub-Net','Universum'][index]+' (ab 0)<input name="'+key+'" type="number" required min="0" max="'+(index?15:127)+'" value="'+config[key]+'" '+(outputState.enabled?'disabled':'')+'></label>').join("")+'</div><div class="row">'+
   (outputState.enabled?button("Blackout & Ausgabe stoppen","output-stop"):'<button class="primary">Verbinden & Ausgabe starten</button>')+
   '<small id="packet-count">'+outputState.packets+' DMX-Pakete gesendet</small></div></form>':
-  '<p class="muted">Für die Art-Net-Ausgabe öffne die Mac-App. Hier kannst du Shows vorbereiten und als Datei übertragen.</p>')+
+  '<p class="muted">Für die Art-Net-Ausgabe öffne die Mac-App oder den Raspberry-Pi-Server. Hier kannst du Shows vorbereiten und als Datei übertragen.</p>')+
   '<p id="connection-notice" role="status">'+esc(connectionMessage||(outputState.enabled?'Node-Verbindung wird geprüft.':"Ausgabe gestoppt."))+'</p>'+
   '<small>Beim Stoppen oder Beenden sendet die App Blackout. Die Anzeige bestätigt gesendete Daten und Node-Antworten. Das tatsächliche Licht prüfst du am Aufbau.</small></section>'+
-  '<section class="panel"><h3>Show</h3><div class="row">'+button("Show exportieren","export-show")+
+  djPanel()+remotePanel()+'<section class="panel"><h3>Show</h3><div class="row">'+button("Show exportieren","export-show")+
   '<label>Show laden <input type="file" id="import-show" accept=".json,application/json" '+(outputState.enabled?'disabled':'')+'></label>'+
   button(demo?"Vorschau beenden":"Vorschau starten","demo",outputState.enabled?'disabled':'')+'</div></section>'+
   '<dialog id="connect-dialog"><h3>Mit gespeichertem Node verbinden?</h3><p>'+esc(config.target)+' · Universum '+esc(config.universe)+'</p><div class="row">'+
@@ -928,6 +928,123 @@ screen.addEventListener("drop",event=>{
 });
 /* NATIVE_SESSION */
 const nativeAvailable=Boolean(window.lichtpultSession);
+let djState={enabled:false,connected:false,sequence:0},djSync=false,djBusy=false,djMessage="",djSequence=null,djBeatCount=0,djDevice="";
+let remoteEnabled=false,remoteBusy=false,remoteAck=null,remoteMessage='';
+function remotePanel(){
+ return '<section class="panel"><h3>MCP-Fernsteuerung</h3><label><input id="remote-enabled" type="checkbox" '+checked(remoteEnabled)+' '+(!nativeAvailable?'disabled':'')+'> Fernsteuerung durch verbundenen MCP-Client erlauben</label>'+
+  '<p>Status und Szenen abfragen, Szenen starten, Master-Helligkeit ändern, Blackout und Stopp. Die Bedienoberfläche muss geöffnet bleiben.</p>'+
+  '<p id="remote-status" role="status">'+esc(remoteMessage||(remoteEnabled?'Fernsteuerung freigegeben.':'Fernsteuerung gesperrt.'))+'</p></section>';
+}
+function remoteState(){
+ return {remoteEnabled,active,stageIndex,master,blackout:override==='black',djSync,
+  scenes:data.scenes.map(scene=>({id:scene.id,name:scene.name,steps:scene.steps.length})),
+  fixtures:data.lights.map(light=>({id:light.id,name:light.name,address:light.address,mode:light.mode}))};
+}
+function executeRemote(command){
+ if(!remoteEnabled)throw new Error('MCP-Fernsteuerung ist gesperrt.');
+ const args=command.args||{};
+ if(command.action==='play_scene'){
+  const scene=data.scenes.find(item=>item.id===args.sceneId);
+  if(!scene?.steps.length)throw new Error('Szene nicht vorhanden oder ohne Steps.');
+  setupToOutput=false;performQueue.clear();auto=false;override='';play(scene.id);
+ }else if(command.action==='blackout'){override='black';schedule();}
+ else if(command.action==='stop'){
+  clearTimeout(timer);performQueue.clear();active=null;liveSnapshot=null;auto=false;setupToOutput=false;override='black';outputStep=null;
+ }else if(command.action==='set_master'){
+  if(!Number.isFinite(args.level)||args.level<0||args.level>100)throw new Error('Ungültige Helligkeit.');
+  master=args.level;retargetMaster();
+ }else throw new Error('Unbekannter Steuerbefehl.');
+ outputStep=null;remoteMessage='MCP ausgeführt: '+command.action;
+ const label=document.querySelector('#remote-status');if(label)label.textContent=remoteMessage;
+ if(tab===2)redrawPlayback();
+ return remoteState();
+}
+async function remoteTick(){
+ if(!nativeAvailable||remoteBusy)return;
+ remoteBusy=true;
+ try{
+  const result=await nativeRequest('/api/control/poll',{state:remoteState(),ack:remoteAck});
+  remoteAck=null;
+  if(result.command){
+   try{remoteAck={id:result.command.id,result:executeRemote(result.command)};}
+   catch(error){remoteAck={id:result.command.id,error:error.message};}
+  }
+ }catch(error){remoteMessage=error.message;}
+ finally{remoteBusy=false;}
+}
+document.addEventListener('change',event=>{
+ if(event.target.id==='remote-enabled'){remoteEnabled=event.target.checked;remoteMessage='';render();remoteTick();}
+});
+setInterval(remoteTick,250);
+function djPanel(){
+ return '<section class="panel"><h3>Pioneer CDJ-3000 · Pro DJ Link</h3>'+
+  '<p>CDJ und Rechner/Pi per LAN am gleichen Switch anschließen. Rekordbox-analysierten Track abspielen. Player auswählen, Empfang starten und eine programmierte Szene in Perform starten.</p>'+
+  (nativeAvailable?'<form id="dj-form"><div class="row"><label>Player <select name="player" '+(djState.enabled?'disabled':'')+'>'+
+  [0,1,2,3,4,5,6].map(player=>'<option value="'+player+'" '+(player===(djState.selectedPlayer||0)?'selected':'')+'>'+(player?'Player '+player:'Erster aktiver Player')+'</option>').join('')+'</select></label>'+
+  (djState.enabled?button('Empfang stoppen','dj-stop'):'<button class="primary">Empfang starten</button>')+'</div></form>':
+  '<p>Der Empfang ist in der Mac-App und auf dem Raspberry Pi verfügbar.</p>')+
+  '<div class="row"><label><input id="dj-sync" type="checkbox" '+checked(djSync)+' '+(!djState.enabled?'disabled':'')+'> Szenen mit CDJ-Beats steuern</label>'+
+  '<label>Beats pro Step / Dunkelphase <select id="dj-beats">'+[1,2,4,8,16].map(value=>'<option '+(value===(data.djBeats||4)?'selected':'')+'>'+value+'</option>').join('')+'</select></label></div>'+
+  '<p id="dj-status" role="status">'+esc(djStatusText())+'</p>'+
+  '<small>Passiver Beat-Empfang. Der gewählte Player bleibt die Quelle; kein automatischer Tempo-Master-Wechsel. Bei Signalausfall pausieren die Steps und die Ausgabe wird dunkel. Blackout und White bleiben manuell bedienbar.</small></section>';
+}
+function djStatusText(){
+ if(djMessage||djState.error)return djMessage||djState.error;
+ if(!djState.enabled)return 'Pro DJ Link gestoppt.';
+ if(!djState.connected)return 'Warte auf CDJ-Beats · UDP 50001.';
+ const device=djState.device;
+ return 'Player '+device.player+' · '+device.name+' · '+device.bpm+' BPM · Beat '+device.beat+' / 4'+(djSync?' · Szenen-Sync aktiv':'');
+}
+function setDJSync(value){
+ djSync=Boolean(value&&djState.enabled);djBeatCount=0;djSequence=djState.sequence;playbackDark=false;outputStep=null;
+ schedule();
+}
+function consumeDJStatus(result){
+ const previous=djState,device=result.device?result.device.ip+':'+result.device.player:'';
+ djState=result;
+ if(!result.connected||!previous.connected||device!==djDevice){djSequence=result.sequence;djBeatCount=0;}
+ const delta=djSequence===null?0:result.sequence-djSequence;
+ djSequence=result.sequence;djDevice=device;
+ if(result.connected&&djSync){
+  data.bpm=result.device.bpm;
+  // A delayed browser must not replay a backlog of lighting cues.
+  if(delta>0&&delta<=8&&running()&&!override&&!setupToOutput){
+   djBeatCount+=delta;
+   if(djBeatCount>=(data.djBeats||4)){
+    djBeatCount=0;
+    if(running().steps[stageIndex]?.darkAfter&&!playbackDark){playbackDark=true;darkenOutput();redrawPlayback();}
+    else{playbackDark=false;advancePlayback();}
+   }
+  }
+ }
+ if(!result.enabled&&djSync)setDJSync(false);
+ const label=document.querySelector('#dj-status');if(label)label.textContent=djStatusText();
+}
+async function djTick(){
+ if(!nativeAvailable||!djState.enabled||djBusy)return;
+ djBusy=true;
+ try{consumeDJStatus(await nativeRequest('/api/dj/status'));djMessage='';}
+ catch(error){djMessage=error.message;consumeDJStatus({...djState,connected:false});}
+ finally{djBusy=false;}
+}
+document.addEventListener('submit',async event=>{
+ if(event.target.id!=='dj-form')return;
+ event.preventDefault();djMessage='';
+ try{consumeDJStatus(await nativeRequest('/api/dj/enable',{player:Number(new FormData(event.target).get('player'))}));}
+ catch(error){djMessage=error.message;}
+ render();
+});
+document.addEventListener('click',async event=>{
+ if(event.target.closest('[data-action]')?.dataset.action!=='dj-stop')return;
+ try{consumeDJStatus(await nativeRequest('/api/dj/stop',{}));djMessage='';}
+ catch(error){djMessage=error.message;}
+ render();
+});
+document.addEventListener('change',event=>{
+ if(event.target.id==='dj-sync'){setDJSync(event.target.checked);render();}
+ else if(event.target.id==='dj-beats'){data.djBeats=Number(event.target.value);djBeatCount=0;save();}
+});
+setInterval(djTick,50);
 let outputState={enabled:false,subscribed:false,packets:0,error:null};
 let localInterfaces=[], connectionMessage="", outputBusy=false, taps=[];
 let frameTransition={from:Array(512).fill(0),to:Array(512).fill(0),start:0,duration:0};
@@ -943,7 +1060,7 @@ function connectionStatus(){
  return demo?"● Vorschau":"○ Getrennt";
 }
 async function nativeRequest(path,body,timeoutMs=2000){
- if(!nativeAvailable)throw new Error("Art-Net ist in der Mac-App verfügbar.");
+ if(!nativeAvailable)throw new Error("Art-Net ist in der Mac-App und auf dem Raspberry Pi verfügbar.");
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),timeoutMs);
  try{
@@ -987,6 +1104,7 @@ async function initializeNative(){
  try{
   const result=await nativeRequest("/api/status");
   localInterfaces=result.interfaces;
+  if(result.dj)consumeDJStatus(result.dj);
 
   updateInfo=result.update||null;
   updateOutputStatus(result);
@@ -1049,6 +1167,7 @@ function interpolatedFrame(now=performance.now()){
  return frameTransition.to.map((value,index)=>Math.round(frameTransition.from[index]+(value-frameTransition.from[index])*amount));
 }
 function outputFrame(){
+ if(djSync&&!djState.connected&&!override&&!setupToOutput)return Array(512).fill(0);
  if(!override&&(setupToOutput?previewDark:playbackDark))return Array(512).fill(0);
  const step=setupToOutput?(previewIndex===null?setupDraft:current()?.steps[previewIndex]):running()?.steps[stageIndex];
  const scene=setupToOutput?current():running();
@@ -1093,6 +1212,7 @@ function groupSelector(){
   groups.map((name,index)=>'<option value="'+index+'">'+esc(name)+'</option>').join("")+'</select></label>':"";
 }
 function validateShow(show){
+ if(show?.djBeats!==undefined&&![1,2,4,8,16].includes(show.djBeats))throw new Error('Ungültiges CDJ-Beat-Raster.');
  validateStage(show?.stage);
  if(show?.masterGroupsCollapsed!==undefined&&typeof show.masterGroupsCollapsed!=="boolean")throw new Error("Ungültige Master-Ansicht.");
  if(show?.selectedColors!==undefined&&(!Array.isArray(show.selectedColors)||show.selectedColors.length>6||!show.selectedColors.every(color=>/^#[0-9a-f]{6}$/i.test(color))))throw new Error("Ungültige Farbauswahl.");
@@ -1157,7 +1277,7 @@ for(const value of Object.values(step.values)){
  const importedMapping=validateMapping(show.mapping||mappingDefaults());
  if(show.recentColors&&!show.recentColors.every(color=>/^#[0-9a-f]{6}$/i.test(color)))throw new Error("Ungültige Farbpalette.");
  // Only show data is imported. The network destination is configured in this app.
- return {masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
+ return {djBeats:show.djBeats||4,masterGroupsCollapsed:show.masterGroupsCollapsed===true,playbackLists:validatePlaybackLists(show.playbackLists,show.scenes),masterGroups:validateMasterGroups(show.masterGroups,show.lights),playbackMode:show.playbackMode||"sequence",selectedColors:show.selectedColors||[],stage:validateStage(show.stage),lights:show.lights,scenes:show.scenes,banks:show.banks||[],tabNames:show.tabNames||{},mapping:importedMapping,layoutVersion:1,recentColors:show.recentColors||[],bpm:Math.max(30,Math.min(300,Number(show.bpm)||130)),tempoSync:Boolean(show.tempoSync)};
 }
 document.addEventListener("click",async event=>{
  const action=event.target.closest("[data-action]")?.dataset.action;
@@ -2046,6 +2166,7 @@ function resetSelectedLights(){
 }
 let updateInfo=null,updateBusy=false;
 function updatePanel(){
+ if(window.lichtpultPlatform==='raspberrypi')return '<section class="panel"><h3>Raspberry Pi</h3><p>Updates über einen neuen Raspberry-Pi-Download oder git pull installieren und den Dienst neu starten. Vorher Show exportieren.</p><small>Die Show liegt im bedienenden Browser. Diesen Browser während der Ausgabe geöffnet und im Vordergrund lassen.</small></section>';
  const info=updateInfo||{},ready=info.state==='ready'&&Number(info.version)>Number(info.runningVersion)||Number(info.stagedVersion)>Number(info.runningVersion);
  const message=ready?'Update geprüft und vorbereitet. Deine Show wird vor dem Neustart gespeichert.':info.message||'Prüfe, ob auf GitHub eine neue Version verfügbar ist.';
  return '<section class="panel"><h3>Updates</h3><p role="status">'+esc(message)+'</p><small>Installierte Version: '+(info.runningVersion||'Browser-Demo')+'</small>'+
@@ -2157,6 +2278,7 @@ function schedule(){
  if(!step||override)return;
  playbackDark=false;
  outputFrame();
+ if(djSync){djBeatCount=0;return;}
  timer=setTimeout(()=>{
   if(step.darkAfter){
    playbackDark=true;darkenOutput();redrawPlayback();

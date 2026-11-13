@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Aktuelle Version: **v17**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v18**.
 
 ## Herunterladen
 
@@ -8,6 +8,12 @@ Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-
 
 - **Mac-App:** ZIP entpacken und NullLight.app in Programme kopieren. Enthält Art-Net-Ausgabe und Updates über GitHub. Die App ist ad-hoc signiert und nicht von Apple notarisiert; beim ersten Start gegebenenfalls Rechtsklick → Öffnen verwenden.
 - **Windows-Demo:** ZIP vollständig entpacken und NullLight-starten.cmd öffnen. Alternativ NullLight.html im Browser öffnen. Keine Installation nötig. Diese Demo sendet keine echten DMX-/Art-Net-Daten.
+- **Raspberry Pi:** Linux-Server mit Art-Net-Ausgabe, Bedienung im lokalen oder entfernten Browser und optionalem Benutzerdienst. Installation und CDJ-3000-Verbindung: [Raspberry-Pi-Anleitung](docs/RASPBERRY-PI.md).
+
+v18 ergänzt passiven Pioneer-CDJ-3000-Beatempfang und einen MCP-Server zur
+Fernsteuerung bestehender Szenen. [MCP einrichten](docs/MCP.md).
+Pi-/CDJ-Unterstützung ist mit simulierten Paketen geprüft; der Gerätetest steht noch aus.
+Die Downloads werden nach Übernahme und Veröffentlichung einer neuen Version aktualisiert.
 
 Der Code lässt sich ebenfalls direkt ausprobieren: NullLight-starten.cmd im Repository startet demo/NullLight.html.
 
@@ -29,6 +35,8 @@ Jeder geprüfte neue Versionsstand auf main wird durch GitHub Actions gebaut. We
 - Mehrfachauswahl, gespeicherte Wiedergabegruppen und Reihenfolgen sowie Zufallswiedergabe.
 - Einklappbare Master-Gruppen zur gemeinsamen Helligkeitssteuerung.
 - Keine KI-Hilfen.
+- CDJ-Beatsteuerung für vorhandene Szenen: 1, 2, 4, 8 oder 16 Beats pro Step, Playerwahl und Blackout bei Signalausfall.
+- MCP über stdio: Status, Szenenstart, Master, Blackout und Stopp mit Freigabe in der Oberfläche.
 
 Shows bleiben im jeweiligen Browser bzw. der Mac-App gespeichert. Unter **Verbindung → Show exportieren / Show laden** lassen sie sich sichern und übertragen.
 
@@ -40,6 +48,7 @@ Node.js 22 oder neuer, keine npm-Abhängigkeiten:
 npm test
 npm run test:demo
 npm run build:demo
+npm run build:pi
 ```
 
 Mac-Prüfung und Paketbau:
@@ -49,10 +58,16 @@ Mac-Prüfung und Paketbau:
 /usr/bin/ruby scripts/build-mac.rb
 ```
 
+Pi-/Server-Prüfung mit Ruby und WEBrick: `npm run test:pi`.
+Start auf dem Pi: `sh native/raspberrypi/start.sh`.
+Der MCP-Client startet `node native/mcp/server.cjs` als stdio-Prozess.
+
 Die Mac-App nutzt das mit macOS gelieferte Ruby; WEBrick wird mitgeliefert. Mindestversion für das Paket ist macOS 12. Der ausführbare Launcher wird nur durch einen neuen kompletten Mac-Download aktualisiert. Die Update-Quelle ist fest an dieses NullLight-Repository gebunden. Prüfsummen schützen die Übertragung, ersetzen aber keine Entwickler-Signatur.
 
 - app/: Oberfläche der installierten App mit leerem Patch.
 - demo/: eigenständige Browser-Demo mit Beispielgeräten.
 - native/macos/: Mac-Fenster, Art-Net, Mapping und GitHub-Updater.
+- native/raspberrypi/: Linux-Start und optionaler systemd-Benutzerdienst.
+- native/mcp/: MCP-stdio-Server; nutzt die authentifizierte Engine-API.
 - scripts/: Paketbau.
 - tests/: Prüfungen für Szenen, Gruppen, Wiedergabe und Update-Sicherheit.
