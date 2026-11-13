@@ -388,20 +388,20 @@ nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
 .fixture-tilt{margin:0;padding:10px 0;border:0;border-top:1px solid var(--line);min-width:0}.fixture-tilt legend{font-size:12px;font-weight:650}
 .tilt-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.arrangement-sidebar .tilt-fields input{width:100%;min-width:0;padding:7px 4px;font-size:12px}
 .rig-light>.fixture-shell{transform:rotate(var(--fixture-angle,0deg))}
-.perform-shell{grid-template-columns:minmax(0,1fr) 380px;gap:12px}.perform-sidebars{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;align-items:start;position:sticky;top:0;min-width:0}
+.perform-shell{grid-template-columns:minmax(0,1fr) 380px;gap:12px}.perform-sidebars{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start;position:sticky;top:0;min-width:0}
 .perform-sidebars>.bank-list,.perform-sidebars>.master-panel{padding:12px;min-width:0;max-height:calc(100vh - 155px);overflow:auto}
 .perform-main .perform-workspace{grid-template-columns:minmax(0,1fr)}.perform-main .rig-canvas{height:clamp(400px,53vh,660px)}
 .program-settings .publish-panel select{width:100%;min-width:0}
-@media(max-width:1150px){.perform-shell{grid-template-columns:minmax(0,1fr) 320px}.perform-sidebars{grid-template-columns:115px minmax(0,1fr)}.perform-sidebars button{font-size:11px;padding:7px}}
-@media(max-width:850px){.perform-shell{grid-template-columns:minmax(0,1fr) 285px}.perform-sidebars{grid-template-columns:100px minmax(0,1fr)}.perform-main .rig-canvas{height:420px}}
-@media(max-width:650px){.perform-shell{grid-template-columns:1fr}.perform-sidebars{position:static;grid-template-columns:130px minmax(0,1fr)}.perform-sidebars>.master-panel,.perform-sidebars>.bank-list{max-height:none}.perform-main .rig-canvas{height:380px}}
+@media(max-width:1150px){.perform-shell{grid-template-columns:minmax(0,1fr) 320px}.perform-sidebars{grid-template-columns:minmax(0,1fr)}.perform-sidebars button{font-size:11px;padding:7px}}
+@media(max-width:850px){.perform-shell{grid-template-columns:minmax(0,1fr) 285px}.perform-sidebars{grid-template-columns:minmax(0,1fr)}.perform-main .rig-canvas{height:420px}}
+@media(max-width:650px){.perform-shell{grid-template-columns:1fr}.perform-sidebars{position:static;grid-template-columns:minmax(0,1fr)}.perform-sidebars>.master-panel,.perform-sidebars>.bank-list{max-height:none}.perform-main .rig-canvas{height:380px}}
 </style>
 
 
 
 
 
-<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v19</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
+<header><h1>NullLight <small style="font-size:11px;color:var(--muted)">v20</small></h1><div class="row"><button data-action="tab:1">Patch</button><button data-action="tab:0">Verbindung</button><button data-action="updates-open">Updates</button><span id="status"></span></div></header>
 <nav id="tabs" aria-label="Lichtpult"></nav>
 <main id="screen"></main>
 <script>
@@ -1982,7 +1982,7 @@ function render(){
  else body=connection();
  screen.classList.toggle("programming-view",tab===3);
  screen.classList.toggle("arrangement-view",tab===4);
-  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+banksPanel()+masterPanel()+'</div></div>':body;
+  screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+masterPanel()+banksPanel()+'</div></div>':body;
  paintRig();
 }
 

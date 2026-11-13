@@ -1,3 +1,7 @@
+NullLight v20 – Banks unter Master
+
+- Im Perform-Bereich stehen die Banks jetzt unter dem Master. Beide Bereiche nutzen die volle Breite der rechten Seitenleiste.
+
 NullLight v19 – Szenen und mehrere Aufbauten
 
 - Performance Buttons heißen jetzt Szenen; die bearbeitete Szene lässt sich beim Speichern direkt wählen.
