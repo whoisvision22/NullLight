@@ -1,3 +1,10 @@
+NullLight v0.2.5
+
+- Jeder Aufbau hat eigene Banks, Szenen, Wiedergabegruppen und Tempo-Faktoren. Neue Aufbauten beginnen mit einer leeren Szene, Kopien sind unabhängig. Alte gemeinsame Szenen bleiben durch Kopien in den bestehenden Aufbauten erhalten.
+- Farbentwürfe bleiben beim Wechsel erhalten. Aufbauwechsel stoppt die laufende Szene und dunkelt die Ausgabe ab.
+- Schwarzer Visualizer-Hintergrund.
+- Master: sanftes Ausblenden, momentaner Weiß-Flash, Tempo halbieren/verdoppeln, Bediensperre und Statusanzeige. Blackout überstimmt Flash; Blackout und Stopp bleiben bei Sperre erreichbar.
+
 NullLight v0.2.4 – Update-Dialog im Aufbau des CVR Tools
 
 - Eigener Update-Dialog mit installierter Version, manueller Prüfung, Download und Neustart in einem Ablauf, Fortschrittsanzeige und Schließen/Abbrechen. Der aktuelle Reiter bleibt geöffnet.

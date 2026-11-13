@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.4**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.5**.
 
 ## Herunterladen
 
@@ -79,3 +79,5 @@ Die Mac-App nutzt das mit macOS gelieferte Ruby; WEBrick wird mitgeliefert. Mind
 - tests/: Prüfungen für Szenen, Gruppen, Wiedergabe und Update-Sicherheit.
 
 Das neue Ring-Logo wird mit der Mac-App als Dock-Symbol ausgeliefert. Dafür die aktuelle Mac-App einmal vollständig herunterladen und ersetzen; Inhaltsupdates ändern das Bundle-Symbol nicht.
+
+Jeder Aufbau verwaltet eigene Banks, Szenen und Wiedergabegruppen. Alte gemeinsame Szenen werden in vorhandene Aufbauten kopiert. Wechseln stoppt die laufende Szene. Geräte bleiben gemeinsam. Der Master bietet Ausblenden, Flash (mit Master-Gruppen und Blackout-Vorrang), Tempo-Faktoren und Sperre. Bei CDJ-Sync gibt der Player das Tempo vor.
