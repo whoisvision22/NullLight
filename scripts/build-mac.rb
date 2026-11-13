@@ -7,7 +7,9 @@ require 'webrick'
 
 root = File.expand_path('..', __dir__)
 Dir.chdir(root)
-version = JSON.parse(File.read('version.json')).fetch('version')
+metadata = JSON.parse(File.read('version.json'))
+version = metadata.fetch('version')
+label = metadata.fetch('displayVersion', version.to_s)
 raise 'Ungültige Version.' unless version.is_a?(Integer) && version > 0
 out = File.join(root, 'dist')
 FileUtils.mkdir_p(out)
@@ -16,7 +18,7 @@ app = File.join(out, 'NullLight.app')
 FileUtils.rm_rf(app)
 raise 'Mac-App konnte nicht erstellt werden.' unless system('/usr/bin/osacompile', '-l', 'JavaScript', '-s', '-o', app, 'native/macos/launcher.js')
 resources = File.join(app, 'Contents', 'Resources')
-files = { 'NullLight.html' => File.binread('app/NullLight.html'), 'version.json' => JSON.generate(version: version) }
+files = { 'NullLight.html' => File.binread('app/NullLight.html'), 'version.json' => JSON.generate(version: version, displayVersion: label) }
 %w[artnet.rb routing.rb scene_ai.rb updater.rb].each { |name| files[name] = File.binread(File.join('native/macos', name)) }
 files.each { |name, content| File.binwrite(File.join(resources, name), content) }
 File.write(File.join(resources, 'update-source.json'), JSON.generate(manifest: 'https://github.com/whoisvision22/NullLight/releases/latest/download/NullLight-update.json'))
@@ -28,12 +30,13 @@ FileUtils.mkdir_p(vendor)
 FileUtils.cp(webrick, vendor)
 FileUtils.cp_r(File.join(File.dirname(webrick), 'webrick'), vendor)
 FileUtils.cp(File.join(root, 'assets', 'NullLight.icns'), File.join(resources, 'NullLight.icns'))
+FileUtils.cp(File.join(root, 'assets', 'NullLight.icns'), File.join(resources, 'applet.icns'))
 plist = File.join(app, 'Contents', 'Info.plist')
 {
   'CFBundleIdentifier' => 'de.lichtpult.macdemo',
   'CFBundleIconFile' => 'NullLight.icns',
   'CFBundleName' => 'NullLight', 'CFBundleDisplayName' => 'NullLight',
-  'CFBundleVersion' => version.to_s, 'CFBundleShortVersionString' => "#{version}.0",
+  'CFBundleVersion' => version.to_s, 'CFBundleShortVersionString' => label,
   'LSMinimumSystemVersion' => '12.0',
   'NSLocalNetworkUsageDescription' => 'NullLight steuert deinen Licht-Node im lokalen Netzwerk.'
 }.each do |key, value|
@@ -42,10 +45,10 @@ plist = File.join(app, 'Contents', 'Info.plist')
 end
 raise 'Signieren fehlgeschlagen.' unless system('/usr/bin/codesign', '--force', '--sign', '-', app)
 raise 'Signaturprüfung fehlgeschlagen.' unless system('/usr/bin/codesign', '--verify', '--strict', app)
-zip = File.join(out, "NullLight-Mac-v#{version}.zip")
+zip = File.join(out, "NullLight-Mac-v#{label}.zip")
 raise 'Archiv konnte nicht erstellt werden.' unless system('/usr/bin/ditto', '-c', '-k', '--keepParent', app, zip)
 payload = JSON.generate(version: version, files: files.transform_values { |content| { sha256: Digest::SHA256.hexdigest(content), contentBase64: Base64.strict_encode64(content) } })
 filename = "NullLight-release-#{version}.json"
 File.binwrite(File.join(out, filename), payload)
-File.write(File.join(out, 'NullLight-update.json'), JSON.generate(schema: 1, minimumBootstrap: 2, version: version, payload: filename, sha256: Digest::SHA256.hexdigest(payload)))
+File.write(File.join(out, 'NullLight-update.json'), JSON.generate(schema: 1, minimumBootstrap: 3, version: version, payload: filename, sha256: Digest::SHA256.hexdigest(payload)))
 puts "Mac-App und Update v#{version} gebaut: #{zip}"

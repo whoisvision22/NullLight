@@ -1,6 +1,6 @@
 {
   "name": "nulllight",
-  "version": "0.23.0",
+  "version": "0.2.3",
   "private": true,
   "description": "NullLight Lichtsteuerung und Offline-Demo",
   "scripts": {

@@ -17,7 +17,7 @@ run('loadLayout('+JSON.stringify(firstLayout)+')');assert.equal(run('data.lights
 run('loadLayout('+JSON.stringify(secondLayout)+')');assert.equal(run('data.stage.width'),14);assert.equal(run('data.lights[0].tilt.z'),90);
 assert.equal(run('validateShow(data).savedLayouts.length'),2);assert.throws(()=>run('validateTilt({x:181})'));
 assert.equal(run('Math.round(rotateFixture({x:0,y:0,z:-1},{x:90,y:0,z:0}).y)'),1);
-run('tab=3;render()');assert(nodes.get('#screen').innerHTML.includes('id="publish-scene"'));
+run('tab=3;render()');assert(nodes.get('#screen').innerHTML.includes('scene-picker-grid'));
 run('tab=2;render()');assert(nodes.get('#screen').innerHTML.indexOf('panel master-panel')<nodes.get('#screen').innerHTML.indexOf('panel bank-list'));
 console.log('Passed: independent saved layouts, stage/tilt persistence, import validation, scene chooser and bank/master order.');
 console.log('Passed: multiple-step timing, selection reset, collapsed masters, 48-cell grid and draft slot creation.');

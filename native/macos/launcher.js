@@ -78,6 +78,8 @@ function run() {
     app.setActivationPolicy($.NSApplicationActivationPolicyRegular);
     var resources = $.NSBundle.mainBundle.resourceURL.path;
     var bundleResources = ObjC.unwrap(resources);
+    var dockIcon = $.NSImage.alloc.initWithContentsOfFile($(bundleResources + '/NullLight.icns'));
+    if (dockIcon) app.setApplicationIconImage(dockIcon);
     var activeResources = bundleResources;
     try {
         var updatePipe = $.NSPipe.pipe;

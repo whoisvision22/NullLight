@@ -1,4 +1,4 @@
-const fs=require('fs'),path=require('path');const version=JSON.parse(fs.readFileSync('version.json')).version;
+const fs=require('fs'),path=require('path');const version=(JSON.parse(fs.readFileSync('version.json')).displayVersion||JSON.parse(fs.readFileSync('version.json')).version);
 const target=path.join('dist','NullLight-Windows-Demo');fs.mkdirSync(target,{recursive:true});
 fs.copyFileSync('demo/NullLight.html',path.join(target,'NullLight.html'));
 fs.writeFileSync(path.join(target,'NullLight-starten.cmd'),'@echo off\r\nstart "" "%~dp0NullLight.html"\r\nexit /b\r\n');

@@ -1,3 +1,9 @@
+NullLight v0.2.3 – Nummerierte Szenenübersicht
+
+- Im bisherigen Kasten Szene: Bankauswahl, nummerierte Szenentasten, Name, Wiederholung und Speichern gemeinsam an einem Ort.
+- Dock-Symbol zusätzlich ausdrücklich beim Start setzen; auch das Standard-Applet-Symbol wird ersetzt. Diese Version benötigt einmalig den neuen Mac-Download.
+- Sichtbare Version und Downloadnamen verwenden v0.2.3. Der interne Updatezähler bleibt zur Erkennung neuerer Versionen fortlaufend.
+
 NullLight v23 – Bank- und Szenenauswahl, neues Logo
 
 - Fester Bereich Bank & Szene beim Programmieren: Bank wählen, Szene laden, neue Szene/Bank anlegen und direkt in Perform speichern. Farbentwürfe bleiben beim Wechsel erhalten.

@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v23**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.3**.
 
 ## Herunterladen
 
@@ -27,7 +27,7 @@ Jeder geprüfte neue Versionsstand auf main wird durch GitHub Actions gebaut. We
 
 ## Neuer Arbeitsablauf
 
-Im Bereich Bank & Szene werden Bank und Szene gewählt und gemeinsam gespeichert. Neue Szenen entstehen in der ausgewählten Bank. Ungespeicherte Step-Änderungen erscheinen oben mit direktem Speichern-Knopf. Rückgängig/Wiederholen umfasst Show-Änderungen und Farbentwürfe; Texteingaben behalten ihre üblichen Tastenkürzel. Rückgängig und Wiederherstellen sind bei aktiver echter Ausgabe gesperrt.
+Im rechten Kasten Szene werden Bank, nummerierte Szenentasten, Name und Speichern gemeinsam angezeigt. Neue Szenen entstehen in der ausgewählten Bank. Ungespeicherte Step-Änderungen erscheinen oben mit direktem Speichern-Knopf. Rückgängig/Wiederholen umfasst Show-Änderungen und Farbentwürfe; Texteingaben behalten ihre üblichen Tastenkürzel. Rückgängig und Wiederherstellen sind bei aktiver echter Ausgabe gesperrt.
 
 Steps können gezogen oder mit den Pfeilen sortiert werden. Alt/Option beim Ablegen kopiert einen Step. Unter Verbindung bzw. über Sicherungen sind die letzten zehn lokalen Sicherungsstände zugänglich. Automatische Sicherungen erfolgen bei Änderungen spätestens nach 30 Sekunden; bitte wichtige Shows zusätzlich exportieren. Die Sicherungen liegen im selben Browser/App-Speicher und ersetzen keine externe Sicherung.
 

@@ -12,7 +12,7 @@ require 'uri'
 require 'rbconfig'
 
 class NullLightUpdater
-  BOOTSTRAP = 2
+  BOOTSTRAP = 3
   FILES = %w[NullLight.html artnet.rb routing.rb scene_ai.rb updater.rb version.json].freeze
   MAX_BYTES = 8 * 1024 * 1024
   FEED = 'https://github.com/whoisvision22/NullLight/releases/latest/download/NullLight-update.json'
