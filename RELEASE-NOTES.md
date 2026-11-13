@@ -1,4 +1,4 @@
-NullLight v0.2.6 – Geräte übersichtlich verwalten und Bühne platzieren
+NullLight v0.2.7 – Geräte übersichtlich verwalten und Bühne platzieren
 
 - Laser und Nebelmaschine als eigene Geräte mit Symbolen, universeller Kanalzahl und DMX-Reglern pro Step. F = Nebelausstoß, U = freier Kanal. White/Flash schaltet diese Geräte nicht ein; Blackout nullt alle Kanäle.
 - Einzeilige Geräte, Plus-Taste zum Hinzufügen und Geräteeditor als Dialog nur bei Bedarf. Kürzere Reiternamen Lichter und Szenen.
@@ -8,6 +8,11 @@ NullLight v0.2.6 – Geräte übersichtlich verwalten und Bühne platzieren
 - Geräteliste und Bearbeitungsformular scrollen unabhängig; Speichern und Abbrechen bleiben im Editor sichtbar. Listenposition bleibt beim Bearbeiten erhalten.
 - Auswahl gängiger DMX-Kanalfolgen mit eigener Kanalfolge als Alternative. Vorhandene Profile bleiben erhalten.
 - Neue Strobos starten mit zwei Kanälen: Dimmer und Strobe (D,S), alternativ S,D. Der Strobe-DMX-Wert ist pro Step einstellbar; Blackout setzt alle Kanäle auf null.
+
+NullLight v0.2.6 – Szenenliste 1 bis 48
+
+- Im Feld Szene ersetzt eine einspaltige nummerierte Liste die quadratischen Tasten. Sie zeigt die Plätze 1 bis 48 des aktuellen Aufbaus mit Szenenname und Bank.
+- Bestehende Einträge laden die zugehörige Szene samt Bank. Ein leerer Platz legt eine Szene mit genau dieser Perform-Nummer in der ausgewählten Bank an.
 
 NullLight v0.2.5
 
