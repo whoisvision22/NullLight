@@ -47,7 +47,7 @@ jobs:
       - run: npm test
       - run: /usr/bin/ruby tests/updater-check.rb
       - run: /usr/bin/ruby scripts/build-mac.rb
-      - run: /usr/bin/lipo -verify_arch x86_64 arm64 dist/NullLight.app/Contents/MacOS/applet
+      - run: /usr/bin/lipo dist/NullLight.app/Contents/MacOS/applet -verify_arch x86_64 arm64
       - uses: actions/upload-artifact@v4
         with:
           name: mac-app-and-update
