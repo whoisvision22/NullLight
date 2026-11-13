@@ -5,6 +5,8 @@ function element(){return {innerHTML:'',textContent:'',style:{setProperty(){}},d
 const document={querySelector(key){if(!nodes.has(key))nodes.set(key,element());return nodes.get(key)},querySelectorAll(){return []},addEventListener(type,cb){(listeners[type]??=[]).push(cb)},createElement(){return element()}};
 const context={document,window:{addEventListener(){}},localStorage:{getItem(){return null},setItem(){}},setInterval(){},setTimeout(){},clearTimeout(){},requestAnimationFrame(){},performance:{now(){return 0}},crypto:{randomUUID(){return 'test-id'}},console,confirm(){return true},getComputedStyle(){return {}},structuredClone};
 vm.createContext(context);const run=s=>vm.runInContext(s,context);run(js);
+// Tests below construct custom fixture patches, independent of the migrated startup layout.
+run("data.savedLayouts=[];data.activeLayoutId=null");
 for(const tab of [1,4,3,2,6,7]){run(`tab=${tab};render()`);assert(nodes.get('#screen').innerHTML.length>100)}
 run('tab=3;render()');let body=nodes.get('#screen').innerHTML;
 assert.equal((body.match(/class="rig-canvas /g)||[]).length,1);assert(body.indexOf('program-sidebar')<body.indexOf('rig-canvas'));assert(body.indexOf('step-panel')>body.indexOf('rig-canvas'));
