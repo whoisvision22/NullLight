@@ -1,3 +1,9 @@
+NullLight v0.2.8 – Abgleich der Effektgeräte-Vorschau
+
+- Die Flash-Vorschau zeigt Laser und Nebel dunkel, passend zu ihrer tatsächlichen DMX-Ausgabe.
+- Der Strobe-Regler zeigt auch bei gespeicherten direkten Kanalwerten den tatsächlich ausgegebenen Wert.
+- Enthält Woodwarths in v0.2.7 übernommenen Pull Request mit kompakter Geräteverwaltung und Bühnenflächen sowie die bei der Prüfung ergänzten Kanal-Korrekturen.
+
 NullLight v0.2.7 – Geräte übersichtlich verwalten und Bühne platzieren
 
 - Laser und Nebelmaschine als eigene Geräte mit Symbolen, universeller Kanalzahl und DMX-Reglern pro Step. F = Nebelausstoß, U = freier Kanal. White/Flash schaltet diese Geräte nicht ein; Blackout nullt alle Kanäle.
