@@ -27,6 +27,14 @@ Jeder geprüfte neue Versionsstand auf main wird durch GitHub Actions gebaut. We
 
 ## Neuer Arbeitsablauf
 
+Laser und Nebelmaschine sind eigene Gerätearten. Für universelle Laser stehen
+freie Kanäle (`U`) zur Verfügung; die Kanalzahl lässt sich anpassen. Bei der
+Nebelmaschine bezeichnet `F` den Ausstoß, weitere Kanäle können frei belegt
+werden. In Szenen erhält jeder Kanal einen Regler von 0 bis 255. Die Bedeutung
+und Wertebereiche richten sich nach dem Gerätehandbuch. Die Werte bleiben pro
+Step gespeichert. **Ausgabe auf null** stoppt die ausgewählten Effektgeräte;
+Blackout nullt alle Kanäle. White/Flash aktiviert Laser und Nebelmaschine nicht.
+
 Unter **Lichter** zeigt jede Zeile ein Gerät. Das **+** öffnet den Geräteeditor;
 die Kanalfolgen-Auswahl richtet sich nach der Geräteart. Unter **Aufbau → + Bühne**
 lässt sich eine Bühne mit eigenen Maßen und Höhe ergänzen, in 2D ziehen oder per

@@ -447,6 +447,16 @@ body{padding-top:30px}.online-demo-note{position:fixed;top:0;left:0;right:0;heig
 .stage-platform:focus-visible{outline:2px solid var(--accent)}.stage-platform span{pointer-events:none;text-shadow:0 1px 3px #000}
 .platform-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#platform-form{display:grid;gap:10px}.platform-fields input{width:100%;box-sizing:border-box}
 @media(max-width:700px){.patch-layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.fixture-dialog{width:calc(100vw - 16px)}.fixture-row-name{gap:8px}}
+
+.fixture-shell.laser{width:45px;height:31px;border:1px solid #8e859d;border-radius:5px;padding:6px;background:linear-gradient(135deg,#514c5e,#16131d);box-shadow:0 5px 0 #100e15}
+.fixture-shell.laser i{border-radius:50%;width:14px;height:14px!important;margin:auto;background:radial-gradient(circle,#d7ffcc,#4caf60 40%,#172a1b 70%);border:1px solid #90b58b}
+.fixture-shell.laser::after{content:'';position:absolute;width:16px;height:2px;background:#789375;right:3px;top:6px;box-shadow:0 4px #789375,0 8px #789375}
+.fixture-shell.fog{width:49px;height:29px;border:1px solid #9b93a6;border-radius:7px 7px 3px 3px;padding:5px;background:linear-gradient(135deg,#827c8c,#26212e);box-shadow:0 5px 0 #100e15}
+.fixture-shell.fog i{width:14px;height:14px!important;border-radius:50%;border:3px solid #aca5b5;background:#17131f;margin:auto}
+.fixture-shell.fog::after{content:'≋';position:absolute;top:-16px;left:17px;font-size:24px;color:#d9d3e3;text-shadow:4px -4px 8px #c7c4cf99}
+#light-form .device-picker{grid-template-columns:repeat(auto-fit,minmax(85px,1fr))}
+.universal-channel-controls{display:grid;gap:8px;min-width:0}.universal-channel-controls fieldset{min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px}.universal-channel-controls legend{font-size:12px}
+.universal-channel-grid{display:grid;gap:6px;max-height:260px;overflow:auto}.universal-channel-grid label{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:3px;font-size:11px}.universal-channel-grid label span{grid-column:1/-1;overflow-wrap:anywhere}.universal-channel-grid input{width:100%}.universal-channel-grid output{text-align:right}
 </style>
 
 
@@ -633,11 +643,12 @@ function setupSteps(scene){
 function setupControls(lights){
  const name=lights.length===1?lights[0].name:lights.length+" Lichter ausgewählt";
  const colorLight=lights.find(light=>channelMap(light).some(channel=>["R","G","B","W"].includes(channel)));
+ if(!colorLight&&lights.every(light=>['laser','fog'].includes(fixtureKind(light))))return '<strong>'+esc(name)+'</strong>'+universalChannelControls(lights);
  return '<strong>'+esc(name)+'</strong><small>Farbe anklicken → Auswahl mit 100 % Helligkeit</small>'+
   quickColorPalette(lights)+
   '<div class="row"><label class="custom-color-button">Eigene Farbe<input id="setup-color" type="color" aria-label="Eigene Farbe wählen" value="'+(colorLight?setupValue(colorLight).color:"#ffffff")+
   '" '+(previewIndex===null?'':'disabled')+'></label>'+button("Farbe auf null","selection-off",previewIndex===null?'':'disabled')+button("Alles abwählen","selection-clear")+'</div>'+
-  '<small>Die sechs Felder merken sich deine zuletzt gewählten Farben.</small>'+strobeControls(lights);
+  '<small>Die sechs Felder merken sich deine zuletzt gewählten Farben.</small>'+strobeControls(lights)+universalChannelControls(lights);
 }
 function selectSetupLight(id,multiple){
  if(!multiple){setupSelection.clear();setupSelection.add(id);}
@@ -652,7 +663,8 @@ function applySetupValue(key,newValue){
   if(!setupSelection.has(light.id))continue;
   const value=setupDraft.values[light.id]??={...defaultValue};
   if(key==='strobe'&&!channelMap(light).includes('S'))continue;
-  delete value.channels;
+  const retained=value.channels?Object.fromEntries(Object.entries(value.channels).filter(([index])=>!['D','R','G','B','W'].includes(channelMap(light)[Number(index)]))):{};
+  delete value.channels;if(Object.keys(retained).length)value.channels=retained;
   value[key]=key==="color"&&!channelMap(light).some(channel=>["R","G","B","W"].includes(channel))?"#ffffff":newValue;
   if(key==="color")value.level=100;
   const cell=screen.querySelector('.cell[data-fixture="'+light.id+'"]');
@@ -759,6 +771,7 @@ document.addEventListener("click",event=>{
 case 'patch-select':if(setupSelection.has(arg))setupSelection.delete(arg);else setupSelection.add(arg);break;
 case 'patch-select-all':data.lights.forEach(light=>setupSelection.add(light.id));break;
 case 'fixture-fold':fixtureGroups().forEach(([name])=>closedFixtureGroups.add(name));break;
+case 'effect-off':stopEffectDevices();break;
 case "tab":
  stopPreview();
  setupToOutput=false;
@@ -957,7 +970,7 @@ const mappingInput=form.get("mapping").trim().toUpperCase();
  const mapping=mappingInput||({Dimmer:"D",RGB:"R,G,B",RGBW:"R,G,B,W"}[mode]||"");
  const group=form.get("group").trim();
  const channelList=mapping.split(",").map(channel=>channel.trim());
- const validMapping=channelList.length>0&&channelList.every(channel=>["D","R","G","B","W","S","0","255"].includes(channel));
+ const validMapping=channelList.length>0&&channelList.every(channel=>["D","R","G","B","W","S","F","U","0","255"].includes(channel));
  const end=address+channelList.length-1;
  const overlap=data.lights.find(light=>light.id!==fixture&&address<light.address+channelCount(light)&&end>=light.address);
  const error=!name?"Bitte gib einen Namen ein.":!deviceTypes[visualType]?"Bitte eine Geräteart auswählen.":!validMapping?"Bitte eine gültige Kanalfolge eingeben.":!Number.isInteger(address)||address<1?"Bitte eine gültige DMX-Adresse eingeben.":end>512?"Der Kanalbereich endet hinter Kanal 512.":overlap?"Überschneidung mit "+overlap.name+".":"";
@@ -1195,7 +1208,7 @@ function patchProblem(){
  for(const light of data.lights){
   const map=channelMap(light);
   if(!Number.isInteger(light.address)||light.address<1||light.address+map.length-1>512)return "Die DMX-Adresse von "+light.name+" ist ungültig.";
-  if(!map.length||!map.every(value=>["D","R","G","B","W","S","0","255"].includes(value)))return "Bitte die Kanalbelegung von "+light.name+" prüfen.";
+  if(!map.length||!map.every(value=>["D","R","G","B","W","S","F","U","0","255"].includes(value)))return "Bitte die Kanalbelegung von "+light.name+" prüfen.";
   for(let index=0;index<map.length;index++){
    const address=light.address+index;
    if(used.has(address))return "Die DMX-Kanäle überschneiden sich bei "+light.name+".";
@@ -1213,6 +1226,7 @@ function encodeFrame(step,mode="",scale=master){
  const frame=Array(512).fill(0);
  if(mode==="black"||(!step&&mode!=="white"))return frame;
  for(const light of data.lights){
+  if(mode==='white'&&['laser','fog'].includes(fixtureKind(light)))continue;
   const map=channelMap(light),value=step?.values[light.id]||defaultValue;
   const parsed=colorValues(value),rgb=parsed.rgb;
   let level=parsed.level*scale/100;
@@ -1303,11 +1317,11 @@ ids.add(light.id);
 validateTilt(light.tilt);
 if(light.inLayout!==undefined&&typeof light.inLayout!=="boolean")throw new Error("Ungültiger Aufbau-Status.");
 if(light.position&&(!Number.isFinite(light.position.x)||!Number.isFinite(light.position.y)||light.position.x<0||light.position.x>1||light.position.y<0||light.position.y>1))throw new Error("Ungültige Lichtposition.");
-if(light.visualType&&!["par","panel","bar","strobe","moving","strip"].includes(light.visualType))throw new Error("Ungültige Darstellung.");
+if(light.visualType&&!["par","panel","bar","strobe","moving","strip","laser","fog"].includes(light.visualType))throw new Error("Ungültige Darstellung.");
 if(light.height!==undefined&&(!Number.isFinite(light.height)||light.height<0||light.height>5))throw new Error("Ungültige Höhe.");
   const map=channelMap(light);
   if(!Number.isInteger(light.address)||light.address<1||light.address+map.length-1>512||
-   !map.every(value=>["D","R","G","B","W","S","0","255"].includes(value)))throw new Error("Ungültige Kanalbelegung.");
+   !map.every(value=>["D","R","G","B","W","S","F","U","0","255"].includes(value)))throw new Error("Ungültige Kanalbelegung.");
   if(light.cell!==undefined&&(!Number.isInteger(light.cell)||light.cell<0||light.cell>=setupCellCount))throw new Error("Ungültige Rasterposition.");
   if(light.group!==undefined&&typeof light.group!=="string")throw new Error("Ungültige Gruppe.");
   for(let index=0;index<map.length;index++){
@@ -1436,6 +1450,11 @@ function selectedEffect(){
  return effects.find(layer=>layer.id===effectLayerId)||effects[0];
 }
 function displayValues(light,value){
+ if(['laser','fog'].includes(fixtureKind(light))){
+  const map=channelMap(light),outputs=map.map((_,index)=>Number(value.channels?.[index])||0);
+  const relevant=fixtureKind(light)==='fog'&&map.includes('F')?outputs.filter((_,index)=>map[index]==='F'):outputs;
+  return {color:fixtureKind(light)==='laser'?'#5dff75':'#dce7ef',level:Math.max(0,...relevant)/255*100};
+ }
  if(!value.channels)return value;
  const map=channelMap(light),frame=encodeFrame({values:{[light.id]:value}},"",100);
  const at=channel=>{const index=map.indexOf(channel);return index<0?0:frame[light.address-1+index];};
@@ -1459,6 +1478,7 @@ function effectStep(step,scene,seconds=performanceClock()){
   const phase=seconds*(layer.tempo===false?1:bpm()/60)*layer.speed;
   const time=layer.reverse?-phase:phase;
   data.lights.forEach((light,index)=>{
+   if(['laser','fog'].includes(fixtureKind(light)))return;
    if(layer.ids.length&&!layer.ids.includes(light.id))return;
    const position=fixturePosition(light,index);
    const space=layer.axis==="y"?position.y:layer.axis==="radial"?
@@ -1567,14 +1587,8 @@ document.addEventListener("input",event=>{
 const field=event.target,scene=current(),layer=selectedEffect();
 if(field.dataset.channelLight){
  if(tab!==3||previewIndex!==null)return;
- const light=data.lights.find(item=>item.id===field.dataset.channelLight);
- if(!light)return;
- const value=setupDraft.values[light.id]??={...defaultValue};
- const frame=encodeFrame({values:{[light.id]:value}},"",100);
- value.channels=Object.fromEntries(channelMap(light).map((_,index)=>[index,frame[light.address-1+index]]));
- value.channels[Number(field.dataset.channelOffset)]=Number(field.value);
+ if(!setFixtureChannel(field.dataset.channelLight,Number(field.dataset.channelOffset),Number(field.value)))return;
  field.nextElementSibling.textContent=field.value;
- Object.assign(value,displayValues(light,value));
  setupNotice="";
  document.querySelector("#setup-notice").textContent="";
  return;
@@ -1623,7 +1637,7 @@ setInterval(paintRig,1000/24);
 const rigView={mode:"2d",yaw:-0.4,pitch:0.92,zoom:1,labels:true,grid:true,drag:null};
 function fixtureKind(light){
  const type=light.visualType==="bar"?"strip":light.visualType;
- return deviceTypes[type]?type:/panel|wolke/i.test(light.name)?"panel":/strip|streifen|bar|leiste/i.test(light.name)?"strip":/moving/i.test(light.name)?"moving":/strobo|strobe/i.test(light.name)?"strobe":"par";
+ return deviceTypes[type]?type:/nebel|fog|hazer/i.test(light.name)?"fog":/laser/i.test(light.name)?"laser":/panel|wolke/i.test(light.name)?"panel":/strip|streifen|bar|leiste/i.test(light.name)?"strip":/moving/i.test(light.name)?"moving":/strobo|strobe/i.test(light.name)?"strobe":"par";
 }
 function rawProjection(point){
  const cy=Math.cos(rigView.yaw),sy=Math.sin(rigView.yaw),y=point.x*sy+point.y*cy;
@@ -1738,9 +1752,9 @@ function drawStage(step){
 function rigDisplayValue(light,step,stored=false){
  const value=displayValues(light,step.values[light.id]||defaultValue);
  let color=light.mode==="Dimmer"?"#ffffff":value.color,level=value.level;
- if(tab===2&&!step.outputEncoded&&!stored)level=level*master/100;
+ if(tab===2&&!step.outputEncoded&&!stored&&!['laser','fog'].includes(fixtureKind(light)))level=level*master/100;
  if(!stored&&override==="black")level=0;
- if(!stored&&override==="white"){color="#ffffff";level=master;}
+ if(!stored&&override==="white"){color="#ffffff";level=['laser','fog'].includes(fixtureKind(light))?0:master;}
  return {color,level};
 }
 function paintRig(){
@@ -2370,7 +2384,9 @@ const deviceTypes={
  par:{name:"PAR-Scheinwerfer",mapping:"R,G,B",height:2.4},
  strobe:{name:"Strobo",mapping:"D,S",height:2.4},
  moving:{name:"Moving Head",mapping:"",height:.4},
- strip:{name:"LED-Streifen",mapping:"R,G,B",height:.1}
+ strip:{name:"LED-Streifen",mapping:"R,G,B",height:.1},
+ laser:{name:"Laser",mapping:"U,U,U,U,U,U,U,U",height:2.4},
+ fog:{name:"Nebelmaschine",mapping:"F",height:.2}
 };
 function deviceSymbol(type){
  return '<span class="device-symbol" aria-hidden="true"><span class="fixture-shell '+type+'"><i></i></span></span>';
@@ -2383,19 +2399,56 @@ const mappingPresets=[
  ['D','Dimmer · 1 Kanal'],['D,S','Strobo: Dimmer → Strobe · 2 Kanäle'],['S,D','Strobo: Strobe → Dimmer · 2 Kanäle'],
  ['R,G,B','RGB'],['G,R,B','GRB'],['R,B,G','RBG'],['B,G,R','BGR'],['G,B,R','GBR'],['B,R,G','BRG'],
  ['D,R,G,B','Dimmer → RGB'],['R,G,B,D','RGB → Dimmer'],['R,G,B,W','RGBW'],['D,R,G,B,W','Dimmer → RGBW'],
- ['R,G,B,W,D','RGBW → Dimmer'],['D,R,G,B,S','Dimmer → RGB → Strobe'],['D,R,G,B,W,S','Dimmer → RGBW → Strobe']
+ ['R,G,B,W,D','RGBW → Dimmer'],['D,R,G,B,S','Dimmer → RGB → Strobe'],['D,R,G,B,W,S','Dimmer → RGBW → Strobe'],
+ ['F','Nebel: Ausstoß · 1 Kanal'],['F,U','Nebel: Ausstoß → freier Kanal'],['U,F','Nebel: freier Kanal → Ausstoß'],['F,R,G,B','Nebel: Ausstoß → RGB'],
+ ...[1,2,4,8,10,12,16].map(count=>[Array(count).fill('U').join(','),'Laser / frei · '+count+' DMX-Kanäle'])
 ];
+function knownMapping(mapping){return mappingPresets.some(([value])=>value===mapping)||mapping.split(',').every(token=>token==='U'||token==='F');}
+function resizeEffectMapping(draft,count){
+ if(!Number.isInteger(count)||count<1||count>512)throw new Error('Bitte zwischen 1 und 512 DMX-Kanälen wählen.');
+ const channels=draft.mapping.split(',');while(channels.length<count)channels.push('U');
+ return {...draft,mapping:channels.slice(0,count).join(','),customMapping:false,mode:'Eigenes Profil'};
+}
+function setFixtureChannel(id,index,out){
+ if(previewIndex!==null)return false;
+ const light=data.lights.find(item=>item.id===id);
+ if(!light||!Number.isInteger(index)||index<0||index>=channelCount(light)||!Number.isInteger(out)||out<0||out>255)return false;
+ const value=setupDraft.values[id]??={...defaultValue},frame=encodeFrame({values:{[id]:value}},'',100);
+ value.channels=Object.fromEntries(channelMap(light).map((_,offset)=>[offset,frame[light.address-1+offset]]));
+ value.channels[index]=out;Object.assign(value,displayValues(light,value));return true;
+}
+function universalChannelControls(lights){
+ const devices=lights.filter(light=>['laser','fog'].includes(fixtureKind(light))||channelMap(light).some(channel=>['U','F'].includes(channel)));
+ if(!devices.length)return '';
+ return '<div class="universal-channel-controls"><strong>DMX-Kanäle</strong>'+button('Ausgabe auf null','effect-off',previewIndex!==null?'disabled':'')+'<small>0–255 pro Kanal. Die Bedeutung der freien Kanäle steht im Gerätehandbuch.</small>'+devices.map(light=>{
+  const frame=encodeFrame({values:{[light.id]:setupValue(light)}},'',100);
+  return '<fieldset><legend>'+esc(light.name)+'</legend><div class="universal-channel-grid">'+channelMap(light).map((channel,index)=>{
+   const value=frame[light.address-1+index],name=channel==='F'?'Nebelausstoß':channel==='U'?'Freier Kanal':channel;
+   return '<label><span>Kanal '+(index+1)+' · '+esc(name)+' · DMX '+(light.address+index)+'</span><input type="range" min="0" max="255" step="1" data-channel-light="'+light.id+'" data-channel-offset="'+index+'" value="'+value+'" '+(previewIndex!==null?'disabled':'')+'><output>'+value+'</output></label>';
+  }).join('')+'</div></fieldset>';
+ }).join('')+'</div>';
+}
+function stopEffectDevices(){
+ if(previewIndex!==null)return;
+ for(const light of data.lights){
+  if(!setupSelection.has(light.id)||!(['laser','fog'].includes(fixtureKind(light))||channelMap(light).some(channel=>['U','F'].includes(channel))))continue;
+  setupDraft.values[light.id]={...defaultValue,level:0,channels:Object.fromEntries(channelMap(light).map((_,index)=>[index,0]))};
+ }
+ setupNotice='DMX-Kanäle der ausgewählten Effektgeräte auf null gesetzt.';
+}
 function mappingFields(draft){
- const presets=presetsForType(draft.visualType),custom=draft.customMapping||!mappingPresets.some(([mapping])=>mapping===draft.mapping);
+ const presets=presetsForType(draft.visualType),custom=draft.customMapping||!knownMapping(draft.mapping);
  return '<label class="stack">DMX-Kanalfolge<select id="mapping-preset" name="mappingPreset">'+(!custom&&!presets.some(([mapping])=>mapping===draft.mapping)?'<option value="'+esc(draft.mapping)+'" selected>Gespeichertes Profil ('+esc(draft.mapping)+')</option>':'')+presets.map(([mapping,label])=>'<option value="'+mapping+'" '+(!custom&&draft.mapping===mapping?'selected':'')+'>'+label+' ('+mapping+')</option>').join('')+'<option value="custom" '+(custom?'selected':'')+'>Eigene Kanalfolge …</option></select></label>'+
   (custom?'<label class="stack">Eigene DMX-Kanalfolge<input name="mapping" placeholder="z. B. D,R,G,B,S" required value="'+esc(draft.mapping)+'"></label>':'<input type="hidden" name="mapping" value="'+esc(draft.mapping)+'">');
 }
 function presetsForType(type){
  return mappingPresets.filter(([mapping])=>{
   if(!type)return true;
-  if(type==='strobe')return mapping.includes('S');
-  if(type==='strip')return mapping.includes('R')&&!mapping.includes('S');
-  return mapping==='D'||mapping.includes('R');
+  if(type==='laser')return mapping.split(',').every(channel=>channel==='U');
+  if(type==='fog')return mapping.includes('F');
+  if(type==='strobe')return mapping.includes('S')&&!mapping.includes('F')&&!mapping.includes('U');
+  if(type==='strip')return mapping.includes('R')&&!mapping.includes('S')&&!mapping.includes('F')&&!mapping.includes('U');
+  return mapping==='D'||mapping.includes('R')&&!mapping.includes('F')&&!mapping.includes('U');
  });
 }
 function strobeControls(lights){
@@ -2408,6 +2461,11 @@ document.addEventListener('input',event=>{
  if(event.target.id==='setup-strobe'){applySetupValue('strobe',Number(event.target.value));event.target.nextElementSibling.textContent=event.target.value;}
 });
 document.addEventListener('change',event=>{
+ if(event.target.id==='universal-channel-count'){
+  captureFixtureForm();
+  try{fixtureDraft=resizeEffectMapping(fixtureDraft,Number(event.target.value));deviceMessage='';render();}
+  catch(error){document.querySelector('#light-error').textContent=error.message;}return;
+ }
  if(event.target.id!=='mapping-preset')return;
  captureFixtureForm();fixtureDraft.customMapping=event.target.value==='custom';
  if(!fixtureDraft.customMapping)fixtureDraft.mapping=event.target.value;
@@ -2446,8 +2504,8 @@ function lights(){
    '<label class="stack">DMX-Startadresse<input name="address" type="number" required min="1" max="512" value="'+esc(draft.address)+'"></label>'+
    '<label class="stack">Gruppe<input name="group" list="fixture-group-names" maxlength="60" value="'+esc(draft.group)+'"></label><datalist id="fixture-group-names">'+fixtureGroups().filter(([name])=>name).map(([name])=>'<option value="'+esc(name)+'"></option>').join('')+'</datalist></div>'+
    (light?'':'<label class="stack">Anzahl gleicher Geräte<input name="count" type="number" min="1" max="64" value="'+draft.count+'" required></label>')+
-   mappingFields(draft)+
-   '<small>Die Kanalfolge muss zum DMX-Modus am Gerät passen. D = Dimmer, S = Strobe, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert. Vorhandene Profile werden nicht automatisch geändert.</small></div>'+
+   (['laser','fog'].includes(draft.visualType)?'<label class="stack">Anzahl DMX-Kanäle<input id="universal-channel-count" type="number" min="1" max="512" step="1" required value="'+draft.mapping.split(',').length+'"></label><small>Universelles Profil: Kanalwerte und Kanalzahl anhand des DMX-Modus am Gerät einstellen. Freie Kanäle sind als U gekennzeichnet.</small>':'')+mappingFields(draft)+
+   '<small>Die Kanalfolge muss zum DMX-Modus am Gerät passen. D = Dimmer, S = Strobe, F = Nebelausstoß, U = freier DMX-Kanal, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert. Vorhandene Profile werden nicht automatisch geändert.</small></div>'+
    '<div class="fixture-form-actions"><p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></div></form></dialog>':'')+
    '<details class="patch-grid-fold"><summary>DMX-Adressraster</summary>'+patchGrid()+'</details></div></div>';
 }

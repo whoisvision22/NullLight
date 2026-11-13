@@ -1,5 +1,6 @@
 NullLight v0.2.6 – Geräte übersichtlich verwalten und Bühne platzieren
 
+- Laser und Nebelmaschine als eigene Geräte mit Symbolen, universeller Kanalzahl und DMX-Reglern pro Step. F = Nebelausstoß, U = freier Kanal. White/Flash schaltet diese Geräte nicht ein; Blackout nullt alle Kanäle.
 - Einzeilige Geräte, Plus-Taste zum Hinzufügen und Geräteeditor als Dialog nur bei Bedarf. Kürzere Reiternamen Lichter und Szenen.
 - Kanalfolgen-Auswahl passend zum gewählten Gerätetyp; vorhandene Profile bleiben auswählbar.
 - Eigene Bühne mit Breite, Tiefe und Höhe im Aufbau: im 2D-Raster verschieben, in 3D sichtbar und je Aufbau gespeichert.
