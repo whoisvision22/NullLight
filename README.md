@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.6**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.7**.
 
 ## Herunterladen
 
@@ -26,6 +26,20 @@ Dieses erste GitHub-Updatepaket benötigt die neue Mac-App einmalig als Download
 Jeder geprüfte neue Versionsstand auf main wird durch GitHub Actions gebaut. Wenn version.json eine neue Versionsnummer enthält, veröffentlicht der Workflow automatisch Mac-App, Windows-Demo und Update-Dateien. Ein bereits vorhandenes Release wird nicht überschrieben. Die verbindlichen Arbeitsschritte für künftige Änderungen stehen in AGENTS.md.
 
 ## Neuer Arbeitsablauf
+
+Laser und Nebelmaschine sind eigene Gerätearten. Für universelle Laser stehen
+freie Kanäle (`U`) zur Verfügung; die Kanalzahl lässt sich anpassen. Bei der
+Nebelmaschine bezeichnet `F` den Ausstoß, weitere Kanäle können frei belegt
+werden. In Szenen erhält jeder Kanal einen Regler von 0 bis 255. Die Bedeutung
+und Wertebereiche richten sich nach dem Gerätehandbuch. Die Werte bleiben pro
+Step gespeichert. **Ausgabe auf null** stoppt die ausgewählten Effektgeräte;
+Blackout nullt alle Kanäle. White/Flash aktiviert Laser und Nebelmaschine nicht.
+
+Unter **Lichter** zeigt jede Zeile ein Gerät. Das **+** öffnet den Geräteeditor;
+die Kanalfolgen-Auswahl richtet sich nach der Geräteart. Unter **Aufbau → + Bühne**
+lässt sich eine Bühne mit eigenen Maßen und Höhe ergänzen, in 2D ziehen oder per
+Pfeiltaste im 0,5-m-Raster verschieben. Die Bühne bleibt im jeweiligen Aufbau
+gespeichert und ist auch in der 3D-Vorschau sichtbar.
 
 Im rechten Kasten Szene werden Bank, nummerierte Szenentasten, Name und Speichern gemeinsam angezeigt. Neue Szenen entstehen in der ausgewählten Bank. Ungespeicherte Step-Änderungen erscheinen oben mit direktem Speichern-Knopf. Rückgängig/Wiederholen umfasst Show-Änderungen und Farbentwürfe; Texteingaben behalten ihre üblichen Tastenkürzel. Rückgängig und Wiederherstellen sind bei aktiver echter Ausgabe gesperrt.
 

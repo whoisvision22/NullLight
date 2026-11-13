@@ -1,0 +1,25 @@
+const fs=require('fs');
+const harness=fs.readFileSync('tests/workspace.cjs','utf8').split('// Tests below')[0];
+const checks=String.raw`
+run('data={lights:[],scenes:[{id:"s1",name:"Test",live:true,steps:[{fade:0,hold:1,values:{}}]}],savedLayouts:[],stage:{width:12,depth:8},layoutVersion:1};editing="s1";outputState.enabled=false;setupSelection.clear();');
+run('addFixtureBatch({name:"PAR",mode:"RGB",mapping:"R,G,B",visualType:"par",address:1,group:"Front"},30);addFixtureBatch({name:"PAR",mode:"RGB",mapping:"R,G,B",visualType:"par",address:100,group:"Bühne"},30)');
+assert.equal(run('data.lights.length'),60);assert.equal(run('fixtureGroups().length'),2);assert.equal(run('fixtureGroups()[0][1].length'),30);
+run('tab=1;fixture=null;render()');let markup=nodes.get('#screen').innerHTML;
+assert(markup.includes('data-scroll-key="patch-devices"'));assert.equal((markup.match(/class="patch-fixture-row"/g)||[]).length,60);assert.equal((markup.match(/data-fixture-group=/g)||[]).length,2);
+run('closedFixtureGroups.add("Front")');assert(!run('groupedFixtures(()=>"x").match(/data-fixture-group="Front" open/)'));
+run('data.lights[0].group="<Group>"');assert(run('groupedFixtures(()=>"x").includes("&lt;Group&gt;")'));
+run('fixture=data.lights[59].id;render()');assert(nodes.get('#screen').innerHTML.includes('id="light-form"'));assert(nodes.get('#screen').innerHTML.includes('fixture-form-actions'));
+assert.equal(run('deviceTypes.strobe.mapping'),'D,S');
+run('addFixtureBatch({name:"Strobo",mode:"Eigenes Profil",mapping:deviceTypes.strobe.mapping,visualType:"strobe",address:200,group:"Strobos"},2)');
+assert.equal(run('data.lights.at(-1).address'),202);assert.equal(run('patchProblem()'),'');
+run('data.scenes[0].steps[0].values[data.lights.at(-2).id]={color:"#ffffff",level:100,strobe:123}');
+const frame=run('encodeFrame(data.scenes[0].steps[0])');assert.equal(frame[199],255);assert.equal(frame[200],123);
+assert(run('encodeFrame(data.scenes[0].steps[0],"black").every(value=>value===0)'));assert.equal(run('encodeFrame(data.scenes[0].steps[0],"white")[200]'),0);
+assert.equal(run('validateShow(data).lights.at(-1).mapping'),'D,S');
+assert.throws(()=>run('validateShow({...data,scenes:[{id:"bad",name:"Bad",steps:[{fade:0,hold:1,values:{[data.lights[0].id]:{color:"#ffffff",level:100,strobe:256}}}]}]})'));
+assert(run('mappingFields({mapping:"G,R,B"}).includes("GRB")'));assert(run('mappingFields({mapping:"S,D"}).includes("selected")'));
+assert(run('mappingFields({mapping:"D,0,R,G,B"}).includes("Eigene DMX-Kanalfolge")'));
+run('data.lights[0].mapping="D";data.lights[0].visualType="strobe";fixture=data.lights[0].id;prepareFixtureDraft(data.lights[0])');assert.equal(run('fixtureDraft.mapping'),'D');
+console.log('Passed: 60 fixtures in collapsible groups, escaped names, editor, two-channel strobe batches/output/blackout/import, mapping presets and legacy profiles.');
+`;
+new Function('require','process',harness+checks)(require,process);
