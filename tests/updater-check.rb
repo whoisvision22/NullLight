@@ -38,6 +38,35 @@ Dir.mktmpdir('nulllight-update-check-') do |root|
   publish.call(19, false, true)
   assert(updater.install['state'] == 'error', 'Ungültiger Ruby-Code muss abgelehnt werden.')
   assert(updater.cached_release[:version] == 18, 'Ungültiger Code darf nicht aktiv werden.')
+
+  publish.call(19)
+  original_reader = updater.method(:read_bytes)
+  arrived = Queue.new
+  resume = Queue.new
+  updater.define_singleton_method(:read_bytes) do |path, redirects = 0|
+    if path.end_with?('NullLight-release-19.json')
+      arrived << true
+      resume.pop
+    end
+    original_reader.call(path, redirects)
+  end
+  updater.start_install
+  require 'timeout'
+  Timeout.timeout(3) { arrived.pop }
+  assert(updater.status['state'] == 'downloading', 'Download-Fortschritt fehlt.')
+  updater.cancel_install
+  resume << true
+  Timeout.timeout(3) { sleep(0.005) until updater.status['state'] == 'cancelled' }
+  assert(updater.cached_release[:version] == 18, 'Abbruch darf den Versionszeiger nicht ändern.')
+  assert(Dir.glob(File.join(cache, 'staging-*')).empty?, 'Abbruch hinterlässt eine unvollständige Installation.')
+  updater.define_singleton_method(:read_bytes, original_reader)
+  updater.start_install
+  Timeout.timeout(3) { sleep(0.005) until updater.status['state'] == 'ready' }
+  assert(updater.cached_release[:version] == 19, 'Nach Abbruch muss ein neuer Versuch möglich sein.')
+  # Restore v18 as the fixture baseline for the existing offline/tamper tests.
+  pointer = JSON.parse(File.read(File.join(cache, 'current.json')))
+  previous = Dir.children(cache).find { |name| name.start_with?('18-') }
+  File.write(File.join(cache, 'current.json'), JSON.generate(version:18,directory:previous))
   File.unlink(File.join(source, 'NullLight-update.json'))
   assert(updater.check['state'] == 'unavailable', 'Offline-Quelle muss gemeldet werden.')
   assert(updater.cached_release[:version] == 18, 'Offline-Start muss vorbereitetes Update verwenden.')
@@ -51,4 +80,4 @@ Dir.mktmpdir('nulllight-update-check-') do |root|
     # Expected: source and redirected downloads are bounded to the trusted host set.
   end
 end
-puts 'Passed: check/install separation, SHA-256 rejection, Ruby validation, offline start, cache fallback and host restrictions.'
+puts 'Passed: asynchronous download, cancellation without activation, retry;  check/install separation, SHA-256 rejection, Ruby validation, offline start, cache fallback and host restrictions.'

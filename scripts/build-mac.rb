@@ -50,5 +50,5 @@ raise 'Archiv konnte nicht erstellt werden.' unless system('/usr/bin/ditto', '-c
 payload = JSON.generate(version: version, files: files.transform_values { |content| { sha256: Digest::SHA256.hexdigest(content), contentBase64: Base64.strict_encode64(content) } })
 filename = "NullLight-release-#{version}.json"
 File.binwrite(File.join(out, filename), payload)
-File.write(File.join(out, 'NullLight-update.json'), JSON.generate(schema: 1, minimumBootstrap: 3, version: version, payload: filename, sha256: Digest::SHA256.hexdigest(payload)))
+File.write(File.join(out, 'NullLight-update.json'), JSON.generate(schema: 1, displayVersion: label, minimumBootstrap: 3, version: version, payload: filename, sha256: Digest::SHA256.hexdigest(payload)))
 puts "Mac-App und Update v#{version} gebaut: #{zip}"

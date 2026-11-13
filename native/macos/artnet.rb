@@ -450,6 +450,10 @@ module ArtNet
         end
         raise ArgumentError, 'Zugriff abgelehnt.' unless request['x-lichtpult-session'] == token
         raise ArgumentError, 'Fremder Ursprung.' if request['origin'] && request['origin'] != "http://#{request['host']}"
+        if request.path == '/api/update/status' && request.request_method == 'GET'
+          response.body = JSON.generate(update_status.call)
+          next
+        end
         if request.path == '/api/dj/status' && request.request_method == 'GET'
           response.body = JSON.generate(dj.status)
           next
@@ -476,6 +480,12 @@ module ArtNet
                  when '/api/dj/stop' then dj.stop
                  when '/api/control/poll' then control.poll(input)
                  when '/api/control' then control.command(input)
+                 when '/api/update/start'
+                   updates.start_install if updates
+                   update_status.call
+                 when '/api/update/cancel'
+                   updates.cancel_install if updates
+                   update_status.call
                  when '/api/update/install'
                    updates.install if updates
                    update_status.call

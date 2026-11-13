@@ -1,3 +1,10 @@
+NullLight v0.2.4 – Update-Dialog im Aufbau des CVR Tools
+
+- Eigener Update-Dialog mit installierter Version, manueller Prüfung, Download und Neustart in einem Ablauf, Fortschrittsanzeige und Schließen/Abbrechen. Der aktuelle Reiter bleibt geöffnet.
+- Hintergrund-Download mit Abbruchprüfung vor dem Aktivieren; fehlgeschlagene oder abgebrochene Vorgänge ersetzen keine Version. Show und Farbentwürfe werden vor dem Neustart gespeichert.
+- Alle auswählen direkt bei den Steps für gemeinsame Zeitänderungen. Keine blaue Textauswahl beim Klicken/Ziehen im Visualizer; ausgewählte Lampen haben einen dünnen violetten Rahmen.
+- Der automatische Updatepfad aktualisiert weiterhin die geprüften App-Inhalte. Änderungen am nativen Starter oder App-Symbol benötigen einen vollständigen Mac-Download; der Dialog verlinkt diesen.
+
 NullLight v0.2.3 – Nummerierte Szenenübersicht
 
 - Im bisherigen Kasten Szene: Bankauswahl, nummerierte Szenentasten, Name, Wiederholung und Speichern gemeinsam an einem Ort.

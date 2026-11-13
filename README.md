@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.3**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.4**.
 
 ## Herunterladen
 
@@ -19,7 +19,7 @@ Der Code lässt sich ebenfalls direkt ausprobieren: NullLight-starten.cmd im Rep
 
 ## Updates und neue Versionen
 
-In der Mac-App: **Updates → Updates prüfen → Herunterladen und vorbereiten → Jetzt neu starten**. Die Dateien werden mit SHA-256 geprüft und erst vollständig vorbereitet übernommen. Die Show wird vor dem Neustart gespeichert, vorherige Versionen bleiben erhalten. Ein fehlgeschlagener Download ersetzt die vorhandene Version nicht. App-Starts benötigen keine Internetverbindung.
+In der Mac-App: **Updates → Nach Updates suchen → Herunterladen und neu starten**. Ein eigener Dialog zeigt Prüfung, Download-Fortschritt und Vorbereitung. Schließen / Abbrechen stoppt einen laufenden Download vor der Aktivierung. Die Dateien werden mit SHA-256 geprüft und erst vollständig vorbereitet übernommen. Die Show wird vor dem Neustart gespeichert, vorherige Versionen bleiben erhalten. Ein fehlgeschlagener Download ersetzt die vorhandene Version nicht. App-Starts benötigen keine Internetverbindung.
 
 Dieses erste GitHub-Updatepaket benötigt die neue Mac-App einmalig als Download. Die Dateidemo unter Windows wird durch Herunterladen der neuen Demo ersetzt.
 

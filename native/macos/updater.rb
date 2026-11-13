@@ -12,6 +12,7 @@ require 'uri'
 require 'rbconfig'
 
 class NullLightUpdater
+  class Cancelled < StandardError; end
   BOOTSTRAP = 3
   FILES = %w[NullLight.html artnet.rb routing.rb scene_ai.rb updater.rb version.json].freeze
   MAX_BYTES = 8 * 1024 * 1024
@@ -26,9 +27,14 @@ class NullLightUpdater
     @bundle_version = JSON.parse(File.read(File.join(@bundle, 'version.json'))).fetch('version')
     raise ArgumentError, 'Ungültige App-Version.' unless @bundle_version.is_a?(Integer)
     FileUtils.mkdir_p(@cache, mode: 0700)
+    @job_mutex = Mutex.new
+    @job_running = false
+    @cancel_requested = false
+    @job = nil
   end
 
   def read_bytes(path, redirects = 0)
+    check_cancelled! unless path.start_with?(@cache + File::SEPARATOR) || path.start_with?(@bundle + File::SEPARATOR)
     unless path.start_with?('https://')
       raise ArgumentError, 'Die Update-Datei ist zu groß.' if File.size(path) > MAX_BYTES
       return File.binread(path)
@@ -56,7 +62,10 @@ class NullLightUpdater
         else
           raise ArgumentError, 'Die Update-Datei ist zu groß.' if response['content-length'].to_i > MAX_BYTES
           response.read_body do |chunk|
+            check_cancelled!
             bytes << chunk
+            length = response['content-length'].to_i
+            report_progress('downloading', length > 0 ? [bytes.bytesize.to_f / length * 80, 80].min : nil, 'Update wird heruntergeladen …')
             raise ArgumentError, 'Die Update-Datei ist zu groß.' if bytes.bytesize > MAX_BYTES
           end
         end
@@ -99,6 +108,8 @@ class NullLightUpdater
   end
 
   def status
+    active = @job_mutex.synchronize { @job_running ? @job.dup : nil }
+    return active.merge('source' => @source) if active
     read_json(File.join(@cache, 'status.json')).merge('source' => @source)
   rescue Errno::ENOENT, JSON::ParserError, ArgumentError
     { 'state' => 'unchecked', 'version' => cached_release[:version], 'source' => @source }
@@ -117,6 +128,8 @@ class NullLightUpdater
       current = cached_release
       begin
         result = yield current
+      rescue Cancelled
+        result = { 'state' => 'cancelled', 'version' => current[:version], 'message' => 'Update abgebrochen. Die bisherige Version bleibt nutzbar.' }
       rescue Errno::ENOENT
         result = { 'state' => 'unavailable', 'version' => current[:version], 'message' => 'GitHub hat noch kein Update bereitgestellt. Die vorhandene Version bleibt nutzbar.' }
       rescue StandardError => error
@@ -134,7 +147,7 @@ class NullLightUpdater
       remote = manifest
       newer = remote['version'] > current[:version]
       { 'state' => newer ? 'available' : 'current', 'version' => [remote['version'], current[:version]].max,
-        'message' => newer ? "Version #{remote['version']} ist verfügbar." : 'NullLight ist aktuell.' }
+        'displayVersion' => remote['displayVersion'], 'message' => newer ? "Version #{remote['displayVersion'] || remote['version']} ist verfügbar." : 'NullLight ist aktuell.' }
     end
   end
 
@@ -148,12 +161,55 @@ class NullLightUpdater
     end
   end
 
+
+  def check_cancelled!
+    raise Cancelled if @job_mutex.synchronize { @job_running && @cancel_requested }
+  end
+
+  def report_progress(state, percent, message)
+    @job_mutex.synchronize do
+      if @job_running
+        @job.merge!('state' => state, 'progress' => percent, 'message' => message)
+      end
+    end
+  end
+
+  def start_install
+    @job_mutex.synchronize do
+      return @job.dup if @job_running
+      @cancel_requested = false
+      @job_running = true
+      @job = { 'state' => 'downloading', 'progress' => 0, 'message' => 'Update wird heruntergeladen …' }
+      @job_thread = Thread.new do
+        begin
+          result = install
+        rescue StandardError => error
+          result = { 'state' => 'error', 'message' => error.message }
+        ensure
+          @job_mutex.synchronize do
+            @job = (result || {}).merge('progress' => result && result['state'] == 'ready' ? 100 : nil)
+            @job_running = false
+          end
+        end
+      end
+      @job.dup
+    end
+  end
+
+  def cancel_install
+    @job_mutex.synchronize { @cancel_requested = true }
+    { 'state' => 'cancelling', 'message' => 'Update wird abgebrochen …' }
+  end
+
   def stage_release(manifest)
     filename, checksum, version = manifest.fetch('payload'), manifest.fetch('sha256'), manifest.fetch('version')
     raise ArgumentError, 'Ungültiger Paketname.' unless filename.is_a?(String) && filename.match?(/\ANullLight-release-\d+\.json\z/)
     raise ArgumentError, 'Ungültige Prüfsumme.' unless checksum.is_a?(String) && checksum.match?(/\A[a-f0-9]{64}\z/)
     payload_path = @source.start_with?('https://') ? URI.join(@source, filename).to_s : File.join(File.dirname(@source), filename)
+    report_progress('downloading', 0, 'Update wird heruntergeladen …')
     bytes = read_bytes(payload_path)
+    check_cancelled!
+    report_progress('verifying', 85, 'Download wird geprüft …')
     raise ArgumentError, 'Die Prüfsumme des Updates stimmt nicht.' unless Digest::SHA256.hexdigest(bytes) == checksum
     payload = JSON.parse(bytes)
     raise ArgumentError, 'Widersprüchliche Paketversion.' unless payload['version'] == version
@@ -163,12 +219,14 @@ class NullLightUpdater
     begin
       hashes = {}
       files.each do |name, item|
+        check_cancelled!
         content = Base64.strict_decode64(item.fetch('contentBase64'))
         digest = Digest::SHA256.hexdigest(content)
         raise ArgumentError, "Ungültige Datei #{name}." unless item['sha256'] == digest
         File.open(File.join(staged, name), 'wb', 0600) { |file| file.write(content); file.flush; file.fsync }
         hashes[name] = digest
       end
+      report_progress('preparing', 92, 'Update wird vorbereitet …')
       %w[artnet.rb routing.rb scene_ai.rb updater.rb].each do |name|
         _, status = Open3.capture2e(RbConfig.ruby, '-c', File.join(staged, name))
         raise ArgumentError, "Die Programmprüfung für #{name} ist fehlgeschlagen." unless status.success?
@@ -177,8 +235,11 @@ class NullLightUpdater
       atomic_json(File.join(staged, 'release.json'), { 'version' => version, 'files' => hashes })
       directory = "#{version}-#{checksum[0, 12]}"
       directory = "#{version}-#{SecureRandom.hex(6)}" if File.exist?(File.join(@cache, directory))
-      File.rename(staged, File.join(@cache, directory))
-      atomic_json(File.join(@cache, 'current.json'), { 'version' => version, 'directory' => directory })
+      @job_mutex.synchronize do
+        raise Cancelled if @job_running && @cancel_requested
+        File.rename(staged, File.join(@cache, directory))
+        atomic_json(File.join(@cache, 'current.json'), { 'version' => version, 'directory' => directory })
+      end
     ensure
       FileUtils.remove_entry_secure(staged) if File.directory?(staged)
     end
