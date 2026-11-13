@@ -27,6 +27,12 @@ Jeder geprüfte neue Versionsstand auf main wird durch GitHub Actions gebaut. We
 
 ## Neuer Arbeitsablauf
 
+Unter **Lichter** zeigt jede Zeile ein Gerät. Das **+** öffnet den Geräteeditor;
+die Kanalfolgen-Auswahl richtet sich nach der Geräteart. Unter **Aufbau → + Bühne**
+lässt sich eine Bühne mit eigenen Maßen und Höhe ergänzen, in 2D ziehen oder per
+Pfeiltaste im 0,5-m-Raster verschieben. Die Bühne bleibt im jeweiligen Aufbau
+gespeichert und ist auch in der 3D-Vorschau sichtbar.
+
 Im rechten Kasten Szene werden Bank, nummerierte Szenentasten, Name und Speichern gemeinsam angezeigt. Neue Szenen entstehen in der ausgewählten Bank. Ungespeicherte Step-Änderungen erscheinen oben mit direktem Speichern-Knopf. Rückgängig/Wiederholen umfasst Show-Änderungen und Farbentwürfe; Texteingaben behalten ihre üblichen Tastenkürzel. Rückgängig und Wiederherstellen sind bei aktiver echter Ausgabe gesperrt.
 
 Steps können gezogen oder mit den Pfeilen sortiert werden. Alt/Option beim Ablegen kopiert einen Step. Unter Verbindung bzw. über Sicherungen sind die letzten zehn lokalen Sicherungsstände zugänglich. Automatische Sicherungen erfolgen bei Änderungen spätestens nach 30 Sekunden; bitte wichtige Shows zusätzlich exportieren. Die Sicherungen liegen im selben Browser/App-Speicher und ersetzen keine externe Sicherung.

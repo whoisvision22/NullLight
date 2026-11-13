@@ -431,6 +431,21 @@ nav{flex-wrap:wrap}nav button{padding:10px 15px;font-size:14px}
 .program-sidebar>.fixture-panel{min-height:160px;display:flex;flex-direction:column;overflow:hidden;flex:1}
 .program-sidebar>.fixture-panel>.fixture-inventory{flex:1;min-height:80px;max-height:none;overflow:auto}
 @media(max-width:700px){.patch-layout{grid-template-columns:1fr;grid-template-rows:minmax(150px,.8fr) minmax(230px,1.2fr);padding:8px;gap:8px}.patch-devices{padding:10px}.patch-devices h2{font-size:15px}.patch-devices> .row button{font-size:11px;padding:5px}.patch-group-editor{max-height:100px}#light-form .device-picker>button{min-height:60px}.patch-grid-fold{max-height:25%}}
+
+/* Compact single-line fixtures and editor opened on demand. */
+.patch-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+.patch-detail{overflow:visible}.patch-grid-fold{max-height:35vh}
+.patch-fixture-row{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:4px 8px;min-height:42px;min-width:520px}
+.patch-fixture-row>.row{flex-wrap:nowrap;min-width:0;gap:8px}.patch-fixture-row button{padding:4px 9px;font-size:12px;white-space:nowrap;flex-shrink:0}
+.patch-fixture-row .device-symbol{height:28px;flex-shrink:0}.fixture-row-name{display:flex;align-items:baseline;gap:12px;min-width:0;white-space:nowrap}
+.fixture-row-name strong{font-size:12px;flex:1;min-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fixture-row-name small{white-space:nowrap;flex-shrink:0}
+.add-fixture{font-size:25px;line-height:1;min-width:40px;padding:6px!important}
+.fixture-dialog{width:min(850px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 40px);padding:0;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);box-sizing:border-box;overflow:hidden}
+.fixture-dialog::backdrop{background:#000a}.fixture-dialog #light-form{border:0;max-height:calc(100dvh - 46px);box-sizing:border-box;min-height:0}
+.stage-platform{position:absolute;z-index:3;display:grid;place-items:center;background:transparent;color:#f2e7ff;font-size:12px;font-weight:700;cursor:move;touch-action:none;border:1px solid transparent;box-sizing:border-box}
+.stage-platform:focus-visible{outline:2px solid var(--accent)}.stage-platform span{pointer-events:none;text-shadow:0 1px 3px #000}
+.platform-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#platform-form{display:grid;gap:10px}.platform-fields input{width:100%;box-sizing:border-box}
+@media(max-width:700px){.patch-layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.fixture-dialog{width:calc(100vw - 16px)}.fixture-row-name{gap:8px}}
 </style>
 
 
@@ -1645,9 +1660,10 @@ function rigVisualizer(){
   (rigView.mode==="3d"?button("−","view-out",'aria-label="Ansicht verkleinern"')+button("+","view-in",'aria-label="Ansicht vergrößern"')+button("Ansicht zurücksetzen","view-reset"):"")+
   '</div></div><div class="rig-canvas '+(rigView.mode==="3d"?"perspective":"top-down")+'" aria-label="'+(rigView.mode==="3d"?"Drehbare 3D-Bühnenvorschau":"2D-Bühnenaufbau")+'">'+
   '<canvas class="stage-drawing" aria-hidden="true"></canvas>'+
+  (stageSize().platform&&rigView.mode==='2d'?'<div class="stage-platform" role="button" tabindex="0" aria-label="Bühne verschieben"><span>BÜHNE</span></div>':'')+
   data.lights.filter(fixturePlaced).map(light=>button('<span class="fixture-shell '+fixtureKind(light)+'"><i></i></span><span class="fixture-label">'+esc(light.name)+'<small>'+esc(deviceTypes[fixtureKind(light)].name)+'</small></span>',
    "setup-light:"+light.id,'class="rig-light" draggable="'+(tab===4&&rigView.mode==="2d")+'" data-fixture="'+light.id+'" '+flag(setupSelection.has(light.id)))).join("")+
-  (!data.lights.some(fixturePlaced)?'<div class="rig-empty"><div><p>Deine Bühne</p><small>'+(data.lights.length?'Wähle links Lichter aus und füge sie dem Aufbau hinzu.':'Lege zuerst deine Lichter an.')+'</small>'+(!data.lights.length?button("Lichter anlegen","tab:1"):'')+'</div></div>':"")+
+  (!data.lights.some(fixturePlaced)&&!stageSize().platform?'<div class="rig-empty"><div><p>Dein Aufbau</p><small>'+(data.lights.length?'Wähle links Lichter aus und füge sie dem Aufbau hinzu.':'Lege zuerst deine Lichter an.')+'</small>'+(!data.lights.length?button("Lichter","tab:1"):'')+'</div></div>':"")+
   '</div><div class="row split rig-foot"><small id="rig-caption"></small><small>'+
   (rigView.mode==="3d"?"Hintergrund ziehen zum Drehen · schematische Lichtvorschau":tab===4?"Ziehen · Einrasten im 0,5-m-Raster":"Schematische Lichtvorschau")+'</small></div></section>';
 }
@@ -1689,6 +1705,7 @@ function drawStage(step){
   for(let half=1;half<size.depth*2;half++){const y=-d+half/2;line({x:-w,y,z:0},{x:w,y,z:0},half%2===0?"#bfa3d82b":"#a995bf16");}
  }
  if(rigView.mode==="2d")drawMetreScale(context,width,height);
+ drawPlatform(context,project);
 
  const sorted=data.lights.map((light,index)=>({light,index,screen:lightScreenPosition(light,index,width,height)})).filter(item=>fixturePlaced(item.light)).sort((a,b)=>a.screen.depth-b.screen.depth);
  for(const item of sorted){
@@ -1732,6 +1749,7 @@ function paintRig(){
  if(!viewport)return;
  const width=viewport.clientWidth,height=viewport.clientHeight;
  const depthOrder=data.lights.map((light,index)=>({id:light.id,depth:lightScreenPosition(light,index,width,height).depth})).sort((a,b)=>a.depth-b.depth).map(item=>item.id);
+ paintPlatform(width,height);
  screen.querySelectorAll(".rig-light").forEach(node=>{
   const index=data.lights.findIndex(light=>light.id===node.dataset.fixture);
   if(index<0)return;
@@ -1757,7 +1775,7 @@ function layoutScreen(){
   groupSelector()+'<div class="row">'+button("Mehrfach","setup-multi",flag(setupMulti))+button("Alle","setup-all")+'</div>'+fixtureInventory(true)+'</aside>'+rigVisualizer()+'<aside class="arrangement-sidebar">'+savedLayoutsPanel()+
   '<section class="panel"><h3>Grundfläche</h3><form id="stage-size-form"><div class="row"><label class="stack">Breite (m)<input name="width" type="number" min="1" max="50" step="0.5" required value="'+size.width+'"></label>'+
   '<label class="stack">Tiefe (m)<input name="depth" type="number" min="1" max="50" step="0.5" required value="'+size.depth+'"></label></div><button class="primary">Größe übernehmen</button><small id="stage-error" role="status"></small></form>'+
-  '<small>Raster 0,5 m · Geräte rasten beim Platzieren ein.</small>'+button("Alle am Raster ausrichten","layout-snap")+'</section>'+
+  '<small>Raster 0,5 m · Geräte rasten beim Platzieren ein.</small>'+button("Alle am Raster ausrichten","layout-snap")+'</section>'+platformPanel()+
   '<section class="panel"><h3>Aufstellung</h3>'+(first?'<strong>'+esc(selected.length===1?first.name:selected.length+" Lichter ausgewählt")+'</strong>'+
   '<label class="stack">Darstellung<select id="fixture-type">'+Object.entries(deviceTypes).map(([key,info])=>'<option value="'+key+'" '+(fixtureKind(first)===key?'selected':'')+'>'+info.name+'</option>').join('')+'</select></label>'+
   '<label>Höhe <input id="fixture-height" type="number" min="0" max="5" step="0.1" value="'+(first.height??2.4)+'"> m</label>'+tiltControls(first)+
@@ -1810,7 +1828,8 @@ screen.addEventListener("pointerup",()=>{rigView.drag=null;});
 screen.addEventListener("pointercancel",()=>{rigView.drag=null;});
 
 let mappingDraft=null,mappingMessage="",performEdit=false,performMessage="";
-const defaultTabNames={"1":"Lichter anlegen","4":"Aufbau","3":"Szenen programmieren","2":"Perform","6":"Art-Net Mapping","7":"DMX Mapping"};
+const defaultTabNames={"1":"Lichter","4":"Aufbau","3":"Szenen","2":"Perform","6":"Art-Net Mapping","7":"DMX Mapping"};
+function tabTitle(index){const saved=data.tabNames?.[index];return (index===1&&saved==='Lichter anlegen'||index===3&&['Szenen programmieren','Szenen anlegen'].includes(saved))?defaultTabNames[index]:saved||defaultTabNames[index];}
 const allBanks=()=>[...new Set([...(data.banks||[]),...data.scenes.map(bankName)])];
 function mappingDefaults(){return {dmx:{enabled:false,passthrough:false,routes:[]},artnet:{enabled:false,passthrough:false,routes:[]}};}
 function validateMapping(input){
@@ -2018,7 +2037,7 @@ function render(){
  const scrollPositions=Array.from(screen.querySelectorAll('[data-scroll-key]'),node=>[node.dataset.scrollKey,node.scrollTop]);
  if(tab===3&&(!setupDraft||(current()?.steps[stepIndex]&&setupDrafts.get(current().steps[stepIndex])!==setupDraft)))loadSetupStep();
  document.querySelector("#tabs").innerHTML=[1,4,3,2,6,7].map(index=>
-  button(esc(data.tabNames?.[index]||defaultTabNames[index]),"tab:"+index,flag(index===tab))).join("");
+  button(esc(tabTitle(index)),"tab:"+index,flag(index===tab))).join("");
  document.querySelector("#status").textContent=storageError?"Speichern nicht verfügbar":connectionStatus();
  let body;
  if(tab===4)body=layoutScreen();
@@ -2032,6 +2051,7 @@ function render(){
  screen.classList.toggle("patch-view",tab===1);
   screen.innerHTML=tab===2?'<div class="perform-shell"><div class="perform-main">'+rigVisualizer()+playbackProgressPanel()+body+'<div class="playback-footer">'+playbackControls()+'</div></div><div class="perform-sidebars">'+masterPanel()+banksPanel()+'</div></div>':body;
  paintRig();
+ const fixtureDialog=screen.querySelector('#fixture-dialog');if(fixtureDialog?.showModal&&!fixtureDialog.open)fixtureDialog.showModal();
  for(const [key,top] of scrollPositions){const node=Array.from(screen.querySelectorAll('[data-scroll-key]')).find(item=>item.dataset.scrollKey===key);if(node)node.scrollTop=top;}
 }
 
@@ -2050,8 +2070,64 @@ function renameEditor(kind,id,label){
 function validateStage(stage){
  if(stage===undefined)return {width:12,depth:8};
  if(!stage||![stage.width,stage.depth].every(value=>Number.isFinite(value)&&value>=1&&value<=50&&Number.isInteger(value*2)))throw new Error("Die Grundfläche muss zwischen 1 und 50 m liegen, in 0,5-m-Schritten.");
- return {width:stage.width,depth:stage.depth};
+ return {width:stage.width,depth:stage.depth,...(stage.platform===undefined?{}:{platform:validatePlatform(stage.platform,stage)})};
 }
+function validatePlatform(platform,size=stageSize()){
+ if(!platform||!['x','y','width','depth','height'].every(key=>Number.isFinite(platform[key])))throw new Error('Ungültige Bühne.');
+ if(!['x','y','width','depth'].every(key=>Number.isInteger(platform[key]*2))||platform.x<0||platform.y<0||platform.width<.5||platform.depth<.5||platform.x+platform.width>size.width||platform.y+platform.depth>size.depth||platform.height<0||platform.height>3)throw new Error('Die Bühne muss in die Grundfläche passen. Maße und Positionen in 0,5-m-Schritten, Höhe 0–3 m.');
+ return Object.fromEntries(['x','y','width','depth','height'].map(key=>[key,platform[key]]));
+}
+function platformAt(platform,x,y,size=stageSize()){
+ return validatePlatform({...platform,x:Math.max(0,Math.min(size.width-platform.width,Math.round(x*2)/2)),y:Math.max(0,Math.min(size.depth-platform.depth,Math.round(y*2)/2))},size);
+}
+function addPlatform(){
+ const size=stageSize(),width=Math.min(6,size.width),depth=Math.min(3,size.depth);
+ data.stage={...size,platform:validatePlatform({x:Math.floor((size.width-width))/2,y:0,width,depth,height:.6},size)};rigView.mode='2d';save();
+}
+function setPlatform(platform){data.stage={...stageSize(),platform:validatePlatform(platform)};save();}
+let platformDrag=null,platformMessage='';
+function platformPanel(){
+ const platform=stageSize().platform;
+ return '<section class="panel"><h3>Bühne</h3>'+(platform?'<form id="platform-form" aria-label="Bühne einstellen"><div class="platform-fields">'+[['width','Breite (m)'],['depth','Tiefe (m)'],['height','Höhe (m)'],['x','Position X (m)'],['y','Position Y (m)']].map(([key,label])=>'<label class="stack">'+label+'<input name="'+key+'" type="number" required min="'+(['width','depth'].includes(key)?.5:0)+'" max="'+(key==='height'?3:50)+'" step="'+(key==='height'?.1:.5)+'" value="'+platform[key]+'"></label>').join('')+'</div><button class="primary">Bühne übernehmen</button></form><small>In 2D ziehen oder mit den Pfeiltasten im 0,5-m-Raster verschieben. Position ab linker hinterer Ecke der Grundfläche.</small>'+button('Bühne entfernen','platform-remove'):
+  '<p>Eine eigene Bühnenfläche in den Aufbau setzen.</p>'+button('+ Bühne','platform-add','class="primary"'))+'<small id="platform-error" role="status">'+esc(platformMessage)+'</small></section>';
+}
+function paintPlatform(width,height){
+ const node=screen.querySelector('.stage-platform'),size=stageSize(),platform=size.platform;if(!node||!platform)return;
+ const start=projectTop({x:platform.x-size.width/2,y:platform.y-size.depth/2},width,height),end=projectTop({x:platform.x+platform.width-size.width/2,y:platform.y+platform.depth-size.depth/2},width,height);
+ Object.assign(node.style,{left:start.x+'px',top:start.y+'px',width:(end.x-start.x)+'px',height:(end.y-start.y)+'px'});
+}
+function drawPlatform(context,project){
+ const size=stageSize(),p=size.platform;if(!p)return;
+ const x=p.x-size.width/2,y=p.y-size.depth/2,z=rigView.mode==='3d'?p.height:0;
+ const top=[{x,y,z},{x:x+p.width,y,z},{x:x+p.width,y:y+p.depth,z},{x,y:y+p.depth,z}];
+ const polygon=(points,fill)=>{context.beginPath();points.forEach((point,index)=>{const at=project(point);if(index)context.lineTo(at.x,at.y);else context.moveTo(at.x,at.y);});context.closePath();context.fillStyle=fill;context.fill();context.strokeStyle='#b9a2d4';context.lineWidth=1.5;context.stroke();};
+ if(z){for(let i=0;i<4;i++){const a=top[i],b=top[(i+1)%4];polygon([a,b,{...b,z:0},{...a,z:0}],'#30243e');}}
+ polygon(top,'#554164');
+ if(rigView.mode==='3d'){const center=project({x:x+p.width/2,y:y+p.depth/2,z});context.fillStyle='#f2e7ff';context.font='bold 12px system-ui';context.textAlign='center';context.fillText('BÜHNE',center.x,center.y);}
+}
+document.addEventListener('click',event=>{
+ const action=event.target.closest('[data-action]')?.dataset.action;if(!['platform-add','platform-remove'].includes(action))return;
+ platformMessage='';if(action==='platform-add')addPlatform();else{data.stage={...stageSize()};delete data.stage.platform;save();}render();
+});
+document.addEventListener('submit',event=>{
+ if(event.target.id!=='platform-form')return;event.preventDefault();const form=new FormData(event.target);
+ try{setPlatform(Object.fromEntries(['x','y','width','depth','height'].map(key=>[key,Number(form.get(key))])));platformMessage='Bühne gespeichert.';render();}
+ catch(error){document.querySelector('#platform-error').textContent=error.message;}
+});
+screen.addEventListener('pointerdown',event=>{
+ if(tab!==4||rigView.mode!=='2d'||event.button!==0||!event.target.closest('.stage-platform'))return;
+ const viewport=event.target.closest('.rig-canvas');platformDrag={x:event.clientX,y:event.clientY,platform:{...stageSize().platform},viewport};recordHistory();event.preventDefault();event.target.closest('.stage-platform').focus();viewport.setPointerCapture(event.pointerId);
+});
+screen.addEventListener('pointermove',event=>{
+ if(!platformDrag)return;const bounds=platformDrag.viewport.getBoundingClientRect(),metrics=stageMetrics(bounds.width,bounds.height),p=platformDrag.platform;
+ data.stage={...stageSize(),platform:platformAt(p,p.x+(event.clientX-platformDrag.x)/metrics.unit,p.y+(event.clientY-platformDrag.y)/metrics.unit)};paintRig();
+});
+screen.addEventListener('pointerup',()=>{if(platformDrag){platformDrag=null;save();render();screen.querySelector('.stage-platform')?.focus?.();}});
+screen.addEventListener('pointercancel',()=>{if(platformDrag){data.stage={...stageSize(),platform:platformDrag.platform};platformDrag=null;render();}});
+screen.addEventListener('keydown',event=>{
+ if(tab!==4||!event.target.closest('.stage-platform')||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+ event.preventDefault();const p=stageSize().platform;if(!p)return;setPlatform(platformAt(p,p.x+(event.key==='ArrowLeft'?-.5:event.key==='ArrowRight'?.5:0),p.y+(event.key==='ArrowUp'?-.5:event.key==='ArrowDown'?.5:0)));for(const key of ['x','y']){const input=screen.querySelector('#platform-form input[name="'+key+'"]');if(input)input.value=stageSize().platform[key];}paintRig();
+});
 function stageSize(){try{return validateStage(data.stage)}catch{return {width:12,depth:8}}}
 function snapPosition(position){
  const size=stageSize();
@@ -2124,7 +2200,8 @@ function removeFixture(id){
  save();
 }
 function updateStage(width,depth){
- data.stage=validateStage({width,depth});
+ const old=stageSize().platform,size=validateStage({width,depth});
+ data.stage=old?{...size,platform:platformAt({...old,width:Math.min(old.width,width),depth:Math.min(old.depth,depth)},old.x,old.y,size)}:size;
  data.lights.forEach(light=>{if(light.position)light.position=snapPosition(light.position)});save();
 }
 
@@ -2308,9 +2385,17 @@ const mappingPresets=[
  ['R,G,B,W,D','RGBW → Dimmer'],['D,R,G,B,S','Dimmer → RGB → Strobe'],['D,R,G,B,W,S','Dimmer → RGBW → Strobe']
 ];
 function mappingFields(draft){
- const custom=draft.customMapping||!mappingPresets.some(([mapping])=>mapping===draft.mapping);
- return '<label class="stack">DMX-Kanalfolge<select id="mapping-preset" name="mappingPreset">'+mappingPresets.map(([mapping,label])=>'<option value="'+mapping+'" '+(!custom&&draft.mapping===mapping?'selected':'')+'>'+label+' ('+mapping+')</option>').join('')+'<option value="custom" '+(custom?'selected':'')+'>Eigene Kanalfolge …</option></select></label>'+
+ const presets=presetsForType(draft.visualType),custom=draft.customMapping||!mappingPresets.some(([mapping])=>mapping===draft.mapping);
+ return '<label class="stack">DMX-Kanalfolge<select id="mapping-preset" name="mappingPreset">'+(!custom&&!presets.some(([mapping])=>mapping===draft.mapping)?'<option value="'+esc(draft.mapping)+'" selected>Gespeichertes Profil ('+esc(draft.mapping)+')</option>':'')+presets.map(([mapping,label])=>'<option value="'+mapping+'" '+(!custom&&draft.mapping===mapping?'selected':'')+'>'+label+' ('+mapping+')</option>').join('')+'<option value="custom" '+(custom?'selected':'')+'>Eigene Kanalfolge …</option></select></label>'+
   (custom?'<label class="stack">Eigene DMX-Kanalfolge<input name="mapping" placeholder="z. B. D,R,G,B,S" required value="'+esc(draft.mapping)+'"></label>':'<input type="hidden" name="mapping" value="'+esc(draft.mapping)+'">');
+}
+function presetsForType(type){
+ return mappingPresets.filter(([mapping])=>{
+  if(!type)return true;
+  if(type==='strobe')return mapping.includes('S');
+  if(type==='strip')return mapping.includes('R')&&!mapping.includes('S');
+  return mapping==='D'||mapping.includes('R');
+ });
 }
 function strobeControls(lights){
  const light=lights.find(item=>channelMap(item).includes('S'));if(!light)return '';
@@ -2327,6 +2412,7 @@ document.addEventListener('change',event=>{
  if(!fixtureDraft.customMapping)fixtureDraft.mapping=event.target.value;
  fixtureDraft.mode=deviceMode(fixtureDraft.mapping);render();
 });
+document.addEventListener('cancel',event=>{if(event.target.id==='fixture-dialog'){event.preventDefault();fixture=null;fixtureDraft=null;render();}},true);
 function prepareFixtureDraft(light){
  const type=fixtureKind(light||{name:"PAR"});
  fixtureDraft={name:light?.name||"",group:light?.group||"",address:light?.address??"",visualType:type,
@@ -2347,11 +2433,11 @@ function lights(){
  if(!fixture){fixtureDraft=null;fixtureDraftKey=null;}
  const draft=fixtureDraft;
  return '<div class="wrap patch-layout"><section class="panel patch-devices"><div class="row split"><h2>Lichter · '+data.lights.length+'</h2>'+
-  button("Licht hinzufügen","new-light",'class="primary" '+(outputState.enabled?"disabled":""))+'</div><div class="row">'+button('Alle auswählen','patch-select-all')+button('Auswahl aufheben','selection-clear')+button('Gruppen einklappen','fixture-fold')+'</div>'+
+  button("+","new-light",'class="primary add-fixture" aria-label="Licht hinzufügen" title="Licht hinzufügen" '+(outputState.enabled?"disabled":""))+'</div><div class="row">'+button('Alle auswählen','patch-select-all')+button('Auswahl aufheben','selection-clear')+button('Gruppen einklappen','fixture-fold')+'</div>'+
   '<div class="patch-device-scroll" data-scroll-key="patch-devices" aria-label="Geräteliste">'+groupedFixtures(item=>'<div class="patch-fixture-row"><div class="row">'+button(setupSelection.has(item.id)?'✓':'○','patch-select:'+item.id,flag(setupSelection.has(item.id))+' aria-label="'+esc(item.name)+' auswählen"')+deviceSymbol(fixtureKind(item))+'<div class="fixture-row-name"><strong>'+esc(item.name)+'</strong><small>'+deviceTypes[fixtureKind(item)].name+' · DMX '+item.address+'–'+(item.address+channelCount(item)-1)+'</small></div></div>'+
    '<div class="row">'+button("Bearbeiten","edit-light:"+item.id,outputState.enabled?"disabled":"")+(deleteCandidate===item.id?'<span class="delete-fixture-prompt">Aus allen Steps entfernen?</span>'+button("Ja, löschen","confirm-delete-light:"+item.id,'class="danger-button"')+button("Abbrechen","cancel-delete-light"):button("Löschen","delete-light:"+item.id,'class="danger-button" '+(outputState.enabled?'disabled':'')))+'</div></div>')+
   (!data.lights.length?'<p class="muted">Lege deine Geräte einzeln an. Sie erscheinen automatisch im Aufbau.</p>':"")+'</div><details class="patch-group-editor" '+(setupSelection.size?'open':'')+'><summary>Ausgewählte Geräte gruppieren · '+setupSelection.size+'</summary>'+groupEditor(data.lights.filter(item=>setupSelection.has(item.id)))+'</details></section>'+
-  '<div class="patch-detail">'+(fixture?'<form id="light-form" class="panel"><h3>'+(light?"Licht bearbeiten":"Neues Licht")+'</h3><div class="fixture-fields" data-scroll-key="fixture-fields">'+
+  '<div class="patch-detail">'+(fixture?'<dialog id="fixture-dialog" class="fixture-dialog" aria-label="'+(light?'Licht bearbeiten':'Neues Licht')+'"><form id="light-form" class="panel"><h3>'+(light?"Licht bearbeiten":"Neues Licht")+'</h3><div class="fixture-fields" data-scroll-key="fixture-fields">'+
    '<div class="device-picker" aria-label="Geräteart">'+Object.entries(deviceTypes).map(([type,info])=>
     button(deviceSymbol(type)+'<span>'+info.name+'</span>',"device-type:"+type,flag(draft.visualType===type))).join("")+'</div>'+
    '<input type="hidden" name="visualType" value="'+draft.visualType+'"><input type="hidden" name="mode" value="'+draft.mode+'">'+
@@ -2361,9 +2447,8 @@ function lights(){
    (light?'':'<label class="stack">Anzahl gleicher Geräte<input name="count" type="number" min="1" max="64" value="'+draft.count+'" required></label>')+
    mappingFields(draft)+
    '<small>Die Kanalfolge muss zum DMX-Modus am Gerät passen. D = Dimmer, S = Strobe, R/G/B = Farbe, W = Weiß, 0 oder 255 = fester Kanalwert. Vorhandene Profile werden nicht automatisch geändert.</small></div>'+
-   '<div class="fixture-form-actions"><p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></div></form>':
-   '<section class="panel"><h3>Gerät bearbeiten</h3><p>Links ein Gerät wählen oder ein neues Licht hinzufügen. Mehrere Geräte auswählen, um ihnen gemeinsam eine Gruppe zuzuweisen.</p></section>')+
-   '<details class="patch-grid-fold" '+(!fixture?'open':'')+'><summary>DMX-Adressraster</summary>'+patchGrid()+'</details></div></div>';
+   '<div class="fixture-form-actions"><p id="light-error" class="error" role="status"></p><div class="row"><button class="primary">Licht speichern</button>'+button("Abbrechen","cancel-light")+'</div></div></form></dialog>':'')+
+   '<details class="patch-grid-fold"><summary>DMX-Adressraster</summary>'+patchGrid()+'</details></div></div>';
 }
 function darkDuration(step){return (Number.isFinite(step.darkHold)?step.darkHold:.25)/playbackRate();}
 function darkenOutput(){
@@ -2423,7 +2508,7 @@ document.addEventListener("click",event=>{
  if(command.startsWith("device-type:")){
   captureFixtureForm();
   const type=command.split(":")[1],previous=deviceTypes[fixtureDraft.visualType];
-  if(!fixtureDraft.mapping||fixtureDraft.mapping===previous.mapping)fixtureDraft.mapping=deviceTypes[type].mapping;
+  if(fixture==='new'||!fixtureDraft.mapping||fixtureDraft.mapping===previous.mapping)fixtureDraft.mapping=deviceTypes[type].mapping;
   fixtureDraft.customMapping=!mappingPresets.some(([mapping])=>mapping===fixtureDraft.mapping);
   fixtureDraft.visualType=type;fixtureDraft.mode=deviceMode(fixtureDraft.mapping);deviceProposal=null;deviceMessage="";
   render();

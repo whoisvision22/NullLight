@@ -1,5 +1,8 @@
-NullLight v0.2.6 – Geräte übersichtlich verwalten
+NullLight v0.2.6 – Geräte übersichtlich verwalten und Bühne platzieren
 
+- Einzeilige Geräte, Plus-Taste zum Hinzufügen und Geräteeditor als Dialog nur bei Bedarf. Kürzere Reiternamen Lichter und Szenen.
+- Kanalfolgen-Auswahl passend zum gewählten Gerätetyp; vorhandene Profile bleiben auswählbar.
+- Eigene Bühne mit Breite, Tiefe und Höhe im Aufbau: im 2D-Raster verschieben, in 3D sichtbar und je Aufbau gespeichert.
 - Einklappbare Gerätegruppen in Patch, Aufbau und Programmierung. Mehrere Geräte im Patch auswählen und gemeinsam einer Gruppe zuweisen.
 - Geräteliste und Bearbeitungsformular scrollen unabhängig; Speichern und Abbrechen bleiben im Editor sichtbar. Listenposition bleibt beim Bearbeiten erhalten.
 - Auswahl gängiger DMX-Kanalfolgen mit eigener Kanalfolge als Alternative. Vorhandene Profile bleiben erhalten.
