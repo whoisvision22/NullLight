@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.8**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.9**.
 
 ## Herunterladen
 
@@ -54,7 +54,7 @@ Steps können gezogen oder mit den Pfeilen sortiert werden. Alt/Option beim Able
 - 48 nummerierte Performance-Plätze mit einstellbaren Buttonfarben.
 - Mehrfachauswahl, gespeicherte Wiedergabegruppen und Reihenfolgen sowie Zufallswiedergabe.
 - Einklappbare Master-Gruppen zur gemeinsamen Helligkeitssteuerung.
-- Keine KI-Hilfen.
+- Optionaler OpenAI-Szenenassistent mit eigenem API-Schlüssel und Vorschau vor Übernahme.
 - CDJ-Beatsteuerung für vorhandene Szenen: 1, 2, 4, 8 oder 16 Beats pro Step, Playerwahl und Blackout bei Signalausfall.
 - MCP über stdio: Status, Szenenstart, Master, Blackout und Stopp mit Freigabe in der Oberfläche.
 
@@ -95,3 +95,7 @@ Die Mac-App nutzt das mit macOS gelieferte Ruby; WEBrick wird mitgeliefert. Mind
 Das neue Ring-Logo wird mit der Mac-App als Dock-Symbol ausgeliefert. Dafür die aktuelle Mac-App einmal vollständig herunterladen und ersetzen; Inhaltsupdates ändern das Bundle-Symbol nicht.
 
 Jeder Aufbau verwaltet eigene Banks, Szenen und Wiedergabegruppen. Alte gemeinsame Szenen werden in vorhandene Aufbauten kopiert. Wechseln stoppt die laufende Szene. Geräte bleiben gemeinsam. Der Master bietet Ausblenden, Flash (mit Master-Gruppen und Blackout-Vorrang), Tempo-Faktoren und Sperre. Bei CDJ-Sync gibt der Player das Tempo vor.
+
+## Null Labs Pixelbars und KI
+
+Unter Lichter → Null Labs · Pixelbars den Adressplan für die geplanten zehn WS2815-Bars anlegen. [Pixelbar- und KI-Anleitung](docs/PIXELBARS-KI.md).

@@ -1,3 +1,10 @@
+NullLight v0.2.9 – Null Labs Pixelbars und KI-Szenenassistent
+
+- Eigenes WS2815-Profil für die geplanten zehn 12-V-Pixelbars mit jeweils 60 RGB-Pixeln. Einrichtungsdialog mit einzeln editierbaren Universen, Adressen und Kanalfolgen. Zwei Bars pro Universum ab Kanal 1/181; Standardplan über fünf Universen.
+- Einzelpixel-Editor, Pixelvorschau und Art-Net-Pixelausgabe zusätzlich zum bisherigen DMX-Universum. Stoppen, Verbindungsverlust und entfernte Universen senden Blackout. Benötigt einen passenden Art-Net-Pixelcontroller; die App erzeugt kein direktes WS2815-Signal.
+- Optionaler OpenAI-Szenenassistent: eigener API-Schlüssel pro Sitzung, Beschreibung eingeben, strukturierte Steps und Pixelmuster prüfen und als neue Szene übernehmen. Keine automatische Showänderung oder Live-Ausgabe durch die KI. Schlüssel werden nicht in Shows oder Browser-Speicher geschrieben. Auf dem Pi ist OPENAI_API_KEY verfügbar.
+- Tests mit echter lokaler UDP-Kommunikation über fünf Pixel-Universen, zusätzlichen Softwaretests für Pixel-Adressierung und KI-Proposalvalidierung. KI-API-Tests verwenden simulierte Antworten, keine kostenpflichtigen Live-Aufrufe. Tests mit der noch zu bauenden Hardware stehen aus.
+
 NullLight v0.2.8 – Abgleich der Effektgeräte-Vorschau
 
 - Die Flash-Vorschau zeigt Laser und Nebel dunkel, passend zu ihrer tatsächlichen DMX-Ausgabe.

@@ -6,6 +6,7 @@ require 'securerandom'
 require 'webrick'
 require_relative 'routing'
 require_relative 'updater'
+require_relative 'scene_ai'
 
 module ArtNet
   PORT = 6454
@@ -159,6 +160,7 @@ module ArtNet
     def initialize
       @lock = Mutex.new
       @channels = Array.new(512, 0)
+      @pixel_frames = {}
       @enabled = false
       @count = 0
       @sequence = 0
@@ -199,6 +201,7 @@ module ArtNet
           @subscriptions = {}
           @received = 0
           @channels = Array.new(512, 0)
+          @pixel_frames = {}
           @enabled = true
           @error = nil
           @last_frame = now
@@ -214,10 +217,24 @@ module ArtNet
       end
     end
 
-    def frame(channels)
+    def frame(channels, pixel_frames = {})
       # Validate before changing the frame buffer.
       ArtNet.dmx(channels, 0, 1)
+      raise ArgumentError, 'Höchstens 32 Pixel-Universen erlaubt.' unless pixel_frames.is_a?(Hash) && pixel_frames.length <= 32
+      checked = {}
+      pixel_frames.each do |address, values|
+        raise ArgumentError, 'Ungültiges Pixel-Universum.' unless address.to_s.match?(/\A\d{1,5}\z/) && address.to_i.between?(0,32767)
+        ArtNet.dmx(values, address.to_i, 1)
+        raise ArgumentError, 'Doppeltes Pixel-Universum.' if checked.key?(address.to_i)
+        checked[address.to_i] = values.dup
+      end
       @lock.synchronize do
+        if @enabled
+          reserved = [@config[:address], *(@mapping['artnet']['enabled'] ? @mapping['artnet']['routes'].map { |route| route['targetUniverse'] } : [])]
+          raise ArgumentError, 'Pixel-Universen dürfen Hauptausgabe und Art-Net-Mapping nicht überschreiben.' unless (checked.keys & reserved).empty?
+          (@pixel_frames.keys - checked.keys).each { |address| 3.times { send_frame(Array.new(512,0),address) } if subscribed?(address) }
+        end
+        @pixel_frames = checked
         @channels = channels
         @last_frame = now
         status_unlocked
@@ -243,6 +260,7 @@ module ArtNet
       @socket.close if @socket && !@socket.closed?
       @socket = nil
       @enabled = false
+      @pixel_frames = {}
       @last_reply = 0
     end
 
@@ -251,7 +269,7 @@ module ArtNet
     end
 
     def output_addresses
-      [@config[:address], *(@mapping['artnet']['enabled'] ? @mapping['artnet']['routes'].map { |route| route['targetUniverse'] } : [])].uniq
+      [@config[:address], *@pixel_frames.keys, *(@mapping['artnet']['enabled'] ? @mapping['artnet']['routes'].map { |route| route['targetUniverse'] } : [])].uniq
     end
 
     def subscribed?(address)
@@ -261,9 +279,10 @@ module ArtNet
     def set_mapping(input)
       mapping = ArtNet.mapping(input)
       @lock.synchronize do
+        raise ArgumentError, 'Art-Net-Mapping kollidiert mit Pixel-Universen.' if mapping['artnet']['enabled'] && mapping['artnet']['routes'].any? { |route| @pixel_frames.key?(route['targetUniverse']) }
         old_addresses = @enabled ? output_addresses : []
         if @enabled
-          new_addresses = [@config[:address], *(mapping['artnet']['enabled'] ? mapping['artnet']['routes'].map { |route| route['targetUniverse'] } : [])].uniq
+          new_addresses = [@config[:address], *@pixel_frames.keys, *(mapping['artnet']['enabled'] ? mapping['artnet']['routes'].map { |route| route['targetUniverse'] } : [])].uniq
           (old_addresses - new_addresses).each do |address|
             3.times { send_frame(Array.new(512, 0), address) } if subscribed?(address)
           end
@@ -299,7 +318,7 @@ module ArtNet
     end
 
     def mapped_frames
-      frames = { @config[:address] => ArtNet.remap_dmx(@channels, @mapping) }
+      frames = { @config[:address] => ArtNet.remap_dmx(@channels, @mapping) }.merge(@pixel_frames)
       return frames unless @mapping['artnet']['enabled']
       @mapping['artnet']['routes'].each do |route|
         destination = (frames[route['targetUniverse']] ||= Array.new(512, 0))
@@ -410,6 +429,7 @@ module ArtNet
     sender = Sender.new
     dj = DJLink.new
     control = RemoteControl.new
+    scene_ai = NullLightSceneAI.new
     bundle_resources = ENV['NULLLIGHT_BUNDLE_RESOURCES'] || File.dirname(page_path)
     begin
       updates = platform == 'mac' ? NullLightUpdater.new(bundle_resources, cache: ENV['NULLLIGHT_UPDATE_CACHE_DIR']) : nil
@@ -450,6 +470,10 @@ module ArtNet
         end
         raise ArgumentError, 'Zugriff abgelehnt.' unless request['x-lichtpult-session'] == token
         raise ArgumentError, 'Fremder Ursprung.' if request['origin'] && request['origin'] != "http://#{request['host']}"
+        if request.path == '/api/ai/status' && request.request_method == 'GET'
+          response.body = JSON.generate(scene_ai.status)
+          next
+        end
         if request.path == '/api/update/status' && request.request_method == 'GET'
           response.body = JSON.generate(update_status.call)
           next
@@ -468,18 +492,22 @@ module ArtNet
         end
         raise ArgumentError, 'Ungültige Anfrage.' unless request.request_method == 'POST' &&
           request['content-type'].to_s.start_with?('application/json') &&
-          request.body.to_s.bytesize <= (request.path == '/api/control/poll' ? 262_144 : 16_384)
+          request.body.to_s.bytesize <= (%w[/api/control/poll /api/frame].include?(request.path) ? 262_144 : 16_384)
         input = JSON.parse(request.body)
         raise ArgumentError, 'JSON-Objekt erforderlich.' unless input.is_a?(Hash)
         result = case request.path
                  when '/api/enable' then sender.enable(input)
-                 when '/api/frame' then sender.frame(input.fetch('channels'))
+                 when '/api/frame' then sender.frame(input.fetch('channels'),input.fetch('pixelFrames',{}))
                  when '/api/stop' then sender.stop
                  when '/api/mapping' then sender.set_mapping(input.fetch('mapping'))
                  when '/api/dj/enable' then dj.enable(input)
                  when '/api/dj/stop' then dj.stop
                  when '/api/control/poll' then control.poll(input)
                  when '/api/control' then control.command(input)
+                 when '/api/ai/config'
+                   raise ArgumentError, 'API-Schlüssel nur direkt am lokalen Rechner eingeben; auf dem Pi OPENAI_API_KEY verwenden.' unless %w[127.0.0.1 ::1].include?(request.peeraddr[3])
+                   scene_ai.configure(input)
+                 when '/api/ai/generate' then scene_ai.generate(input)
                  when '/api/update/start'
                    updates.start_install if updates
                    update_status.call

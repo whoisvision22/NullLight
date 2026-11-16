@@ -1,15 +1,15 @@
 {
   "name": "nulllight",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "private": true,
   "description": "NullLight Lichtsteuerung und Offline-Demo",
   "scripts": {
-    "test": "node tests/all.cjs app/NullLight.html && node tests/djlink-ui.cjs app/NullLight.html && node tests/mcp.cjs && node tests/workflow.cjs app/NullLight.html && node tests/update-dialog.cjs app/NullLight.html && node tests/layout-programs.cjs app/NullLight.html && node tests/fixtures.cjs app/NullLight.html && node tests/stage-platform.cjs app/NullLight.html && node tests/effect-devices.cjs app/NullLight.html",
-    "test:demo": "node tests/all.cjs demo/NullLight.html && node tests/djlink-ui.cjs demo/NullLight.html && node tests/workflow.cjs demo/NullLight.html && node tests/update-dialog.cjs demo/NullLight.html && node tests/layout-programs.cjs demo/NullLight.html && node tests/fixtures.cjs demo/NullLight.html && node tests/stage-platform.cjs demo/NullLight.html && node tests/effect-devices.cjs demo/NullLight.html",
+    "test": "node tests/all.cjs app/NullLight.html && node tests/djlink-ui.cjs app/NullLight.html && node tests/mcp.cjs && node tests/workflow.cjs app/NullLight.html && node tests/update-dialog.cjs app/NullLight.html && node tests/layout-programs.cjs app/NullLight.html && node tests/fixtures.cjs app/NullLight.html && node tests/stage-platform.cjs app/NullLight.html && node tests/effect-devices.cjs app/NullLight.html && node tests/pixel-ai.cjs app/NullLight.html",
+    "test:demo": "node tests/all.cjs demo/NullLight.html && node tests/djlink-ui.cjs demo/NullLight.html && node tests/workflow.cjs demo/NullLight.html && node tests/update-dialog.cjs demo/NullLight.html && node tests/layout-programs.cjs demo/NullLight.html && node tests/fixtures.cjs demo/NullLight.html && node tests/stage-platform.cjs demo/NullLight.html && node tests/effect-devices.cjs demo/NullLight.html && node tests/pixel-ai.cjs demo/NullLight.html",
     "build:demo": "node scripts/package-demo.cjs",
     "build:mac": "ruby scripts/build-mac.rb",
     "test:updates": "ruby tests/updater-check.rb",
-    "test:pi": "ruby tests/artnet-check.rb && ruby tests/djlink-check.rb && ruby tests/server-check.rb",
+    "test:pi": "ruby tests/artnet-check.rb && ruby tests/djlink-check.rb && ruby tests/server-check.rb && ruby tests/pixel-ai-check.rb",
     "build:pi": "node scripts/package-pi.cjs",
     "start:pi": "ruby native/raspberrypi/server.rb",
     "mcp": "node native/mcp/server.cjs"

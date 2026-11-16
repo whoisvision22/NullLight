@@ -66,6 +66,10 @@ Dir.mktmpdir('nulllight-pi-check-') do |state|
     assert(expired.code == '400' && JSON.parse(expired.body)['error'].include?('Ausführungsbestätigung'), 'Nicht bestätigter Befehl als erfolgreich gemeldet.')
     poll = JSON.parse(request.call('/api/control/poll', { state: { remoteEnabled: true } }).body)
     assert(poll['command'].nil?, 'Abgelaufener Befehl darf nicht später ausgeführt werden.')
+    assert(request.call('/api/ai/status').code == '200', 'KI-Status fehlt.')
+    assert(request.call('/api/ai/status',nil,false).code == '400', 'KI-Status ohne Sitzung erreichbar.')
+    assert(request.call('/api/ai/generate',{'prompt'=>'Test','fixtures'=>[]}).code == '400','Ungültiger KI-Kontext akzeptiert.')
+    assert(request.call('/api/frame',{'channels'=>Array.new(512,0),'pixelFrames'=>{'1'=>Array.new(512,10)}}).code == '200','Pixel-Frames werden nicht angenommen.')
     puts 'Passed: real Pi server, private session, host/origin checks, interfaces, version, CDJ API and acknowledged MCP bridge.'
   ensure
     Process.kill(Gem.win_platform? ? 'KILL' : 'TERM', process.pid) if process.alive?
