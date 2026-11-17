@@ -1,3 +1,11 @@
+# v0.2.10 – LED-Bar-Effektstudio
+
+- Neuer Reiter „LED Bars“ mit eigenständigem Effekteditor statt Step-Programmierung.
+- Acht laufende Pixel-Effekte mit Farben, Größe/Dichte, Helligkeit, Richtung und Tempo/BPM.
+- Durchgehende Lichtlinie oder parallele Bars; Reihenfolge und umgedrehte Montage pro Bar einstellbar.
+- Animierte Vorschau ohne Live-Ausgabe; Effekte als eigene Szenen des aktuellen Aufbaus in Perform speichern, laden und bearbeiten.
+- Prozedurale Art-Net-Pixelausgabe berücksichtigt Master, Gruppen, Blackout und White.
+
 NullLight v0.2.9 – Null Labs Pixelbars und KI-Szenenassistent
 
 - Eigenes WS2815-Profil für die geplanten zehn 12-V-Pixelbars mit jeweils 60 RGB-Pixeln. Einrichtungsdialog mit einzeln editierbaren Universen, Adressen und Kanalfolgen. Zwei Bars pro Universum ab Kanal 1/181; Standardplan über fünf Universen.

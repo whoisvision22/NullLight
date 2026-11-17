@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.9**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.10**.
 
 ## Herunterladen
 
@@ -99,3 +99,7 @@ Jeder Aufbau verwaltet eigene Banks, Szenen und Wiedergabegruppen. Alte gemeinsa
 ## Null Labs Pixelbars und KI
 
 Unter Lichter → Null Labs · Pixelbars den Adressplan für die geplanten zehn WS2815-Bars anlegen. [Pixelbar- und KI-Anleitung](docs/PIXELBARS-KI.md).
+
+### LED-Bar-Effektstudio
+
+Im Reiter **LED Bars** wählst du deine Pixelbars, ihre Reihenfolge und Montagerichtung. Lauflicht, Welle, Farbverlauf, Mitte, Abwechseln, Sparkle, Regenbogen und Einfarbig werden direkt animiert. Die Vorschau sendet kein Licht. Mit **Als neue Szene in Perform speichern** wird der Effekt im aktuellen Aufbau abgelegt; eine gespeicherte LED-Szene lässt sich dort erneut laden. In Perform starten, um über Art-Net auszugeben. Der Editor verändert keine manuell programmierten Szenen.
