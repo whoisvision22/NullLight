@@ -1,3 +1,11 @@
+# v0.2.14 – Pixel wieder deutlich sichtbar
+
+- Quadratische Kästchen in der Pixel-Lupe. „Pixel groß“ vergrößert die gemeinsame 2D-Bühne; Hintergrund ziehen verschiebt sie, „Übersicht“ passt wieder alles ein.
+- Große Pixel-Vorschau direkt oben im LED-Bar-Reiter; die 180 LEDs erscheinen als drei große Reihen vor der Aufbau-Übersicht.
+- Bar-Symbole haben drei höhere Pixelreihen statt winziger flacher Felder. Positionen und Drehungen bleiben gemeinsam und unverändert.
+- Nach dem ersten Anlegen von Bars im LED-Reiter werden diese für die Vorschau ausgewählt.
+- Gemeinsame Bühne, Studio-Anordnung und Streifen-Modi bleiben erhalten.
+
 # v0.2.13 – Gemeinsamer Visualizer und drei Streifen
 
 - LED-Bar-Reiter wieder mit Bars links, Vorschau und Effekten in der Mitte, Speichern rechts.

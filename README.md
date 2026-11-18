@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.13**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.14**.
 
 ## Herunterladen
 
@@ -116,16 +116,22 @@ Neue Bars werden mit **3 × 60 = 180 RGBW-Pixeln** angelegt. Alle drei Streifen 
 
 Die Ausgabe ist softwareseitig geprüft; echte RGBW-Bars wurden noch nicht am physischen Aufbau getestet.
 
-### LED-Bar-Clip-Pult ab v0.2.13
+### LED-Bar-Clip-Pult ab v0.2.14
 
 Links einen Effekt-Clip oder eine gespeicherte LED-Szene laden. Die mittlere Vorschau übernimmt die Positionen und Z-Drehung aus **Aufbau**, einschließlich der Grundfläche; Geometrie dort ändern. Neue/erneut geladene Effekte folgen dem aktuellen Aufbau. Bereits laufende ältere Szenen behalten bis zum erneuten Speichern ihr bisheriges Mapping.
 
 Mit +/− bis 400 % zoomen. Eine Bar anklicken oder in der **Pixel-Lupe** wählen: Alle 180 Pixel sind als drei Reihen mit je 60 Kästchen sichtbar. Bei kleinen Fenstern horizontal scrollen. Ein Pixel-Klick zeigt die Nummer; das ändert keine Farben. Regler und Speichern befinden sich rechts. Meteor, Scanner, Mehrfach-Lauflicht, Blitzer, laufende Punkte, Sparkle und Funkeln bieten bewegte beziehungsweise punktuelle Effekte. Farbflächen bleiben aufklappbar.
 
-### Gemeinsame Darstellung ab v0.2.13
+### Gemeinsame Darstellung ab v0.2.14
 
 LED Bars nutzen wieder den Studio-Aufbau mit Bars links, Vorschau/Effekten mittig und Speichern rechts. Die Vorschau ist jetzt derselbe Visualizer wie in Aufbau, Szenen und Perform: gemeinsame Positionen, Grundfläche, Z-Drehung und 2D-/3D-Kamera. 180er-Bars werden überall als 1 m lange Bar mit drei Streifen dargestellt. Die Pixel-Lupe bleibt darunter.
 
 **Bars mit Abstand anordnen** verteilt die Bars im gemeinsamen Aufbau mit 1,5 m Abstand und passt bei Bedarf die Grundfläche an. Dies verändert die tatsächlichen Aufbaupositionen; die Änderung erscheint in allen Bereichen. Bei aktiver Ausgabe zuerst die Ausgabe stoppen.
 
 **Drei LED-Streifen:** Gemeinsam, mit Versatz oder einen der drei Streifen einzeln wählen. Einzelstreifen deaktiviert die übrigen Streifen einschließlich W. In Linien- und Parallel-Modus laufen Effekte über die 60 Spalten jeder Bar; der Versatz erzeugt unterschiedliche Phasen pro Streifen.
+
+### Lesbare Pixelvorschau ab v0.2.14
+
+Die große Pixel-Vorschau steht direkt oben im LED-Bar-Reiter. Eine Bar aus der Liste wählen; ihre 180 LEDs erscheinen als drei große Reihen. Darunter bleibt die gemeinsame Aufbau-Übersicht. Die Übersicht stellt die räumliche Anordnung dar; die große Vorschau dient zum Beurteilen einzelner Pixel. Neue Bars werden beim ersten Anlegen im LED-Reiter automatisch ausgewählt.
+
+**Pixelgröße im Visualizer:** „Pixel groß“ vergrößert die 2D-Bühne um die ausgewählte Bar. Mit +/− weiter zoomen, den Hintergrund ziehen zum Verschieben. „Übersicht“ stellt die Gesamtansicht wieder her. Die gemeinsame Kamera verändert keine Gerätepositionen. Die Pixel-Lupe verwendet quadratische Kästchen.
