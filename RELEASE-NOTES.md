@@ -1,3 +1,11 @@
+# v0.2.13 – Gemeinsamer Visualizer und drei Streifen
+
+- LED-Bar-Reiter wieder mit Bars links, Vorschau und Effekten in der Mitte, Speichern rechts.
+- Alle Bereiche nutzen denselben 2D-/3D-Visualizer mit derselben Bühnenprojektion, Position und Drehung. Pixelbars werden überall mit derselben Länge dargestellt.
+- „Bars mit Abstand anordnen“ verteilt die Bars mit 1,5 m Abstand im gemeinsamen Aufbau; Grundfläche wird bei Bedarf erweitert.
+- Alle Effekte können die drei Streifen gemeinsam, mit Versatz oder einen einzelnen Streifen steuern. Inaktive Streifen bleiben auch auf dem Weißkanal dunkel.
+- Pixel-Lupe und zusätzliche aktive Effekte bleiben erhalten.
+
 # v0.2.12 – LED-Bar-Clip-Pult und Pixel-Lupe
 
 - Schlankes Clip-Pult: Effekt-Clips links, Aufbau-Vorschau mit Pixel-Lupe in der Mitte, Regler und Speichern rechts.
