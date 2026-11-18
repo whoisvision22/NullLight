@@ -1,3 +1,5 @@
+> Ab v0.2.11 ist der neue Standard 3 × 60 RGBW-Pixel pro Bar. Die folgende ursprüngliche WS2815-Konfiguration bleibt als älteres RGB-Profil unterstützt. Aktuelle RGBW-Belegung und Mapping-Bedienung: README.md, Abschnitt „RGBW und drei Streifen pro Bar“.
+
 # Null Labs WS2815-Pixelbars
 
 Geplant sind zehn Bars mit je 60 adressierbaren RGB-Pixeln bei 12 V. Unter **Lichter → Null Labs · Pixelbars** wird dieser Plan als Geräteprofil angelegt. Die Ausgabe erfolgt an einen Art-Net-Pixelcontroller, der Art-Net in das WS2815-Signal umsetzt. Ein passiver RJ45-Adapter oder reiner DMX-Node kann dieses serielle Pixelsignal nicht erzeugen.

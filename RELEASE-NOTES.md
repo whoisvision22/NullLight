@@ -1,3 +1,12 @@
+# v0.2.11 – RGBW, drei Streifen und räumliches Pixel-Mapping
+
+- Neue Pixelbars haben 3 × 60 RGBW-LEDs / 180 Pixel; alle drei Streifen sind einzeln sichtbar.
+- Im LED-Bar-Studio Bars auf einer schwarzen Mapping-Fläche ziehen und in 90°-Schritten drehen. Effekte entlang X/Y oder radial über die Anordnung abbilden.
+- 720 RGBW-Kanäle pro Bar: Ausgabe über zwei Art-Net-Universen mit 512 Kanälen, 128 + 52 Pixel. Zehn Bars nutzen standardmäßig 20 Universen. Controller auf RGBW, passende Kanalfolge und fortlaufende Universen einstellen. Ältere RGB-Profile behalten 510 Kanäle je Universum.
+- Separate Weißsteuerung im Szenen- und LED-Bar-Editor. RGBW-Geräte bekommen einen eigenen W-Kanal; RGB-Geräte mischen Weiß. Bestehende Geräteadressen und manuell gewählte Profile bleiben erhalten.
+- Vorhandene Profile bleiben erhalten. „Auf 3 × 60 umstellen“ aktualisiert sie bei gestoppter Ausgabe und behält Geräte-IDs sowie Szenen.
+- Mapping-Koordinaten, Winkel und Effekte bleiben mit der Perform-Szene des jeweiligen Aufbaus gespeichert.
+
 # v0.2.10 – LED-Bar-Effektstudio
 
 - Neuer Reiter „LED Bars“ mit eigenständigem Effekteditor statt Step-Programmierung.

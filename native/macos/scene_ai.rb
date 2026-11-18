@@ -28,7 +28,7 @@ class NullLightSceneAI
     color = { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' }
     fixture = { type: 'object', additionalProperties: false, required: %w[fixtureId color secondaryColor level pixelEffect position], properties: {
       fixtureId: { type: 'string', enum: ids }, color: color, secondaryColor: color,
-      level: { type: 'integer', minimum: 0, maximum: 100 }, pixelEffect: { type: 'string', enum: %w[solid alternating gradient chase] }, position: { type: 'integer', minimum: 0, maximum: 169 }
+      level: { type: 'integer', minimum: 0, maximum: 100 }, pixelEffect: { type: 'string', enum: %w[solid alternating gradient chase] }, position: { type: 'integer', minimum: 0, maximum: 179 }
     } }
     step = { type: 'object', additionalProperties: false, required: %w[fade hold darkAfter darkHold fixtures], properties: {
       fade: { type: 'number', minimum: 0, maximum: 120 }, hold: { type: 'number', minimum: 0.1, maximum: 120 },
@@ -48,7 +48,7 @@ class NullLightSceneAI
     safe = fixtures.map do |fixture|
       raise ArgumentError, 'Ungültiges Licht für den Assistenten.' unless fixture.is_a?(Hash) && fixture['id'].is_a?(String) && fixture['id'].match?(/\A[-a-zA-Z0-9]+\z/) && !ids.include?(fixture['id']) && %w[par panel strip moving strobe pixelbar].include?(fixture['kind'])
       count = fixture.fetch('pixelCount',0)
-      raise ArgumentError, 'Ungültige Pixelzahl.' unless count.is_a?(Integer) && count.between?(0,170) && (fixture['kind'] != 'pixelbar' || count > 0)
+      raise ArgumentError, 'Ungültige Pixelzahl.' unless count.is_a?(Integer) && count.between?(0,180) && (fixture['kind'] != 'pixelbar' || count > 0)
       ids << fixture['id']
       { id: fixture['id'], name: fixture['name'].to_s[0,60], kind: fixture['kind'], pixelCount: count }
     end
@@ -84,7 +84,7 @@ class NullLightSceneAI
         fixture = fixtures.find { |item| item['id'] == light['fixtureId'] }
         raise ArgumentError, 'Der Vorschlag enthält ein unbekanntes Licht.' unless fixture && !used.include?(light['fixtureId'])
         used << light['fixtureId']
-        raise ArgumentError, 'Ungültige Lichtwerte im Vorschlag.' unless valid_color.call(light['color']) && valid_color.call(light['secondaryColor']) && light['level'].is_a?(Integer) && light['level'].between?(0,100) && %w[solid alternating gradient chase].include?(light['pixelEffect']) && light['position'].is_a?(Integer) && light['position'].between?(0,169)
+        raise ArgumentError, 'Ungültige Lichtwerte im Vorschlag.' unless valid_color.call(light['color']) && valid_color.call(light['secondaryColor']) && light['level'].is_a?(Integer) && light['level'].between?(0,100) && %w[solid alternating gradient chase].include?(light['pixelEffect']) && light['position'].is_a?(Integer) && light['position'].between?(0,179)
         raise ArgumentError, 'Pixel-Effekt passt nicht zum Licht.' if fixture['kind'] != 'pixelbar' && light['pixelEffect'] != 'solid'
         raise ArgumentError, 'Pixelposition außerhalb der Bar.' if fixture['kind'] == 'pixelbar' && light['pixelEffect'] == 'chase' && light['position'] >= fixture['pixelCount']
       end

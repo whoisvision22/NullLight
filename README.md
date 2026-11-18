@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.10**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.11**.
 
 ## Herunterladen
 
@@ -103,3 +103,15 @@ Unter Lichter → Null Labs · Pixelbars den Adressplan für die geplanten zehn 
 ### LED-Bar-Effektstudio
 
 Im Reiter **LED Bars** wählst du deine Pixelbars, ihre Reihenfolge und Montagerichtung. Lauflicht, Welle, Farbverlauf, Mitte, Abwechseln, Sparkle, Regenbogen und Einfarbig werden direkt animiert. Die Vorschau sendet kein Licht. Mit **Als neue Szene in Perform speichern** wird der Effekt im aktuellen Aufbau abgelegt; eine gespeicherte LED-Szene lässt sich dort erneut laden. In Perform starten, um über Art-Net auszugeben. Der Editor verändert keine manuell programmierten Szenen.
+
+### RGBW und drei Streifen pro Bar
+
+Neue Bars werden mit **3 × 60 = 180 RGBW-Pixeln** angelegt. Alle drei Streifen erscheinen auf der frei anordbaren Mapping-Fläche. Ziehen verschiebt die Bar; „↻ 90°“ dreht sie. Die Mapping-Achse bildet Effekte über X, Y oder radial ab. Positionen und Winkel gehören zur gespeicherten Effekt-Szene des jeweiligen Aufbaus.
+
+**Vorhandene Bars:** Im LED-Bar-Reiter bei gestoppter Ausgabe **Auf 3 × 60 umstellen** wählen. Dabei werden die Pixelprofile auf RGBW und die Startadressen auf Universenpaare umgestellt. Geräte-IDs und vorhandene Szenen bleiben erhalten. Auch den Controller neu konfigurieren.
+
+**RGBW-Controller:** 512 Kanäle / 128 RGBW-Pixel je Universum und fortlaufende Ausgabe. Pro Bar: Pixel 1–128 im ersten, Pixel 129–180 im zweiten Universum. Die nächste Bar beginnt zwei Universen später. Zehn Bars nutzen standardmäßig 20 Universen (1–20). RGBW-/GRBW-/WRGB-Kanalfolge in App und Controller abgleichen. Der konkrete RGBW-Streifentyp und die Versorgung müssen zum Controller passen; ein gewöhnlicher Art-Net-zu-DMX-Knoten erzeugt kein adressierbares LED-Signal.
+
+**Weißsteuerung:** Szenen und LED-Effekte haben einen eigenen W-Regler. „Weiß automatisch“ gewinnt Weiß aus RGB-Farben; manuell gesetztes W lässt sich unabhängig hinzumischen. Bestehende RGBW-Fixtureprofile nutzen ihren W-Kanal. RGB-Fixtures mischen Weiß über R/G/B; vorhandene manuelle Geräteprofile werden nicht automatisch umadressiert. Ältere WS2815-Profile werden weiterhin als RGB unterstützt, mit 510 Kanälen pro Universum.
+
+Die Ausgabe ist softwareseitig geprüft; echte RGBW-Bars wurden noch nicht am physischen Aufbau getestet.
