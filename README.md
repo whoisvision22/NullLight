@@ -1,6 +1,6 @@
 # NullLight
 
-Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.11**.
+Lichtsteuerung mit violetter Oberfläche, Szenenprogrammierung und einer 2D-/3D-Vorschau. Entwicklungsstand: **v0.2.12**.
 
 ## Herunterladen
 
@@ -115,3 +115,9 @@ Neue Bars werden mit **3 × 60 = 180 RGBW-Pixeln** angelegt. Alle drei Streifen 
 **Weißsteuerung:** Szenen und LED-Effekte haben einen eigenen W-Regler. „Weiß automatisch“ gewinnt Weiß aus RGB-Farben; manuell gesetztes W lässt sich unabhängig hinzumischen. Bestehende RGBW-Fixtureprofile nutzen ihren W-Kanal. RGB-Fixtures mischen Weiß über R/G/B; vorhandene manuelle Geräteprofile werden nicht automatisch umadressiert. Ältere WS2815-Profile werden weiterhin als RGB unterstützt, mit 510 Kanälen pro Universum.
 
 Die Ausgabe ist softwareseitig geprüft; echte RGBW-Bars wurden noch nicht am physischen Aufbau getestet.
+
+### LED-Bar-Clip-Pult ab v0.2.12
+
+Links einen Effekt-Clip oder eine gespeicherte LED-Szene laden. Die mittlere Vorschau übernimmt die Positionen und Z-Drehung aus **Aufbau**, einschließlich der Grundfläche; Geometrie dort ändern. Neue/erneut geladene Effekte folgen dem aktuellen Aufbau. Bereits laufende ältere Szenen behalten bis zum erneuten Speichern ihr bisheriges Mapping.
+
+Mit +/− bis 400 % zoomen. Eine Bar anklicken oder in der **Pixel-Lupe** wählen: Alle 180 Pixel sind als drei Reihen mit je 60 Kästchen sichtbar. Bei kleinen Fenstern horizontal scrollen. Ein Pixel-Klick zeigt die Nummer; das ändert keine Farben. Regler und Speichern befinden sich rechts. Meteor, Scanner, Mehrfach-Lauflicht, Blitzer, laufende Punkte, Sparkle und Funkeln bieten bewegte beziehungsweise punktuelle Effekte. Farbflächen bleiben aufklappbar.

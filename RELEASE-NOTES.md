@@ -1,3 +1,11 @@
+# v0.2.12 – LED-Bar-Clip-Pult und Pixel-Lupe
+
+- Schlankes Clip-Pult: Effekt-Clips links, Aufbau-Vorschau mit Pixel-Lupe in der Mitte, Regler und Speichern rechts.
+- LED Bars folgen Positionen, Z-Drehung und Grundfläche des aktuellen Aufbaus. Die Ansicht lässt sich bis 400 % vergrößern.
+- Eine Bar anklicken: alle 180 Pixel in drei großen Reihen; Pixelnummer und Streifennummer sind einzeln auswählbar.
+- Sechs zusätzliche aktive Effekte: Meteor/Schweif, Scanner, Mehrfach-Lauflicht, Funkeln, Blitzer und laufende Punkte. Sparkle/Lauflicht stehen im Vordergrund; Farbflächen sind eingeklappt.
+- Gespeicherte LED-Szenen sind als Clips ladbar. Vorschau bleibt von der Perform-Ausgabe getrennt.
+
 # v0.2.11 – RGBW, drei Streifen und räumliches Pixel-Mapping
 
 - Neue Pixelbars haben 3 × 60 RGBW-LEDs / 180 Pixel; alle drei Streifen sind einzeln sichtbar.
